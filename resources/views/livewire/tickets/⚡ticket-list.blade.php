@@ -18,14 +18,14 @@ new class extends Component
 
     public bool $showEditModal = false;
 
+    public bool $showCloseConfirmation = false;
+
+    public string $modalMessage = '';
+
+    public string $modalMessageType = '';
+
     #[Locked]
     public ?int $editingTicketId = null;
-
-    #[Validate('required|string|max:255')]
-    public string $editSubject = '';
-
-    #[Validate('required|string|min:10')]
-    public string $editDescription = '';
 
     #[Validate('required|in:low,medium,high')]
     public string $editPriority = 'medium';
@@ -58,40 +58,54 @@ new class extends Component
         $this->authorize('update', $ticket);
 
         $this->editingTicketId = $ticket->id;
-        $this->editSubject = $ticket->subject;
-        $this->editDescription = $ticket->description;
         $this->editPriority = $ticket->priority->value;
         $this->replyBody = '';
+        $this->modalMessage = '';
+        $this->modalMessageType = '';
         $this->showEditModal = true;
+    }
+
+    public function confirmClose(): void
+    {
+        $this->showCloseConfirmation = true;
+    }
+
+    public function cancelClose(): void
+    {
+        $this->showCloseConfirmation = false;
     }
 
     public function closeEditModal(): void
     {
         $this->showEditModal = false;
+        $this->showCloseConfirmation = false;
         $this->editingTicketId = null;
-        $this->reset(['editSubject', 'editDescription', 'editPriority', 'replyBody']);
+        $this->reset(['editPriority', 'replyBody', 'modalMessage', 'modalMessageType']);
         $this->resetValidation();
     }
 
     public function updateTicket(): void
     {
-        $this->validate(['editSubject', 'editDescription', 'editPriority']);
+        $this->validate([
+            'editPriority' => 'required|in:low,medium,high',
+        ]);
 
         $ticket = Ticket::findOrFail($this->editingTicketId);
         $this->authorize('update', $ticket);
 
         $ticket->update([
-            'subject' => $this->editSubject,
-            'description' => $this->editDescription,
             'priority' => $this->editPriority,
         ]);
 
-        session()->flash('success', 'Ticket updated successfully.');
+        $this->modalMessage = 'Ticket updated successfully.';
+        $this->modalMessageType = 'success';
     }
 
     public function submitReply(): void
     {
-        $this->validate(['replyBody']);
+        $this->validate([
+            'replyBody' => 'required|string|min:5',
+        ]);
 
         $ticket = Ticket::findOrFail($this->editingTicketId);
 
@@ -109,7 +123,8 @@ new class extends Component
 
         $this->replyBody = '';
 
-        session()->flash('success', 'Your reply has been submitted.');
+        $this->modalMessage = 'Your reply has been submitted.';
+        $this->modalMessageType = 'success';
     }
 };
 ?>
@@ -202,47 +217,56 @@ new class extends Component
     @endif
 
     {{-- Edit Ticket Modal --}}
-    <flux:modal wire:model.self="showEditModal" class="md:w-3xl max-h-[90vh] overflow-y-auto">
+    <flux:modal wire:model.self="showEditModal" class="w-[70vw] max-w-[70vw] max-h-[90vh] overflow-y-auto">
         @if($this->editingTicket)
             <div class="space-y-6">
-                <div>
-                    <flux:heading size="lg">Edit Ticket</flux:heading>
-                    <flux:text class="mt-2">Update your support ticket details and add replies.</flux:text>
+                <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
+                        <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Edit Ticket</flux:heading>
+                    </div>
+                    <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Update your support ticket details and add replies.</flux:text>
                 </div>
 
-                {{-- Ticket Details Form --}}
-                <form wire:submit="updateTicket" class="space-y-4">
-                    <flux:input
-                        wire:model="editSubject"
-                        label="Subject"
-                        placeholder="Brief description of your issue"
-                        required
-                    />
+                {{-- Modal Message --}}
+                @if($modalMessage)
+                    <flux:callout variant="{{ $modalMessageType }}" icon="{{ $modalMessageType === 'success' ? 'check-circle' : 'exclamation-circle' }}" dismissible>
+                        {{ $modalMessage }}
+                    </flux:callout>
+                @endif
 
-                    <flux:textarea
-                        wire:model="editDescription"
-                        label="Description"
-                        placeholder="Please describe your issue in detail..."
-                        rows="6"
-                        required
-                    />
-
-                    <flux:select wire:model="editPriority" label="Priority">
-                        @foreach(TicketPriority::cases() as $priority)
-                            <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-
-                    <div class="flex items-center gap-4 pt-4">
-                        <flux:button type="submit" variant="primary">
-                            Save Changes
-                        </flux:button>
+                {{-- Ticket Details --}}
+                <div class="space-y-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800">
+                    <div>
+                        <flux:label>Subject</flux:label>
+                        <div class="mt-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                            {{ $this->editingTicket->subject }}
+                        </div>
                     </div>
-                </form>
+
+                    <div>
+                        <flux:label>Description</flux:label>
+                        <div class="mt-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 whitespace-pre-wrap">{{ $this->editingTicket->description }}</div>
+                    </div>
+
+                    <form wire:submit="updateTicket" class="space-y-4">
+                        <flux:select wire:model="editPriority" label="Priority">
+                            @foreach(TicketPriority::cases() as $priority)
+                                <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <div class="flex items-center gap-4 pt-4">
+                            <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
+                                Save Changes
+                            </flux:button>
+                        </div>
+                    </form>
+                </div>
 
                 {{-- Conversation --}}
                 <div class="space-y-4">
-                    <h3 class="text-base font-semibold text-zinc-900 dark:text-white">Conversation</h3>
+                    <h3 class="text-base font-semibold text-blue-900 dark:text-blue-100">Conversation</h3>
 
                     @php
                         $replies = $this->editingTicket->replies ?? collect();
@@ -278,8 +302,8 @@ new class extends Component
 
                 {{-- Reply Form --}}
                 @if($this->editingTicket->status->value === 'open')
-                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6">
-                        <h3 class="text-base font-semibold text-zinc-900 dark:text-white mb-4">Add a Reply</h3>
+                    <div class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-6">
+                        <h3 class="text-base font-semibold text-blue-900 dark:text-blue-100 mb-4">Add a Reply</h3>
                         <form wire:submit="submitReply" class="space-y-4">
                             <flux:textarea
                                 wire:model="replyBody"
@@ -287,7 +311,7 @@ new class extends Component
                                 rows="4"
                                 required
                             />
-                            <flux:button type="submit" variant="primary">
+                            <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
                                 Send Reply
                             </flux:button>
                         </form>
@@ -300,10 +324,22 @@ new class extends Component
                     </div>
                 @endif
 
-                <div class="flex items-center gap-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                    <flux:button type="button" wire:click="closeEditModal" variant="ghost">
-                        Close
-                    </flux:button>
+                <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                    @if($showCloseConfirmation)
+                        <div class="flex items-center gap-2">
+                            <flux:text class="text-zinc-600 dark:text-zinc-400">Are you sure you want to close?</flux:text>
+                            <flux:button type="button" wire:click="closeEditModal" variant="danger" size="sm">
+                                Yes, Close
+                            </flux:button>
+                            <flux:button type="button" wire:click="cancelClose" variant="ghost" size="sm">
+                                Cancel
+                            </flux:button>
+                        </div>
+                    @else
+                        <flux:button type="button" wire:click="confirmClose" variant="ghost">
+                            Close
+                        </flux:button>
+                    @endif
                 </div>
             </div>
         @endif
