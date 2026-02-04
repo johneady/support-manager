@@ -23,7 +23,7 @@ return [
      * The package will automatically create a user model when trying
      * to log in a user that doesn't exist.
      */
-    'automatically_create_missing_users' => true,
+    'automatically_create_missing_users' => false,
 
     /*
      * The user model that should be logged in. If this is set to `null`
