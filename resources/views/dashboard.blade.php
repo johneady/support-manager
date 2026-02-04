@@ -1,7 +1,7 @@
 <x-layouts::app :title="__('Dashboard')">
     <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl">
         {{-- Welcome Header --}}
-        <div class="relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-400/85 via-sky-400/85 to-cyan-400/85 p-6 text-white shadow-md shadow-blue-500/15">
+        <div class="relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-400/50 via-sky-400/50 to-cyan-400/50 p-6 text-white shadow-md shadow-blue-500/15">
             <div class="absolute inset-0 bg-linear-to-r from-blue-600/20 to-transparent"></div>
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
             <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
