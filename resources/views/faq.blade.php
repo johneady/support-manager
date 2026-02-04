@@ -68,7 +68,7 @@
 
             {{-- FAQs Section --}}
             <section class="pb-16">
-                <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     <livewire:faq-list />
 
                     <div class="mt-12 text-center">

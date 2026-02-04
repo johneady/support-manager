@@ -85,7 +85,7 @@ new class extends Component
 
     {{-- FAQs Section --}}
     <section class="py-16">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <flux:heading size="lg" level="2" class="bg-linear-to-r from-violet-600 to-pink-600 dark:from-violet-400 dark:to-pink-400 bg-clip-text text-transparent">Frequently Asked Questions</flux:heading>
                 <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">
