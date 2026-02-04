@@ -17,7 +17,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Open Tickets</p>
-                        <p class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">0</p>
+                        <p class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">{{ $openTickets }}</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-linear-to-br from-violet-500 to-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <svg class="size-6 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -32,7 +32,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">In Progress</p>
-                        <p class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">0</p>
+                        <p class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">{{ $inProgressTickets }}</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-linear-to-br from-pink-500 to-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <svg class="size-6 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -47,7 +47,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Resolved</p>
-                        <p class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">0</p>
+                        <p class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">{{ $resolvedTickets }}</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-linear-to-br from-amber-500 to-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <svg class="size-6 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

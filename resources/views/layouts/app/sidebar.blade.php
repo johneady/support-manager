@@ -29,9 +29,21 @@
                         {{ __('FAQ') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+                <flux:sidebar.group :heading="__('Account')" class="grid">
+                    <flux:sidebar.item icon="cog" :href="route('profile.edit')" :current="request()->routeIs('profile.edit') || request()->routeIs('settings.*')" wire:navigate class="text-zinc-900 dark:text-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-800 hover:bg-white/20 font-medium">
+                        {{ __('Settings') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="arrow-right-start-on-rectangle" href="#" x-on:click.prevent="$refs.logoutForm.submit()" class="text-zinc-900 dark:text-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-800 hover:bg-white/20 font-medium">
+                        {{ __('Log Out') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />
+
+            <form x-ref="logoutForm" method="POST" action="{{ route('logout') }}" class="hidden">
+                @csrf
+            </form>
         </flux:sidebar>
 
         {{ $slot }}
