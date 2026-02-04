@@ -18,14 +18,14 @@
         @fluxAppearance
     </head>
     <body class="antialiased">
-        <div class="min-h-screen bg-linear-to-br from-violet-50 via-pink-50 to-amber-50 dark:from-zinc-900 dark:via-purple-950/30 dark:to-zinc-900">
+        <div class="min-h-screen bg-linear-to-br from-blue-50 via-sky-50 to-cyan-50 dark:from-zinc-900 dark:via-blue-950/30 dark:to-zinc-900">
             {{-- Header --}}
-            <header class="bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border-b border-violet-100 dark:border-zinc-700">
+            <header class="bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border-b border-blue-100 dark:border-zinc-700">
                 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <nav class="flex items-center justify-between">
                         <a href="/" class="flex items-center gap-2 group">
                             <x-app-logo-icon class="size-8 transition-transform group-hover:scale-110" />
-                            <span class="font-semibold bg-linear-to-r from-violet-600 to-pink-600 dark:from-violet-400 dark:to-pink-400 bg-clip-text text-transparent">Support Manager</span>
+                            <span class="font-semibold bg-linear-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent">Support Manager</span>
                         </a>
                         <div class="flex items-center gap-4">
                             <flux:button href="{{ route('faq') }}" variant="ghost" size="sm">FAQ</flux:button>
@@ -36,7 +36,7 @@
                                     <flux:button href="{{ route('login') }}" variant="ghost" size="sm">Log in</flux:button>
                                 @endif
                                 @if (Route::has('register'))
-                                    <flux:button href="{{ route('register') }}" variant="primary" size="sm" class="bg-linear-to-r! from-violet-500! to-pink-500! hover:from-violet-600! hover:to-pink-600! border-0!">Register</flux:button>
+                                    <flux:button href="{{ route('register') }}" variant="primary" size="sm" class="bg-linear-to-r! from-blue-500! to-sky-500! hover:from-blue-600! hover:to-sky-600! border-0!">Register</flux:button>
                                 @endif
                             @endauth
                         </div>
@@ -48,16 +48,16 @@
             <section class="relative py-12 sm:py-16 overflow-hidden">
                 {{-- Decorative background elements --}}
                 <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div class="absolute -top-40 -right-40 w-80 h-80 bg-linear-to-br from-violet-300/30 to-pink-300/30 dark:from-violet-600/20 dark:to-pink-600/20 rounded-full blur-3xl"></div>
-                    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-linear-to-br from-amber-300/30 to-orange-300/30 dark:from-amber-600/20 dark:to-orange-600/20 rounded-full blur-3xl"></div>
+                    <div class="absolute -top-40 -right-40 w-80 h-80 bg-linear-to-br from-blue-300/30 to-sky-300/30 dark:from-blue-600/20 dark:to-sky-600/20 rounded-full blur-3xl"></div>
+                    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-linear-to-br from-cyan-300/30 to-teal-300/30 dark:from-cyan-600/20 dark:to-teal-600/20 rounded-full blur-3xl"></div>
                 </div>
 
                 <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-violet-100 to-pink-100 dark:from-violet-900/50 dark:to-pink-900/50 text-violet-700 dark:text-violet-300 text-sm font-medium mb-6">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-blue-100 to-sky-100 dark:from-blue-900/50 dark:to-sky-900/50 text-blue-700 dark:text-blue-300 text-sm font-medium mb-6">
                         <flux:icon name="light-bulb" class="size-4" />
                         Knowledge Base
                     </div>
-                    <flux:heading size="xl" level="1" class="text-3xl sm:text-4xl bg-linear-to-r! from-violet-600! via-pink-600! to-amber-600! dark:from-violet-400! dark:via-pink-400! dark:to-amber-400! bg-clip-text! text-transparent!">
+                    <flux:heading size="xl" level="1" class="text-3xl sm:text-4xl bg-linear-to-r! from-blue-600! via-sky-600! to-cyan-600! dark:from-blue-400! dark:via-sky-400! dark:to-cyan-400! bg-clip-text! text-transparent!">
                         Frequently Asked Questions
                     </flux:heading>
                     <flux:text class="mt-4 text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
@@ -72,8 +72,8 @@
                     <livewire:faq-list />
 
                     <div class="mt-12 text-center">
-                        <div class="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm border border-violet-100 dark:border-zinc-700">
-                            <div class="w-12 h-12 rounded-xl bg-linear-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+                        <div class="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm border border-blue-100 dark:border-zinc-700">
+                            <div class="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
                                 <flux:icon name="chat-bubble-left-right" class="size-6 text-white" />
                             </div>
                             <div class="text-center sm:text-left">
@@ -81,11 +81,11 @@
                                 <p class="text-sm text-zinc-500 dark:text-zinc-400">Our support team is ready to assist you.</p>
                             </div>
                             @auth
-                                <flux:button href="{{ route('tickets.create') }}" variant="primary" class="bg-linear-to-r! from-violet-500! to-pink-500! hover:from-violet-600! hover:to-pink-600! border-0!">
+                                <flux:button href="{{ route('tickets.create') }}" variant="primary" class="bg-linear-to-r! from-blue-500! to-sky-500! hover:from-blue-600! hover:to-sky-600! border-0!">
                                     Create a Ticket
                                 </flux:button>
                             @else
-                                <flux:button href="{{ route('login') }}" variant="primary" class="bg-linear-to-r! from-violet-500! to-pink-500! hover:from-violet-600! hover:to-pink-600! border-0!">
+                                <flux:button href="{{ route('login') }}" variant="primary" class="bg-linear-to-r! from-blue-500! to-sky-500! hover:from-blue-600! hover:to-sky-600! border-0!">
                                     Sign in to Submit
                                 </flux:button>
                             @endauth
@@ -95,15 +95,15 @@
             </section>
 
             {{-- Footer --}}
-            <footer class="bg-white/40 dark:bg-zinc-900/80 backdrop-blur-sm border-t border-violet-100 dark:border-zinc-700 py-8">
+            <footer class="bg-white/40 dark:bg-zinc-900/80 backdrop-blur-sm border-t border-blue-100 dark:border-zinc-700 py-8">
                 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                         <flux:text size="sm" class="text-zinc-500">
                             &copy; {{ date('Y') }} Support Manager. All rights reserved.
                         </flux:text>
                         <div class="flex items-center gap-6">
-                            <flux:link href="#" variant="subtle" class="text-sm text-violet-600! dark:text-violet-400!">Privacy Policy</flux:link>
-                            <flux:link href="#" variant="subtle" class="text-sm text-violet-600! dark:text-violet-400!">Terms of Service</flux:link>
+                            <flux:link href="#" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Privacy Policy</flux:link>
+                            <flux:link href="#" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Terms of Service</flux:link>
                         </div>
                     </div>
                 </div>

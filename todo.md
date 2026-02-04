@@ -1,3 +1,3 @@
 ### Todo
 
-* Create a better logo
+* fix the mobile version. menu disappears

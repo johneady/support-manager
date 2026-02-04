@@ -4,7 +4,7 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:header container class="border-b border-violet-100/50 bg-white/90 dark:bg-zinc-800/90 dark:border-zinc-700/50 shadow-sm">
+        <flux:header container class="border-b border-blue-100/50 bg-white/90 dark:bg-zinc-800/90 dark:border-zinc-700/50 shadow-sm">
             <flux:sidebar.toggle class="lg:hidden mr-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white" icon="bars-2" inset="left" />
 
             <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
@@ -45,7 +45,7 @@
         </flux:header>
 
         <!-- Mobile Menu -->
-        <flux:sidebar collapsible="mobile" sticky class="lg:hidden border-e border-violet-100/50 bg-white/90 dark:bg-zinc-800/90 dark:border-zinc-700/50 shadow-sm">
+        <flux:sidebar collapsible="mobile" sticky class="lg:hidden border-e border-blue-100/50 bg-white/90 dark:bg-zinc-800/90 dark:border-zinc-700/50 shadow-sm">
             <flux:sidebar.header>
                 <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
                 <flux:sidebar.collapse class="in-data-flux-sidebar-on-desktop:not-in-data-flux-sidebar-collapsed-desktop:-mr-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white" />
