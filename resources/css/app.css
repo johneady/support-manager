@@ -64,3 +64,8 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+/* Sidebar group headings - improve visibility on gradient background */
+[data-flux-sidebar] [data-flux-sidebar-group] > div:first-child > div {
+    @apply text-white/90 font-semibold uppercase tracking-wide text-xs;
+}
