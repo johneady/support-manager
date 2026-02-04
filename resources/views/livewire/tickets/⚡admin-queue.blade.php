@@ -15,6 +15,8 @@ new class extends Component
 {
     use WithPagination;
 
+    public string $search = '';
+
     public bool $showEditModal = false;
 
     public bool $showCloseConfirmation = false;
@@ -38,12 +40,26 @@ new class extends Component
         abort_unless(auth()->user()?->isAdmin(), 403);
     }
 
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
     #[Computed]
     public function tickets(): LengthAwarePaginator
     {
         return Ticket::query()
             ->with(['user', 'replies' => fn ($q) => $q->latest()->limit(1)])
             ->open()
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('subject', 'like', '%'.$this->search.'%')
+                        ->orWhereHas('user', function ($userQuery) {
+                            $userQuery->where('name', 'like', '%'.$this->search.'%')
+                                ->orWhere('email', 'like', '%'.$this->search.'%');
+                        });
+                });
+            })
             ->orderByRaw("
                 CASE
                     WHEN id IN (
@@ -157,19 +173,32 @@ new class extends Component
         </flux:callout>
     @endif
 
-    {{-- Stats --}}
-    <div class="flex items-center gap-4">
+    {{-- Search and Stats --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-2">
             <flux:badge color="red" size="lg">{{ $this->needsResponseCount }}</flux:badge>
             <span class="text-sm text-zinc-600 dark:text-zinc-400">tickets need a response</span>
+        </div>
+        <div class="w-full sm:w-80">
+            <flux:input
+                wire:model.live.debounce.300ms="search"
+                placeholder="Search subject, name, or email..."
+                icon="magnifying-glass"
+            />
         </div>
     </div>
 
     @if($this->tickets->isEmpty())
         <div class="text-center py-12 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-            <flux:icon.check-circle class="mx-auto h-12 w-12 text-green-500" />
-            <h3 class="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">All caught up!</h3>
-            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">There are no open tickets requiring attention.</p>
+            @if($search)
+                <flux:icon.magnifying-glass class="mx-auto h-12 w-12 text-zinc-400" />
+                <h3 class="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">No tickets found</h3>
+                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">No tickets match your search "{{ $search }}".</p>
+            @else
+                <flux:icon.check-circle class="mx-auto h-12 w-12 text-green-500" />
+                <h3 class="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">All caught up!</h3>
+                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">There are no open tickets requiring attention.</p>
+            @endif
         </div>
     @else
         <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
