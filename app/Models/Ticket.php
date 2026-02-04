@@ -76,6 +76,37 @@ class Ticket extends Model
         return $query->where('user_id', $userId);
     }
 
+    /**
+     * Scope to tickets that need an admin response.
+     * A ticket needs a response if it has no replies, or if the last reply was from the customer.
+     *
+     * @param  Builder<Ticket>  $query
+     * @return Builder<Ticket>
+     */
+    public function scopeNeedsResponse(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereDoesntHave('replies')
+                ->orWhereHas('replies', function (Builder $subQuery) {
+                    $subQuery->where('id', function ($latestQuery) {
+                        $latestQuery->selectRaw('MAX(id)')
+                            ->from('ticket_replies')
+                            ->whereColumn('ticket_id', 'tickets.id');
+                    })->where('is_from_admin', false);
+                });
+        });
+    }
+
+    /**
+     * Check if this ticket needs an admin response.
+     */
+    public function needsResponse(): bool
+    {
+        $lastReply = $this->replies()->latest()->first();
+
+        return $lastReply === null || ! $lastReply->is_from_admin;
+    }
+
     public function close(): void
     {
         $this->update([

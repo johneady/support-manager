@@ -19,7 +19,11 @@ new class extends Component
 
     public function mount(Ticket $ticket): void
     {
-        abort_unless($ticket->user_id === auth()->id(), 403);
+        $isOwner = $ticket->user_id === auth()->id();
+        $isAdmin = auth()->user()?->isAdmin();
+
+        abort_unless($isOwner || $isAdmin, 403);
+
         $this->ticket = $ticket;
     }
 
@@ -33,8 +37,7 @@ new class extends Component
             'is_from_admin' => false,
         ]);
 
-        $adminEmails = config('support.admin_emails', []);
-        $admins = User::whereIn('email', $adminEmails)->get();
+        $admins = User::where('is_admin', true)->get();
 
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new TicketReplyNotification($reply));

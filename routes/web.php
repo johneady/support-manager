@@ -15,6 +15,7 @@ Route::view('dashboard', 'dashboard')
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('tickets', 'tickets.index')->name('tickets.index');
     Route::view('tickets/create', 'tickets.create')->name('tickets.create');
+    Route::view('tickets/queue', 'tickets.admin-queue')->name('tickets.queue');
     Route::view('tickets/{ticket}', 'tickets.show')->name('tickets.show');
 });
 
