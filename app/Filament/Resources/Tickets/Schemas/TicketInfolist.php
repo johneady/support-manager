@@ -4,8 +4,8 @@ namespace App\Filament\Resources\Tickets\Schemas;
 
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class TicketInfolist
