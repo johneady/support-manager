@@ -55,5 +55,13 @@
                 <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
             </div>
         @endif
+
+        @env('local')
+            <div class="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-700">
+                <div class="space-y-2">
+                    <x-login-link email="tony@testing.com" label="Login as Tony Testing" />
+                </div>
+            </div>
+        @endenv
     </div>
 </x-layouts::auth>

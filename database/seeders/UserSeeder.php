@@ -14,10 +14,12 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
+                'is_admin' => true,
             ],
             [
                 'name' => 'Support Manager',
                 'email' => 'support@example.com',
+                'is_admin' => true,
             ],
         ]);
 
