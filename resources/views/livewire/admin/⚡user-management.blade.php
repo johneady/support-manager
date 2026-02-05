@@ -127,22 +127,15 @@ new class extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,'.$this->editingUserId,
-            'password' => 'nullable|string|min:8',
         ]);
 
         $user = User::findOrFail($this->editingUserId);
 
-        $data = [
+        $user->update([
             'name' => $this->name,
             'email' => $this->email,
             'is_admin' => $this->isAdmin,
-        ];
-
-        if ($this->password) {
-            $data['password'] = Hash::make($this->password);
-        }
-
-        $user->update($data);
+        ]);
 
         unset($this->users);
 
@@ -347,13 +340,6 @@ new class extends Component
                         <flux:label>Email</flux:label>
                         <flux:input type="email" wire:model="email" placeholder="email@example.com" />
                         <flux:error name="email" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Password</flux:label>
-                        <flux:input type="password" wire:model="password" placeholder="Leave blank to keep current password" />
-                        <flux:error name="password" />
-                        <flux:text size="sm" class="text-zinc-500">Only fill this if you want to change the password.</flux:text>
                     </flux:field>
 
                     <flux:field>
