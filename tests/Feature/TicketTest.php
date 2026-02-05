@@ -34,6 +34,58 @@ describe('ticket listing', function () {
             ->assertSee('My Test Ticket Subject')
             ->assertDontSee('Other User Ticket Subject');
     });
+
+    it('shows Responded indicator for open tickets with admin reply', function () {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $ticket = Ticket::factory()->create([
+            'user_id' => $this->user->id,
+            'status' => 'open',
+        ]);
+
+        TicketReply::factory()->create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $admin->id,
+            'is_from_admin' => true,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test('tickets.ticket-list')
+            ->assertSee('Responded');
+    });
+
+    it('does not show Responded indicator for open tickets awaiting admin reply', function () {
+        $ticket = Ticket::factory()->create([
+            'user_id' => $this->user->id,
+            'status' => 'open',
+        ]);
+
+        TicketReply::factory()->create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->user->id,
+            'is_from_admin' => false,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test('tickets.ticket-list')
+            ->assertDontSee('Responded');
+    });
+
+    it('does not show Responded indicator for closed tickets', function () {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $ticket = Ticket::factory()->closed()->create([
+            'user_id' => $this->user->id,
+        ]);
+
+        TicketReply::factory()->create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $admin->id,
+            'is_from_admin' => true,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test('tickets.ticket-list')
+            ->assertDontSee('Responded');
+    });
 });
 
 describe('ticket creation', function () {

@@ -38,6 +38,7 @@ new class extends Component
     {
         return Ticket::query()
             ->forUser(auth()->id())
+            ->with(['replies' => fn ($query) => $query->latest()->limit(1)])
             ->when($this->statusFilter, fn ($query) => $query->where('status', $this->statusFilter))
             ->latest()
             ->get();
@@ -192,9 +193,16 @@ new class extends Component
                                 </span>
                             </td>
                             <td class="whitespace-nowrap px-4 py-4">
-                                <flux:badge color="{{ $ticket->status->color() }}" size="sm">
-                                    {{ $ticket->status->label() }}
-                                </flux:badge>
+                                <div class="flex items-center gap-2">
+                                    <flux:badge color="{{ $ticket->status->color() }}" size="sm">
+                                        {{ $ticket->status->label() }}
+                                    </flux:badge>
+                                    @if($ticket->status === TicketStatus::Open && ! $ticket->needsResponse())
+                                        <flux:badge color="sky" size="sm">
+                                            Responded
+                                        </flux:badge>
+                                    @endif
+                                </div>
                             </td>
                             <td class="whitespace-nowrap px-4 py-4">
                                 <flux:badge color="{{ $ticket->priority->color() }}" size="sm">

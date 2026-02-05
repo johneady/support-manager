@@ -65,3 +65,17 @@ test('already verified user visiting verification link is redirected without fir
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
     Event::assertNotDispatched(Verified::class);
 });
+
+test('unverified user cannot access protected routes', function () {
+    $user = User::factory()->unverified()->create();
+
+    $this->actingAs($user)->get(route('dashboard'))
+        ->assertRedirect(route('verification.notice'));
+});
+
+test('verified user can access protected routes', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('dashboard'))
+        ->assertOk();
+});

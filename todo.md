@@ -2,10 +2,6 @@
 
 * fix the mobile version. menu disappears
 
-* Enable email verificaiton
-
-* Test emails actually go out
-
 achyutn/filament-log-viewer
 spatie/laravel-login-link
 croustibat/filament-jobs-monitor
