@@ -33,7 +33,7 @@
                 />
 
                 @if (Route::has('password.request'))
-                    <flux:link class="absolute top-0 text-sm end-0" :href="route('password.request')" wire:navigate>
+                    <flux:link class="absolute top-0 text-sm end-0 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300" :href="route('password.request')" wire:navigate>
                         {{ __('Forgot your password?') }}
                     </flux:link>
                 @endif
@@ -43,7 +43,7 @@
             <flux:checkbox name="remember" :label="__('Remember me')" :checked="old('remember')" />
 
             <div class="flex items-center justify-end">
-                <flux:button variant="primary" type="submit" class="w-full" data-test="login-button">
+                <flux:button variant="primary" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600" data-test="login-button">
                     {{ __('Log in') }}
                 </flux:button>
             </div>
@@ -52,12 +52,12 @@
         @if (Route::has('register'))
             <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
                 <span>{{ __('Don\'t have an account?') }}</span>
-                <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
+                <flux:link :href="route('register')" wire:navigate class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">{{ __('Sign up') }}</flux:link>
             </div>
         @endif
 
         @env('local')
-            <div class="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-700">
+            <div class="mt-6 pt-6 border-t border-blue-200 dark:border-blue-800">
                 <div class="space-y-2">
                     <x-login-link email="tony@testing.com" label="Login as Tony Testing" />
                 </div>

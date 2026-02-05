@@ -76,7 +76,7 @@
                     <flux:button
                         variant="primary"
                         type="submit"
-                        class="w-full"
+                        class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                     >
                         {{ __('Continue') }}
                     </flux:button>
@@ -84,7 +84,7 @@
 
                 <div class="mt-5 space-x-0.5 text-sm leading-5 text-center">
                     <span class="opacity-50">{{ __('or you can') }}</span>
-                    <div class="inline font-medium underline cursor-pointer opacity-80">
+                    <div class="inline font-medium underline cursor-pointer opacity-80 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                         <span x-show="!showRecoveryInput" @click="toggleInput()">{{ __('login using a recovery code') }}</span>
                         <span x-show="showRecoveryInput" @click="toggleInput()">{{ __('login using an authentication code') }}</span>
                     </div>
