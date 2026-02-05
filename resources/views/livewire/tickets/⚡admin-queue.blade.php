@@ -20,8 +20,6 @@ new class extends Component
 
     public bool $showEditModal = false;
 
-    public bool $showCloseConfirmation = false;
-
     public string $modalMessage = '';
 
     public string $modalMessageType = '';
@@ -112,20 +110,9 @@ new class extends Component
         $this->showEditModal = true;
     }
 
-    public function confirmClose(): void
-    {
-        $this->showCloseConfirmation = true;
-    }
-
-    public function cancelClose(): void
-    {
-        $this->showCloseConfirmation = false;
-    }
-
     public function closeEditModal(): void
     {
         $this->showEditModal = false;
-        $this->showCloseConfirmation = false;
         $this->editingTicketId = null;
         $this->reset(['replyBody', 'newStatus', 'newPriority', 'modalMessage', 'modalMessageType']);
         $this->resetValidation();
@@ -416,21 +403,9 @@ new class extends Component
                 @endif
 
                 <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-                    @if($showCloseConfirmation)
-                        <div class="flex items-center gap-2">
-                            <flux:text class="text-zinc-600 dark:text-zinc-400">Are you sure you want to close?</flux:text>
-                            <flux:button type="button" wire:click="closeEditModal" variant="danger" size="sm">
-                                Yes, Close
-                            </flux:button>
-                            <flux:button type="button" wire:click="cancelClose" variant="ghost" size="sm">
-                                Cancel
-                            </flux:button>
-                        </div>
-                    @else
-                        <flux:button type="button" wire:click="confirmClose" variant="ghost">
-                            Close
-                        </flux:button>
-                    @endif
+                    <flux:button type="button" wire:click="closeEditModal" variant="ghost">
+                        Close
+                    </flux:button>
                 </div>
             </div>
         @endif
