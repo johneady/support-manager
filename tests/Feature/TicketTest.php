@@ -46,7 +46,7 @@ describe('ticket creation', function () {
     it('creates a ticket and notifies admins', function () {
         Notification::fake();
 
-        config(['support.admin_emails' => [$this->user->email]]);
+        $admin = User::factory()->create(['is_admin' => true]);
 
         Livewire::actingAs($this->user)
             ->test('tickets.create-ticket')
@@ -63,7 +63,7 @@ describe('ticket creation', function () {
             'status' => 'open',
         ]);
 
-        Notification::assertSentTo($this->user, NewTicketNotification::class);
+        Notification::assertSentTo($admin, NewTicketNotification::class);
     });
 
     it('validates required fields', function () {

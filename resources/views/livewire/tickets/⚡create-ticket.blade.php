@@ -31,12 +31,9 @@ new class extends Component
             'priority' => $this->priority,
         ]);
 
-        $adminEmails = config('support.admin_emails', []);
-        $admins = User::whereIn('email', $adminEmails)->get();
+        $admins = User::where('is_admin', true)->get();
 
-        if ($admins->isNotEmpty()) {
-            Notification::send($admins, new NewTicketNotification($ticket));
-        }
+        Notification::send($admins, new NewTicketNotification($ticket));
 
         session()->flash('success', 'Your support ticket has been submitted successfully.');
 
