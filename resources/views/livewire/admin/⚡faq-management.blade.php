@@ -175,24 +175,38 @@ new class extends Component
         </flux:callout>
     @endif
 
-    {{-- Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <flux:heading size="xl" class="text-blue-900 dark:text-blue-100">FAQ Management</flux:heading>
-            <flux:text class="text-blue-700 dark:text-blue-300">Manage frequently asked questions</flux:text>
+    {{-- Header Banner --}}
+    <div class="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="rounded-full bg-white/20 p-3">
+                    <flux:icon.question-mark-circle class="size-8 text-white" />
+                </div>
+                <div>
+                    <flux:heading size="2xl" class="text-white">FAQ Management</flux:heading>
+                    <flux:text class="text-blue-100">Manage frequently asked questions</flux:text>
+                </div>
+            </div>
+            <button wire:click="openCreateModal" class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">
+                <flux:icon.plus class="size-4" />
+                Create FAQ
+            </button>
         </div>
-        <flux:button variant="primary" icon="plus" wire:click="openCreateModal" class="bg-blue-600 hover:bg-blue-700">
-            Create FAQ
-        </flux:button>
     </div>
 
-    {{-- Search --}}
-    <div class="w-full sm:w-80">
-        <flux:input
-            wire:model.live.debounce.300ms="search"
-            placeholder="Search questions or answers..."
-            icon="magnifying-glass"
-        />
+    {{-- Search and Stats --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-2">
+            <flux:badge color="blue" size="lg">{{ $this->faqs->total() }}</flux:badge>
+            <span class="text-sm text-zinc-600 dark:text-zinc-400">total FAQs</span>
+        </div>
+        <div class="w-full sm:w-80">
+            <flux:input
+                wire:model.live.debounce.300ms="search"
+                placeholder="Search questions or answers..."
+                icon="magnifying-glass"
+            />
+        </div>
     </div>
 
     @if($this->faqs->isEmpty())
