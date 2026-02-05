@@ -198,6 +198,25 @@ new class extends Component
         </flux:callout>
     @endif
 
+    {{-- Header Banner --}}
+    <div class="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="rounded-full bg-white/20 p-3">
+                    <flux:icon.ticket class="size-8 text-white" />
+                </div>
+                <div>
+                    <flux:heading size="2xl" class="text-white">My Support Tickets</flux:heading>
+                    <flux:text class="text-blue-100">Manage your support requests and conversations</flux:text>
+                </div>
+            </div>
+            <button wire:click="openCreateModal" class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">
+                <flux:icon.plus class="size-4" />
+                New Ticket
+            </button>
+        </div>
+    </div>
+
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="max-w-xs">
             <flux:select wire:model.live="statusFilter" placeholder="All Statuses">
@@ -207,9 +226,6 @@ new class extends Component
                 @endforeach
             </flux:select>
         </div>
-        <flux:button wire:click="openCreateModal" icon="plus">
-            New Ticket
-        </flux:button>
     </div>
 
     @if($this->tickets->isEmpty())

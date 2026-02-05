@@ -172,19 +172,32 @@ new class extends Component
         </flux:callout>
     @endif
 
-    {{-- Search and Stats --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-2">
-            <flux:badge color="red" size="lg">{{ $this->needsResponseCount }}</flux:badge>
-            <span class="text-sm text-zinc-600 dark:text-zinc-400">tickets need a response</span>
+    {{-- Header Banner --}}
+    <div class="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="rounded-full bg-white/20 p-3">
+                    <flux:icon.inbox class="size-8 text-white" />
+                </div>
+                <div>
+                    <flux:heading size="2xl" class="text-white">Ticket Queue</flux:heading>
+                    <flux:text class="text-blue-100">Manage and respond to open support tickets</flux:text>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <flux:badge color="blue" size="lg" class="!bg-white/20 !text-white border border-white/30">{{ $this->needsResponseCount }}</flux:badge>
+                <span class="text-sm text-blue-100">need response</span>
+            </div>
         </div>
-        <div class="w-full sm:w-80">
-            <flux:input
-                wire:model.live.debounce.300ms="search"
-                placeholder="Search subject, name, or email..."
-                icon="magnifying-glass"
-            />
-        </div>
+    </div>
+
+    {{-- Search --}}
+    <div class="w-full sm:w-80">
+        <flux:input
+            wire:model.live.debounce.300ms="search"
+            placeholder="Search subject, name, or email..."
+            icon="magnifying-glass"
+        />
     </div>
 
     @if($this->tickets->isEmpty())
