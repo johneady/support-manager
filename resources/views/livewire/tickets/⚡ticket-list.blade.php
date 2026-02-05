@@ -177,6 +177,9 @@ new class extends Component
 
         $this->modalMessage = 'Your reply has been submitted.';
         $this->modalMessageType = 'success';
+
+        $this->closeEditModal();
+        session()->flash('success', 'Your reply has been submitted.');
     }
 };
 ?>

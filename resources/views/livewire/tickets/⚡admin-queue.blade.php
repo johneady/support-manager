@@ -158,10 +158,8 @@ new class extends Component
         $this->modalMessage = 'Reply sent successfully.';
         $this->modalMessageType = 'success';
 
-        if ($this->newStatus === 'closed') {
-            $this->closeEditModal();
-            session()->flash('success', 'Reply sent and ticket closed.');
-        }
+        $this->closeEditModal();
+        session()->flash('success', 'Reply sent successfully.');
     }
 };
 ?>
