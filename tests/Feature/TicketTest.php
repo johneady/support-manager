@@ -135,6 +135,42 @@ describe('ticket creation', function () {
             ->call('submit')
             ->assertHasErrors(['description']);
     });
+
+    it('creates a ticket from ticket list modal', function () {
+        Notification::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($this->user)
+            ->test('tickets.ticket-list')
+            ->call('openCreateModal')
+            ->assertSet('showCreateModal', true)
+            ->set('newSubject', 'Modal Test Ticket')
+            ->set('newDescription', 'This is a detailed description from the modal form.')
+            ->set('newPriority', 'medium')
+            ->call('createTicket')
+            ->assertHasNoErrors()
+            ->assertSet('showCreateModal', false);
+
+        $this->assertDatabaseHas('tickets', [
+            'user_id' => $this->user->id,
+            'subject' => 'Modal Test Ticket',
+            'priority' => 'medium',
+            'status' => 'open',
+        ]);
+
+        Notification::assertSentTo($admin, NewTicketNotification::class);
+    });
+
+    it('validates required fields in ticket list modal', function () {
+        Livewire::actingAs($this->user)
+            ->test('tickets.ticket-list')
+            ->call('openCreateModal')
+            ->set('newSubject', '')
+            ->set('newDescription', '')
+            ->call('createTicket')
+            ->assertHasErrors(['newSubject', 'newDescription']);
+    });
 });
 
 describe('ticket viewing', function () {

@@ -258,7 +258,7 @@ new class extends Component
     @endif
 
     {{-- Edit Ticket Modal --}}
-    <flux:modal wire:model.self="showEditModal" class="w-[70vw] max-w-[70vw] max-h-[90vh] overflow-y-auto">
+    <flux:modal wire:model.self="showEditModal" class="w-[50vw]! max-w-[50vw]! max-h-[90vh] overflow-y-auto">
         @if($this->editingTicket)
             <div class="space-y-6">
                 <div class="border-b border-blue-200 dark:border-blue-800 pb-4">

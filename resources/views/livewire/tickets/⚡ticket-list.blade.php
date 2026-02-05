@@ -4,6 +4,7 @@ use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Notifications\NewTicketNotification;
 use App\Notifications\TicketReplyNotification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
@@ -17,6 +18,8 @@ new class extends Component
     public string $statusFilter = '';
 
     public bool $showEditModal = false;
+
+    public bool $showCreateModal = false;
 
     public bool $showCloseConfirmation = false;
 
@@ -32,6 +35,15 @@ new class extends Component
 
     #[Validate('required|string|min:5')]
     public string $replyBody = '';
+
+    #[Validate('required|string|max:255')]
+    public string $newSubject = '';
+
+    #[Validate('required|string|min:10')]
+    public string $newDescription = '';
+
+    #[Validate('required|in:low,medium,high')]
+    public string $newPriority = 'medium';
 
     #[Computed]
     public function tickets(): Collection
@@ -83,6 +95,45 @@ new class extends Component
         $this->editingTicketId = null;
         $this->reset(['editPriority', 'replyBody', 'modalMessage', 'modalMessageType']);
         $this->resetValidation();
+    }
+
+    public function openCreateModal(): void
+    {
+        $this->reset(['newSubject', 'newDescription', 'newPriority']);
+        $this->newPriority = 'medium';
+        $this->resetValidation();
+        $this->showCreateModal = true;
+    }
+
+    public function closeCreateModal(): void
+    {
+        $this->showCreateModal = false;
+        $this->reset(['newSubject', 'newDescription', 'newPriority']);
+        $this->resetValidation();
+    }
+
+    public function createTicket(): void
+    {
+        $this->validate([
+            'newSubject' => 'required|string|max:255',
+            'newDescription' => 'required|string|min:10',
+            'newPriority' => 'required|in:low,medium,high',
+        ]);
+
+        $ticket = Ticket::create([
+            'user_id' => auth()->id(),
+            'subject' => $this->newSubject,
+            'description' => $this->newDescription,
+            'priority' => $this->newPriority,
+        ]);
+
+        $admins = User::where('is_admin', true)->get();
+
+        Notification::send($admins, new NewTicketNotification($ticket));
+
+        $this->closeCreateModal();
+
+        session()->flash('success', 'Your support ticket has been submitted successfully.');
     }
 
     public function updateTicket(): void
@@ -146,7 +197,7 @@ new class extends Component
                 @endforeach
             </flux:select>
         </div>
-        <flux:button href="{{ route('tickets.create') }}" icon="plus">
+        <flux:button wire:click="openCreateModal" icon="plus">
             New Ticket
         </flux:button>
     </div>
@@ -163,7 +214,7 @@ new class extends Component
                 @endif
             </p>
             <div class="mt-6">
-                <flux:button href="{{ route('tickets.create') }}" icon="plus">
+                <flux:button wire:click="openCreateModal" icon="plus">
                     Create your first ticket
                 </flux:button>
             </div>
@@ -224,8 +275,55 @@ new class extends Component
         </div>
     @endif
 
+    {{-- Create Ticket Modal --}}
+    <flux:modal wire:model.self="showCreateModal" class="w-[50vw]! max-w-[50vw]! max-h-[90vh] overflow-y-auto">
+        <div class="space-y-6">
+            <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
+                    <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Create New Ticket</flux:heading>
+                </div>
+                <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Submit a new support request.</flux:text>
+            </div>
+
+            <form wire:submit="createTicket" class="space-y-4">
+                <div class="space-y-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800">
+                    <flux:input
+                        wire:model="newSubject"
+                        label="Subject"
+                        placeholder="Brief description of your issue"
+                        required
+                    />
+
+                    <flux:textarea
+                        wire:model="newDescription"
+                        label="Description"
+                        placeholder="Please describe your issue in detail..."
+                        rows="6"
+                        required
+                    />
+
+                    <flux:select wire:model="newPriority" label="Priority">
+                        @foreach(TicketPriority::cases() as $priority)
+                            <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </div>
+
+                <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                    <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
+                        Submit Ticket
+                    </flux:button>
+                    <flux:button type="button" wire:click="closeCreateModal" variant="ghost">
+                        Cancel
+                    </flux:button>
+                </div>
+            </form>
+        </div>
+    </flux:modal>
+
     {{-- Edit Ticket Modal --}}
-    <flux:modal wire:model.self="showEditModal" class="w-[70vw] max-w-[70vw] max-h-[90vh] overflow-y-auto">
+    <flux:modal wire:model.self="showEditModal" class="w-[50vw]! max-w-[50vw]! max-h-[90vh] overflow-y-auto">
         @if($this->editingTicket)
             <div class="space-y-6">
                 <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
