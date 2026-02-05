@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,6 +15,7 @@ Route::get('dashboard', DashboardController::class)
     ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('health', HealthController::class)->name('health');
     Route::view('tickets', 'tickets.index')->name('tickets.index');
     Route::view('tickets/create', 'tickets.create')->name('tickets.create');
     Route::view('tickets/queue', 'tickets.admin-queue')->name('tickets.queue');

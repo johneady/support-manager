@@ -28,6 +28,9 @@
                         <flux:sidebar.item icon="clipboard-document-list" :href="route('admin.faqs')" :current="request()->routeIs('admin.faqs')" wire:navigate class="text-zinc-900 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800 font-medium">
                             {{ __('FAQ Management') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="shield-check" href="/health" :current="request()->path() === '/health'" wire:navigate class="text-zinc-900 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800 font-medium">
+                            {{ __('Health') }}
+                        </flux:sidebar.item>
                     @endif
                 </flux:sidebar.group>
                 <flux:sidebar.group :heading="__('Help')" class="grid">
