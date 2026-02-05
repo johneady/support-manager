@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Models\TicketReply;
 use App\Models\User;
 use App\Notifications\NewTicketNotification;
+use App\Notifications\TicketAutoClosedNotification;
 use App\Notifications\TicketReplyNotification;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -46,6 +47,7 @@ class PreviewMailCommand extends Command
         'new-ticket' => '[Admin] New support ticket notification (NewTicketNotification)',
         'ticket-reply-to-customer' => 'Reply notification to customer (TicketReplyNotification)',
         'ticket-reply-to-admin' => '[Admin] Customer reply notification (TicketReplyNotification)',
+        'ticket-auto-closed' => 'Ticket auto-closed notification (TicketAutoClosedNotification)',
     ];
 
     /**
@@ -124,6 +126,7 @@ class PreviewMailCommand extends Command
             'new-ticket' => $this->sendNewTicketNotification($toEmail),
             'ticket-reply-to-customer' => $this->sendTicketReplyToCustomerNotification($toEmail),
             'ticket-reply-to-admin' => $this->sendTicketReplyToAdminNotification($toEmail),
+            'ticket-auto-closed' => $this->sendTicketAutoClosedNotification($toEmail),
         };
 
         $this->info("  Sent: {$this->emailTypes[$type]}");
@@ -235,5 +238,23 @@ class PreviewMailCommand extends Command
         $reply->setRelation('user', $data['user']);
 
         $admin->notifyNow(new TicketReplyNotification($reply));
+    }
+
+    protected function sendTicketAutoClosedNotification(string $toEmail): void
+    {
+        $data = $this->createTestData();
+        $customer = $this->createTestUser($toEmail);
+
+        $ticket = Ticket::factory()->make([
+            'user_id' => $customer->id,
+            'subject' => 'Unable to reset my password',
+            'description' => 'I have been trying to reset my password but I am not receiving the reset email. I have checked my spam folder but nothing is there. Can you please help me resolve this issue?',
+            'status' => TicketStatus::Closed,
+            'priority' => TicketPriority::High,
+        ]);
+        $ticket->id = 99999;
+        $ticket->setRelation('user', $customer);
+
+        $customer->notifyNow(new TicketAutoClosedNotification($ticket));
     }
 }
