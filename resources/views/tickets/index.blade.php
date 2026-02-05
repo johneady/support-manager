@@ -1,7 +1,5 @@
-<x-layouts::app.sidebar>
-    <flux:main>
-        <div class="px-4 py-4">
-            <livewire:tickets.ticket-list />
-        </div>
-    </flux:main>
-</x-layouts::app.sidebar>
+<x-layouts::app :title="__('My Tickets')">
+    <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl">
+        <livewire:tickets.ticket-list />
+    </div>
+</x-layouts::app>

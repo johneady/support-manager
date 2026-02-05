@@ -1,7 +1,5 @@
-<x-layouts::app.sidebar>
-    <flux:main>
-        <div class="px-4 py-4">
-            <livewire:tickets.admin-queue />
-        </div>
-    </flux:main>
-</x-layouts::app.sidebar>
+<x-layouts::app :title="__('Ticket Queue')">
+    <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl">
+        <livewire:tickets.admin-queue />
+    </div>
+</x-layouts::app>
