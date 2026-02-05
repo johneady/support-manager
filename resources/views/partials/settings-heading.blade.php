@@ -1,9 +1,11 @@
-<div class="relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-400/50 via-sky-400/50 to-cyan-400/50 p-6 text-white shadow-md shadow-blue-500/15 mb-6">
-    <div class="absolute inset-0 bg-linear-to-r from-blue-500/15 to-transparent"></div>
-    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-    <div class="relative">
-        <h1 class="text-2xl font-bold text-white">{{ __('Settings') }} ⚙️</h1>
-        <p class="mt-1 text-white">{{ __('Manage your profile and account settings') }}</p>
+<div class="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8 text-white shadow-lg mb-6">
+    <div class="flex items-center gap-4">
+        <div class="rounded-full bg-white/20 p-3">
+            <flux:icon.gear class="size-8 text-white" />
+        </div>
+        <div>
+            <flux:heading size="2xl" class="text-white">Settings</flux:heading>
+            <flux:text class="text-blue-100">Manage your profile and account settings</flux:text>
+        </div>
     </div>
 </div>

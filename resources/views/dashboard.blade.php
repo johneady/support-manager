@@ -1,13 +1,15 @@
 <x-layouts::app :title="__('Dashboard')">
     <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl">
         {{-- Welcome Header --}}
-        <div class="relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-400/50 via-sky-400/50 to-cyan-400/50 p-6 text-white shadow-md shadow-blue-500/15">
-            <div class="absolute inset-0 bg-linear-to-r from-blue-600/20 to-transparent"></div>
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-            <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-            <div class="relative">
-                <h1 class="text-2xl font-bold text-white">Welcome back! 👋</h1>
-                <p class="mt-1 text-white">Here's what's happening with your support tickets.</p>
+        <div class="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8 text-white shadow-lg">
+            <div class="flex items-center gap-4">
+                <div class="rounded-full bg-white/20 p-3">
+                    <flux:icon.home class="size-8 text-white" />
+                </div>
+                <div>
+                    <flux:heading size="2xl" class="text-white">Welcome back!</flux:heading>
+                    <flux:text class="text-blue-100">Here's what's happening with your support tickets.</flux:text>
+                </div>
             </div>
         </div>
 
