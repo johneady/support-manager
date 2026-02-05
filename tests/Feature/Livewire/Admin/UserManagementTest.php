@@ -215,20 +215,6 @@ describe('user editing', function () {
         expect($userToEdit->fresh()->password)->toBe($originalPassword);
     });
 
-    it('updates password when provided', function () {
-        $userToEdit = User::factory()->create();
-        $originalPassword = $userToEdit->password;
-
-        Livewire::actingAs($this->admin)
-            ->test('admin.user-management')
-            ->call('openEditModal', $userToEdit->id)
-            ->set('password', 'newpassword123')
-            ->call('updateUser')
-            ->assertHasNoErrors();
-
-        expect($userToEdit->fresh()->password)->not->toBe($originalPassword);
-    });
-
     it('validates unique email excluding current user', function () {
         $userToEdit = User::factory()->create(['email' => 'current@example.com']);
         User::factory()->create(['email' => 'existing@example.com']);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TicketCategory;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
@@ -205,6 +206,7 @@ new class extends Component
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">#</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Subject</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Category</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">User</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Priority</th>
@@ -221,6 +223,11 @@ new class extends Component
                                 <span class="font-medium text-zinc-900 dark:text-white">
                                     {{ Str::limit($ticket->subject, 50) }}
                                 </span>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-4">
+                                <flux:badge color="{{ $ticket->category->color() }}" size="sm">
+                                    {{ $ticket->category->label() }}
+                                </flux:badge>
                             </td>
                             <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                                 <div>{{ $ticket->user->name }}</div>

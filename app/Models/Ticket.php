@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TicketCategory;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,6 +22,7 @@ class Ticket extends Model
         'description',
         'status',
         'priority',
+        'category',
         'closed_at',
     ];
 
@@ -29,6 +31,7 @@ class Ticket extends Model
         return [
             'status' => TicketStatus::class,
             'priority' => TicketPriority::class,
+            'category' => TicketCategory::class,
             'closed_at' => 'datetime',
         ];
     }

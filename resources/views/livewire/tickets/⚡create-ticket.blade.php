@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TicketCategory;
 use App\Enums\TicketPriority;
 use App\Models\Ticket;
 use App\Models\User;
@@ -17,6 +18,9 @@ new class extends Component
     #[Validate('required|string|min:10')]
     public string $description = '';
 
+    #[Validate('required|in:technical_issue,feature_request,general_inquiry')]
+    public string $category = 'general_inquiry';
+
     #[Validate('required|in:low,medium,high')]
     public string $priority = 'medium';
 
@@ -28,6 +32,7 @@ new class extends Component
             'user_id' => auth()->id(),
             'subject' => $this->subject,
             'description' => $this->description,
+            'category' => $this->category,
             'priority' => $this->priority,
         ]);
 
@@ -58,6 +63,12 @@ new class extends Component
             rows="6"
             required
         />
+
+        <flux:select wire:model="category" label="Category">
+            @foreach(TicketCategory::cases() as $category)
+                <flux:select.option value="{{ $category->value }}">{{ $category->label() }}</flux:select.option>
+            @endforeach
+        </flux:select>
 
         <flux:select wire:model="priority" label="Priority">
             @foreach(TicketPriority::cases() as $priority)

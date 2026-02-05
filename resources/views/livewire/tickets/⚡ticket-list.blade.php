@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TicketCategory;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
@@ -41,6 +42,9 @@ new class extends Component
 
     #[Validate('required|string|min:10')]
     public string $newDescription = '';
+
+    #[Validate('required|in:technical_issue,feature_request,general_inquiry')]
+    public string $newCategory = 'general_inquiry';
 
     #[Validate('required|in:low,medium,high')]
     public string $newPriority = 'medium';
@@ -99,7 +103,8 @@ new class extends Component
 
     public function openCreateModal(): void
     {
-        $this->reset(['newSubject', 'newDescription', 'newPriority']);
+        $this->reset(['newSubject', 'newDescription', 'newCategory', 'newPriority']);
+        $this->newCategory = 'general_inquiry';
         $this->newPriority = 'medium';
         $this->resetValidation();
         $this->showCreateModal = true;
@@ -108,7 +113,7 @@ new class extends Component
     public function closeCreateModal(): void
     {
         $this->showCreateModal = false;
-        $this->reset(['newSubject', 'newDescription', 'newPriority']);
+        $this->reset(['newSubject', 'newDescription', 'newCategory', 'newPriority']);
         $this->resetValidation();
     }
 
@@ -117,6 +122,7 @@ new class extends Component
         $this->validate([
             'newSubject' => 'required|string|max:255',
             'newDescription' => 'required|string|min:10',
+            'newCategory' => 'required|in:technical_issue,feature_request,general_inquiry',
             'newPriority' => 'required|in:low,medium,high',
         ]);
 
@@ -124,6 +130,7 @@ new class extends Component
             'user_id' => auth()->id(),
             'subject' => $this->newSubject,
             'description' => $this->newDescription,
+            'category' => $this->newCategory,
             'priority' => $this->newPriority,
         ]);
 
@@ -229,6 +236,7 @@ new class extends Component
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">#</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Subject</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Category</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Priority</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Created</th>
@@ -245,6 +253,11 @@ new class extends Component
                                 <span class="font-medium text-zinc-900 dark:text-white">
                                     {{ Str::limit($ticket->subject, 50) }}
                                 </span>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-4">
+                                <flux:badge color="{{ $ticket->category->color() }}" size="sm">
+                                    {{ $ticket->category->label() }}
+                                </flux:badge>
                             </td>
                             <td class="whitespace-nowrap px-4 py-4">
                                 <div class="flex items-center gap-2">
@@ -305,6 +318,12 @@ new class extends Component
                         rows="6"
                         required
                     />
+
+                    <flux:select wire:model="newCategory" label="Category">
+                        @foreach(TicketCategory::cases() as $category)
+                            <flux:select.option value="{{ $category->value }}">{{ $category->label() }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
 
                     <flux:select wire:model="newPriority" label="Priority">
                         @foreach(TicketPriority::cases() as $priority)
@@ -454,3 +473,4 @@ new class extends Component
         @endif
     </flux:modal>
 </div>
+
