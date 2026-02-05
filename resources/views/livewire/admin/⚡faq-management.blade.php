@@ -97,8 +97,9 @@ new class extends Component
         session()->flash('success', 'FAQ created successfully.');
     }
 
-    public function openEditModal(Faq $faq): void
+    public function openEditModal(int $id): void
     {
+        $faq = Faq::findOrFail($id);
         $this->editingFaqId = $faq->id;
         $this->question = $faq->question;
         $this->answer = $faq->answer;
@@ -137,9 +138,9 @@ new class extends Component
         session()->flash('success', 'FAQ updated successfully.');
     }
 
-    public function confirmDelete(Faq $faq): void
+    public function confirmDelete(int $id): void
     {
-        $this->deletingFaqId = $faq->id;
+        $this->deletingFaqId = $id;
         $this->showDeleteConfirmation = true;
     }
 
@@ -160,8 +161,9 @@ new class extends Component
         session()->flash('success', 'FAQ deleted successfully.');
     }
 
-    public function togglePublished(Faq $faq): void
+    public function togglePublished(int $id): void
     {
+        $faq = Faq::findOrFail($id);
         $faq->update(['is_published' => ! $faq->is_published]);
         unset($this->faqs);
     }
@@ -292,7 +294,8 @@ new class extends Component
 
                     <flux:field>
                         <flux:label>Answer</flux:label>
-                        <flux:textarea wire:model="answer" placeholder="Provide a detailed answer..." rows="5" />
+                        <flux:textarea wire:model="answer" placeholder="Provide a detailed answer..." rows="8" />
+                        <flux:description>Markdown is supported. Use **bold**, *italic*, [links](url), lists, headings, and more.</flux:description>
                         <flux:error name="answer" />
                     </flux:field>
 
@@ -349,7 +352,8 @@ new class extends Component
 
                     <flux:field>
                         <flux:label>Answer</flux:label>
-                        <flux:textarea wire:model="answer" placeholder="Provide a detailed answer..." rows="5" />
+                        <flux:textarea wire:model="answer" placeholder="Provide a detailed answer..." rows="8" />
+                        <flux:description>Markdown is supported. Use **bold**, *italic*, [links](url), lists, headings, and more.</flux:description>
                         <flux:error name="answer" />
                     </flux:field>
 

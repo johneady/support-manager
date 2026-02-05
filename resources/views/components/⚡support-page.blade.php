@@ -96,31 +96,22 @@ new class extends Component
             @if($this->faqs->count() > 0)
                 <div class="space-y-4">
                     @foreach($this->faqs as $faq)
-                        <div
-                            x-data="{ open: false }"
-                            class="bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-xl border border-blue-100 dark:border-zinc-700 overflow-hidden shadow-sm hover:shadow-md hover:shadow-blue-200/50 dark:hover:shadow-blue-900/20 transition-all duration-300"
+                        <a
+                            href="{{ route('faq.show', $faq) }}"
+                            class="block bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-xl border border-blue-100 dark:border-zinc-700 overflow-hidden shadow-sm hover:shadow-md hover:shadow-blue-200/50 dark:hover:shadow-blue-900/20 transition-all duration-300 px-6 py-4 group"
                         >
-                            <button
-                                @click="open = !open"
-                                class="w-full px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-blue-50/50 dark:hover:bg-zinc-700/50 transition-colors"
-                            >
-                                <span class="font-medium text-zinc-900 dark:text-white">{{ $faq->question }}</span>
-                                <flux:icon
-                                    name="chevron-down"
-                                    class="size-5 text-blue-400 transition-transform duration-200"
-                                    ::class="open && 'rotate-180'"
-                                />
-                            </button>
-                            <div
-                                x-show="open"
-                                x-collapse
-                                class="px-6 pb-4"
-                            >
-                                <flux:text class="text-zinc-600 dark:text-zinc-400">
-                                    {!! nl2br(e($faq->answer)) !!}
-                                </flux:text>
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <h3 class="font-medium text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{{ $faq->question }}</h3>
+                                    <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">{{ $faq->summary() }}</p>
+                                    <span class="mt-3 inline-flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+                                        <flux:icon name="clock" class="size-3.5" />
+                                        {{ $faq->readingTime() }} min read
+                                    </span>
+                                </div>
+                                <flux:icon name="chevron-right" class="size-5 text-blue-400 shrink-0 mt-0.5 group-hover:translate-x-0.5 transition-transform" />
                             </div>
-                        </div>
+                        </a>
                     @endforeach
                 </div>
             @else

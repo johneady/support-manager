@@ -9,6 +9,11 @@ Route::get('/', function () {
 })->name('home');
 
 Route::view('faq', 'faq')->name('faq');
+Route::get('faq/{faq}', function (\App\Models\Faq $faq) {
+    abort_unless($faq->is_published, 404);
+
+    return view('faq-show', ['faq' => $faq]);
+})->name('faq.show');
 
 Route::get('dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])

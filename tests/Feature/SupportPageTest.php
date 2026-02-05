@@ -10,7 +10,7 @@ test('support page loads successfully', function () {
     $response->assertSee('Frequently Asked Questions');
 });
 
-test('support page displays published faqs', function () {
+test('support page displays published faqs with links to show page', function () {
     $publishedFaq = Faq::factory()->create([
         'question' => 'Test Published Question',
         'answer' => 'Test Published Answer',
@@ -30,6 +30,7 @@ test('support page displays published faqs', function () {
     $response->assertStatus(200);
     $response->assertSee('Test Published Question');
     $response->assertDontSee('Unpublished Question');
+    $response->assertSee(route('faq.show', $publishedFaq));
 });
 
 test('support page shows empty state when no faqs exist', function () {
