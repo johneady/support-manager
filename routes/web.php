@@ -18,6 +18,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('tickets/create', 'tickets.create')->name('tickets.create');
     Route::view('tickets/queue', 'tickets.admin-queue')->name('tickets.queue');
     Route::view('tickets/{ticket}', 'tickets.show')->name('tickets.show');
+
+    Route::view('admin/users', 'admin.users')->name('admin.users');
+    Route::view('admin/faqs', 'admin.faqs')->name('admin.faqs');
 });
 
 require __DIR__.'/settings.php';

@@ -22,6 +22,12 @@
                         <flux:sidebar.item icon="inbox-stack" :href="route('tickets.queue')" :current="request()->routeIs('tickets.queue')" wire:navigate class="text-zinc-900 dark:text-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-800 hover:bg-white/20 font-medium">
                             {{ __('Ticket Queue') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="users" :href="route('admin.users')" :current="request()->routeIs('admin.users')" wire:navigate class="text-zinc-900 dark:text-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-800 hover:bg-white/20 font-medium">
+                            {{ __('Users') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="clipboard-document-list" :href="route('admin.faqs')" :current="request()->routeIs('admin.faqs')" wire:navigate class="text-zinc-900 dark:text-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-800 hover:bg-white/20 font-medium">
+                            {{ __('FAQ Management') }}
+                        </flux:sidebar.item>
                     @endif
                 </flux:sidebar.group>
                 <flux:sidebar.group :heading="__('Help')" class="grid">
