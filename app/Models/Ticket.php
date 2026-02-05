@@ -102,6 +102,13 @@ class Ticket extends Model
      */
     public function needsResponse(): bool
     {
+        // Use eager-loaded replies if available, otherwise query the database
+        if ($this->relationLoaded('replies')) {
+            $replies = $this->replies;
+
+            return $replies->isEmpty() || ! $replies->first()?->is_from_admin;
+        }
+
         $lastReply = $this->replies()->latest()->first();
 
         return $lastReply === null || ! $lastReply->is_from_admin;

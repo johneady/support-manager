@@ -19,7 +19,9 @@
         "spatie/laravel-login-link": "^1.6"
     },
     "require-dev": {
+        "beyondcode/laravel-query-detector": "^2.2",
         "fakerphp/faker": "^1.23",
+        "fruitcake/laravel-debugbar": "^4.0",
         "laravel/boost": "^2.0",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",

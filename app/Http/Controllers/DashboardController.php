@@ -27,7 +27,7 @@ class DashboardController extends Controller
 
             // Get 3 most recent tickets (descending by creation datetime)
             $recentTickets = Ticket::query()
-                ->with('user')
+                ->with(['user', 'replies' => fn ($query) => $query->latest()->limit(1)])
                 ->latest('created_at')
                 ->limit(3)
                 ->get();
