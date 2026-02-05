@@ -1,11 +1,7 @@
 ### Todo
 
-* fix the mobile version. menu disappears
+* 
 
-achyutn/filament-log-viewer
-spatie/laravel-login-link
-croustibat/filament-jobs-monitor
-shuvroroy/filament-spatie-laravel-health
 spatie/laravel-honeypot
 beyondcode/laravel-query-detector
 

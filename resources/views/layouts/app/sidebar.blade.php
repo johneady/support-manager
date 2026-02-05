@@ -4,7 +4,7 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-blue-200/50 bg-gradient-to-b from-blue-400/50 via-sky-400/50 to-cyan-400/50 dark:border-blue-700/50 dark:from-blue-600/50 dark:via-sky-600/50 dark:to-cyan-600/50 shadow-md shadow-blue-500/15">
+        <flux:sidebar sticky collapsible="mobile" class="border-e border-blue-200/50 bg-linear-to-b from-blue-400 via-sky-400 to-cyan-400 lg:from-blue-400/50 lg:via-sky-400/50 lg:to-cyan-400/50 dark:border-blue-700/50 dark:from-blue-600 dark:via-sky-600 dark:to-cyan-600 dark:lg:from-blue-600/50 dark:lg:via-sky-600/50 dark:lg:to-cyan-600/50 shadow-md shadow-blue-500/15">
             <flux:sidebar.header>
                 <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
                 <flux:sidebar.collapse class="lg:hidden text-white hover:text-white/90" />
@@ -45,6 +45,17 @@
                 @csrf
             </form>
         </flux:sidebar>
+
+        <!-- Mobile Header with Toggle -->
+        <flux:header class="lg:hidden! border-b border-blue-200/50 bg-linear-to-r from-blue-400/50 via-sky-400/50 to-cyan-400/50 dark:border-blue-700/50 dark:from-blue-600/50 dark:via-sky-600/50 dark:to-cyan-600/50 shadow-sm shadow-blue-500/15">
+            <flux:sidebar.toggle class="lg:hidden text-zinc-900 dark:text-zinc-800 hover:bg-white/20" icon="bars-2" inset="left" />
+
+            <flux:spacer />
+
+            <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
+
+            <flux:spacer />
+        </flux:header>
 
         {{ $slot }}
 
