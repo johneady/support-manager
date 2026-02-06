@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Health\Checks\Checks\CacheCheck;
@@ -32,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->registerHealthChecks();
+        $this->configureRateLimiters();
     }
 
     protected function configureDefaults(): void
@@ -66,5 +70,15 @@ class AppServiceProvider extends ServiceProvider
             QueueCheck::new(),
             ScheduleCheck::new(),
         ]);
+    }
+
+    /**
+     * Configure rate limiters.
+     */
+    protected function configureRateLimiters(): void
+    {
+        RateLimiter::for('invitation', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
     }
 }

@@ -15,6 +15,10 @@ Route::get('faq/{faq}', function (\App\Models\Faq $faq) {
     return view('faq-show', ['faq' => $faq]);
 })->name('faq.show');
 
+Route::get('invitation/{token}', \App\Livewire\Auth\AcceptInvitation::class)
+    ->middleware('throttle:invitation')
+    ->name('invitation.accept');
+
 Route::get('dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');

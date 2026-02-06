@@ -1,9 +1,13 @@
 <?php
 
 use App\Models\User;
+use App\Notifications\UserInvitation;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    Notification::fake();
+
     $this->admin = User::factory()->create(['is_admin' => true]);
     $this->user = User::factory()->create(['is_admin' => false]);
 });
@@ -75,7 +79,6 @@ describe('user creation', function () {
             ->call('openCreateModal')
             ->set('name', 'New User')
             ->set('email', 'newuser@example.com')
-            ->set('password', 'password123')
             ->set('isAdmin', false)
             ->call('createUser')
             ->assertHasNoErrors()
@@ -84,8 +87,11 @@ describe('user creation', function () {
         $this->assertDatabaseHas('users', [
             'name' => 'New User',
             'email' => 'newuser@example.com',
+            'password' => null,
             'is_admin' => false,
         ]);
+
+        Notification::assertSentTo(User::where('email', 'newuser@example.com')->first(), UserInvitation::class);
     });
 
     it('creates an admin user', function () {
@@ -94,7 +100,6 @@ describe('user creation', function () {
             ->call('openCreateModal')
             ->set('name', 'New Admin')
             ->set('email', 'newadmin@example.com')
-            ->set('password', 'password123')
             ->set('isAdmin', true)
             ->call('createUser')
             ->assertHasNoErrors();
@@ -102,8 +107,11 @@ describe('user creation', function () {
         $this->assertDatabaseHas('users', [
             'name' => 'New Admin',
             'email' => 'newadmin@example.com',
+            'password' => null,
             'is_admin' => true,
         ]);
+
+        Notification::assertSentTo(User::where('email', 'newadmin@example.com')->first(), UserInvitation::class);
     });
 
     it('validates required fields', function () {
@@ -112,9 +120,8 @@ describe('user creation', function () {
             ->call('openCreateModal')
             ->set('name', '')
             ->set('email', '')
-            ->set('password', '')
             ->call('createUser')
-            ->assertHasErrors(['name', 'email', 'password']);
+            ->assertHasErrors(['name', 'email']);
     });
 
     it('validates email format', function () {
@@ -123,7 +130,6 @@ describe('user creation', function () {
             ->call('openCreateModal')
             ->set('name', 'Test')
             ->set('email', 'invalid-email')
-            ->set('password', 'password123')
             ->call('createUser')
             ->assertHasErrors(['email']);
     });
@@ -136,20 +142,8 @@ describe('user creation', function () {
             ->call('openCreateModal')
             ->set('name', 'Test')
             ->set('email', 'existing@example.com')
-            ->set('password', 'password123')
             ->call('createUser')
             ->assertHasErrors(['email']);
-    });
-
-    it('validates password length', function () {
-        Livewire::actingAs($this->admin)
-            ->test('admin.user-management')
-            ->call('openCreateModal')
-            ->set('name', 'Test')
-            ->set('email', 'test@example.com')
-            ->set('password', 'short')
-            ->call('createUser')
-            ->assertHasErrors(['password']);
     });
 });
 
@@ -208,7 +202,7 @@ describe('user editing', function () {
             ->test('admin.user-management')
             ->call('openEditModal', $userToEdit->id)
             ->set('name', 'Updated Name')
-            ->set('password', '')
+            ->set('email', 'updated@example.com')
             ->call('updateUser')
             ->assertHasNoErrors();
 

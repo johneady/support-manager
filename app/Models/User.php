@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
+use App\Notifications\UserInvitation;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -27,6 +28,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'is_admin',
+        'invitation_token',
+        'invitation_created_at',
+        'invitation_accepted_at',
     ];
 
     /**
@@ -52,6 +56,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'invitation_created_at' => 'datetime',
+            'invitation_accepted_at' => 'datetime',
         ];
     }
 
@@ -88,5 +94,101 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new QueuedResetPassword($token));
+    }
+
+    /**
+     * Generate a secure invitation token.
+     */
+    public function generateInvitationToken(): string
+    {
+        $this->invitation_token = Str::random(60);
+        $this->invitation_created_at = now();
+        $this->invitation_accepted_at = null;
+        $this->save();
+
+        return $this->invitation_token;
+    }
+
+    /**
+     * Send the invitation notification.
+     */
+    public function sendInvitationNotification(string $inviterName): void
+    {
+        $token = $this->generateInvitationToken();
+        $this->notify(new UserInvitation($token, $inviterName));
+    }
+
+    /**
+     * Resend the invitation with a new token.
+     */
+    public function resendInvitation(string $inviterName): void
+    {
+        $this->sendInvitationNotification($inviterName);
+    }
+
+    /**
+     * Accept the invitation by setting the password.
+     */
+    public function acceptInvitation(string $token, string $password): bool
+    {
+        if (! $this->isInvitationValid($token)) {
+            return false;
+        }
+
+        $this->password = $password;
+        $this->invitation_token = null;
+        $this->invitation_accepted_at = now();
+        $this->save();
+
+        return true;
+    }
+
+    /**
+     * Check if the invitation token is valid and not expired.
+     */
+    public function isInvitationValid(string $token): bool
+    {
+        if ($this->invitation_token !== $token) {
+            return false;
+        }
+
+        if ($this->invitation_accepted_at !== null) {
+            return false;
+        }
+
+        if ($this->invitation_created_at === null) {
+            return false;
+        }
+
+        $expiryDays = config('fortify.invitation_token_expiration_days', 7);
+        $expiryDate = $this->invitation_created_at->addDays($expiryDays);
+
+        return now()->lt($expiryDate);
+    }
+
+    /**
+     * Check if the user has a pending invitation.
+     */
+    public function hasPendingInvitation(): bool
+    {
+        return $this->invitation_token !== null && $this->invitation_accepted_at === null;
+    }
+
+    /**
+     * Get the invitation status.
+     *
+     * @return 'pending'|'accepted'|null
+     */
+    public function getInvitationStatus(): ?string
+    {
+        if ($this->invitation_accepted_at === null && $this->invitation_token === null) {
+            return null;
+        }
+
+        if ($this->invitation_token === null) {
+            return 'accepted';
+        }
+
+        return 'pending';
     }
 }

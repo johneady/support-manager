@@ -37,9 +37,6 @@ new class extends Component
     #[Validate('required|email|max:255')]
     public string $email = '';
 
-    #[Validate('nullable|string|min:8')]
-    public string $password = '';
-
     public bool $isAdmin = false;
 
     public function mount(): void
@@ -68,7 +65,7 @@ new class extends Component
 
     public function openCreateModal(): void
     {
-        $this->reset(['name', 'email', 'password', 'isAdmin', 'modalMessage', 'modalMessageType']);
+        $this->reset(['name', 'email', 'isAdmin', 'modalMessage', 'modalMessageType']);
         $this->resetValidation();
         $this->showCreateModal = true;
     }
@@ -76,7 +73,7 @@ new class extends Component
     public function closeCreateModal(): void
     {
         $this->showCreateModal = false;
-        $this->reset(['name', 'email', 'password', 'isAdmin', 'modalMessage', 'modalMessageType']);
+        $this->reset(['name', 'email', 'isAdmin', 'modalMessage', 'modalMessageType']);
         $this->resetValidation();
     }
 
@@ -85,20 +82,21 @@ new class extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $this->name,
             'email' => $this->email,
-            'password' => Hash::make($this->password),
+            'password' => null,
             'is_admin' => $this->isAdmin,
         ]);
+
+        $user->sendInvitationNotification(auth()->user()->name);
 
         unset($this->users);
 
         $this->closeCreateModal();
-        session()->flash('success', 'User created successfully.');
+        session()->flash('success', 'User created successfully. An invitation email has been sent.');
     }
 
     public function openEditModal(User $user): void
@@ -106,7 +104,6 @@ new class extends Component
         $this->editingUserId = $user->id;
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->password = '';
         $this->isAdmin = $user->is_admin;
         $this->modalMessage = '';
         $this->modalMessageType = '';
@@ -118,7 +115,7 @@ new class extends Component
     {
         $this->showEditModal = false;
         $this->editingUserId = null;
-        $this->reset(['name', 'email', 'password', 'isAdmin', 'modalMessage', 'modalMessageType']);
+        $this->reset(['name', 'email', 'isAdmin', 'modalMessage', 'modalMessageType']);
         $this->resetValidation();
     }
 
@@ -184,6 +181,19 @@ new class extends Component
         $this->cancelDelete();
         session()->flash('success', 'User deleted successfully.');
     }
+
+    public function resendInvitation(User $user): void
+    {
+        if (! $user->hasPendingInvitation()) {
+            session()->flash('error', 'This user does not have a pending invitation.');
+
+            return;
+        }
+
+        $user->resendInvitation(auth()->user()->name);
+
+        session()->flash('success', 'Invitation email has been resent successfully.');
+    }
 };
 ?>
 
@@ -191,6 +201,12 @@ new class extends Component
     @if(session('success'))
         <flux:callout variant="success" icon="check-circle" dismissible>
             {{ session('success') }}
+        </flux:callout>
+    @endif
+
+    @if(session('error'))
+        <flux:callout variant="danger" icon="exclamation-circle" dismissible>
+            {{ session('error') }}
         </flux:callout>
     @endif
 
@@ -248,6 +264,7 @@ new class extends Component
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Name</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Email</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Role</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Created</th>
                         <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
                     </tr>
@@ -268,11 +285,21 @@ new class extends Component
                                     <flux:badge color="zinc" size="sm">User</flux:badge>
                                 @endif
                             </td>
+                            <td class="whitespace-nowrap px-4 py-4">
+                                @if($user->getInvitationStatus() === 'pending')
+                                    <flux:badge color="amber" size="sm">Pending</flux:badge>
+                                @elseif($user->getInvitationStatus() === 'accepted')
+                                    <flux:badge color="emerald" size="sm">Accepted</flux:badge>
+                                @endif
+                            </td>
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                                 {{ $user->created_at->format('M j, Y') }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-4 text-right text-sm" wire:click.stop>
                                 <div class="flex items-center justify-end gap-2">
+                                    @if($user->hasPendingInvitation())
+                                        <flux:button variant="ghost" size="sm" icon="paper-airplane" wire:click="resendInvitation({{ $user->id }})" class="text-blue-600 hover:text-blue-700" />
+                                    @endif
                                     <flux:button variant="ghost" size="sm" icon="pencil" wire:click="openEditModal({{ $user->id }})" />
                                     <flux:button variant="ghost" size="sm" icon="trash" wire:click="confirmDelete({{ $user->id }})" class="text-red-600 hover:text-red-700" />
                                 </div>
@@ -310,12 +337,6 @@ new class extends Component
                         <flux:label>Email</flux:label>
                         <flux:input type="email" wire:model="email" placeholder="email@example.com" />
                         <flux:error name="email" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Password</flux:label>
-                        <flux:input type="password" wire:model="password" placeholder="Minimum 8 characters" />
-                        <flux:error name="password" />
                     </flux:field>
 
                     <flux:field>

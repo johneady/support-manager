@@ -117,7 +117,21 @@ return [
     'limiters' => [
         'login' => 'login',
         'two-factor' => 'two-factor',
+        'invitation' => 'invitation',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Invitation Token Expiration
+    |--------------------------------------------------------------------------
+    |
+    | This value defines how many days an invitation token is valid.
+    | After this period, the token will expire and the user will need
+    | to be re-invited.
+    |
+    */
+
+    'invitation_token_expiration_days' => 7,
 
     /*
     |--------------------------------------------------------------------------
