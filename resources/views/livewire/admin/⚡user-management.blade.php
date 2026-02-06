@@ -96,6 +96,9 @@ new class extends Component
             'is_admin' => $this->isAdmin,
         ]);
 
+        $user->email_verified_at = now();
+        $user->save();
+
         $user->sendInvitationNotification(auth()->user()->name);
 
         unset($this->users);

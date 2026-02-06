@@ -145,6 +145,23 @@ describe('user creation', function () {
             ->call('createUser')
             ->assertHasErrors(['email']);
     });
+
+    it('creates user with email_verified_at set', function () {
+        Livewire::actingAs($this->admin)
+            ->test('admin.user-management')
+            ->call('openCreateModal')
+            ->set('name', 'Invited User')
+            ->set('email', 'invited@example.com')
+            ->set('isAdmin', false)
+            ->call('createUser')
+            ->assertHasNoErrors();
+
+        $user = User::where('email', 'invited@example.com')->first();
+
+        expect($user->email_verified_at)->not->toBeNull();
+
+        Notification::assertSentTo($user, UserInvitation::class);
+    });
 });
 
 describe('user editing', function () {
