@@ -11,6 +11,8 @@ use Livewire\Component;
 
 class AcceptInvitation extends Component
 {
+    protected $layout = 'layouts.auth';
+
     #[Locked]
     public string $token = '';
 
@@ -26,6 +28,13 @@ class AcceptInvitation extends Component
 
     public function mount(string $token): void
     {
+        // Ensure user is logged out before accepting invitation
+        if (Auth::check()) {
+            Auth::logout();
+            session()->invalidate();
+            session()->regenerateToken();
+        }
+
         $this->token = $token;
 
         $this->user = User::where('invitation_token', $token)->first();
