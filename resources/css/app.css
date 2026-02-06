@@ -81,3 +81,86 @@ select:focus[data-flux-control] {
 [data-flux-sidebar] [data-flux-sidebar-group] > div:first-child > div {
     @apply text-zinc-600 font-semibold uppercase tracking-wide text-xs dark:text-zinc-400;
 }
+
+/* Typography styles for markdown content */
+@layer components {
+    .prose {
+        @apply text-zinc-700 dark:text-zinc-300 leading-relaxed;
+
+        h1, h2, h3, h4, h5, h6 {
+            @apply font-semibold text-zinc-900 dark:text-white mt-6 mb-3;
+        }
+
+        h1 { @apply text-2xl; }
+        h2 { @apply text-xl; }
+        h3 { @apply text-lg; }
+
+        p {
+            @apply my-3;
+        }
+
+        a {
+            @apply text-blue-600 dark:text-blue-400 underline hover:text-blue-700 dark:hover:text-blue-300;
+        }
+
+        strong {
+            @apply font-semibold text-zinc-900 dark:text-white;
+        }
+
+        em {
+            @apply italic;
+        }
+
+        ul, ol {
+            @apply my-3 ml-6 list-disc;
+        }
+
+        ol {
+            @apply list-decimal;
+        }
+
+        li {
+            @apply my-1;
+        }
+
+        ul ul, ol ul, ul ol, ol ol {
+            @apply my-1 ml-4;
+        }
+
+        code {
+            @apply px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-pink-600 dark:text-pink-400 font-mono text-sm;
+        }
+
+        pre {
+            @apply my-4 p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-x-auto;
+        }
+
+        pre code {
+            @apply p-0 bg-transparent text-zinc-900 dark:text-zinc-100;
+        }
+
+        blockquote {
+            @apply my-4 pl-4 border-l-4 border-blue-500 italic text-zinc-600 dark:text-zinc-400;
+        }
+
+        hr {
+            @apply my-6 border-t border-zinc-200 dark:border-zinc-700;
+        }
+
+        table {
+            @apply my-4 w-full border-collapse;
+        }
+
+        th, td {
+            @apply px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left;
+        }
+
+        th {
+            @apply font-semibold text-zinc-900 dark:text-white bg-zinc-100 dark:bg-zinc-800;
+        }
+
+        img {
+            @apply my-4 rounded-lg;
+        }
+    }
+}
