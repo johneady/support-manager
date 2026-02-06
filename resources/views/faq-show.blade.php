@@ -56,7 +56,7 @@
             {{-- Article --}}
             <article class="py-8 pb-16">
                 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="max-w-3xl">
+                    <div>
                         <div class="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400 mb-4">
                             <span class="inline-flex items-center gap-1">
                                 <flux:icon name="clock" class="size-4" />
@@ -69,7 +69,7 @@
                         </flux:heading>
                     </div>
 
-                    <div class="mt-8 max-w-3xl">
+                    <div class="mt-8">
                         <div class="rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-blue-100 dark:border-zinc-700 px-6 sm:px-8 py-6">
                             <div class="prose dark:prose-invert prose-blue max-w-none prose-headings:font-semibold prose-a:text-blue-600 dark:prose-a:text-blue-400">
                                 {!! $faq->renderedAnswer() !!}
@@ -78,7 +78,7 @@
                     </div>
 
                     {{-- Back link --}}
-                    <div class="mt-8 max-w-3xl">
+                    <div class="mt-8">
                         <flux:button href="{{ route('faq') }}" variant="ghost" icon="arrow-left" class="text-blue-600! dark:text-blue-400!">
                             Back to all FAQs
                         </flux:button>
