@@ -82,9 +82,22 @@ select:focus[data-flux-control] {
     @apply text-zinc-600 font-semibold uppercase tracking-wide text-xs dark:text-zinc-400;
 }
 
+/* TipTap editor styles */
+@layer components {
+    .markdown-editor-content .tiptap {
+        @apply min-h-[200px] px-4 py-3 focus:outline-none;
+    }
+
+    .markdown-editor-content .tiptap p.is-editor-empty:first-child::before {
+        @apply text-zinc-400 dark:text-zinc-500 float-left h-0 pointer-events-none;
+        content: attr(data-placeholder);
+    }
+}
+
 /* Typography styles for markdown content */
 @layer components {
-    .prose {
+    .prose,
+    .markdown-editor-content .tiptap {
         @apply text-zinc-700 dark:text-zinc-300 leading-relaxed;
 
         h1, h2, h3, h4, h5, h6 {

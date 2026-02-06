@@ -4,7 +4,6 @@ use App\Models\Faq;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,32 +13,10 @@ new class extends Component
 
     public string $search = '';
 
-    public bool $showCreateModal = false;
-
-    public bool $showEditModal = false;
-
     public bool $showDeleteConfirmation = false;
-
-    public string $modalMessage = '';
-
-    public string $modalMessageType = '';
-
-    #[Locked]
-    public ?int $editingFaqId = null;
 
     #[Locked]
     public ?int $deletingFaqId = null;
-
-    #[Validate('required|string|max:500')]
-    public string $question = '';
-
-    #[Validate('required|string')]
-    public string $answer = '';
-
-    public bool $isPublished = false;
-
-    #[Validate('integer|min:0')]
-    public int $sortOrder = 0;
 
     public function mount(): void
     {
@@ -63,79 +40,6 @@ new class extends Component
             })
             ->ordered()
             ->paginate(10);
-    }
-
-    public function openCreateModal(): void
-    {
-        $this->reset(['question', 'answer', 'isPublished', 'sortOrder', 'modalMessage', 'modalMessageType']);
-        $this->sortOrder = Faq::query()->max('sort_order') + 1;
-        $this->resetValidation();
-        $this->showCreateModal = true;
-    }
-
-    public function closeCreateModal(): void
-    {
-        $this->showCreateModal = false;
-        $this->reset(['question', 'answer', 'isPublished', 'sortOrder', 'modalMessage', 'modalMessageType']);
-        $this->resetValidation();
-    }
-
-    public function createFaq(): void
-    {
-        $this->validate();
-
-        Faq::create([
-            'question' => $this->question,
-            'answer' => $this->answer,
-            'is_published' => $this->isPublished,
-            'sort_order' => $this->sortOrder,
-        ]);
-
-        unset($this->faqs);
-
-        $this->closeCreateModal();
-        session()->flash('success', 'FAQ created successfully.');
-    }
-
-    public function openEditModal(int $id): void
-    {
-        $faq = Faq::findOrFail($id);
-        $this->editingFaqId = $faq->id;
-        $this->question = $faq->question;
-        $this->answer = $faq->answer;
-        $this->isPublished = $faq->is_published;
-        $this->sortOrder = $faq->sort_order;
-        $this->modalMessage = '';
-        $this->modalMessageType = '';
-        $this->resetValidation();
-        $this->showEditModal = true;
-    }
-
-    public function closeEditModal(): void
-    {
-        $this->showEditModal = false;
-        $this->editingFaqId = null;
-        $this->reset(['question', 'answer', 'isPublished', 'sortOrder', 'modalMessage', 'modalMessageType']);
-        $this->resetValidation();
-    }
-
-    public function updateFaq(): void
-    {
-        $this->validate();
-
-        $faq = Faq::findOrFail($this->editingFaqId);
-
-        $faq->update([
-            'question' => $this->question,
-            'answer' => $this->answer,
-            'is_published' => $this->isPublished,
-            'sort_order' => $this->sortOrder,
-        ]);
-
-        unset($this->faqs);
-
-        $this->closeEditModal();
-        session()->flash('success', 'FAQ updated successfully.');
     }
 
     public function confirmDelete(int $id): void
@@ -189,10 +93,10 @@ new class extends Component
                     <flux:text class="text-blue-100">Manage frequently asked questions</flux:text>
                 </div>
             </div>
-            <button wire:click="openCreateModal" class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">
+            <a href="{{ route('admin.faqs.create') }}" wire:navigate class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">
                 <flux:icon.plus class="size-4" />
                 Create FAQ
-            </button>
+            </a>
         </div>
     </div>
 
@@ -236,7 +140,7 @@ new class extends Component
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
                     @foreach($this->faqs as $faq)
-                        <tr wire:key="faq-{{ $faq->id }}" wire:click="openEditModal({{ $faq->id }})" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                        <tr wire:key="faq-{{ $faq->id }}" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50" onclick="window.location='{{ route('admin.faqs.edit', $faq->id) }}'">
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                                 {{ $faq->sort_order }}
                             </td>
@@ -248,7 +152,7 @@ new class extends Component
                                     {{ Str::limit($faq->answer, 100) }}
                                 </div>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4" wire:click.stop>
+                            <td class="whitespace-nowrap px-4 py-4" onclick="event.stopPropagation()">
                                 <button wire:click="togglePublished({{ $faq->id }})" class="cursor-pointer">
                                     @if($faq->is_published)
                                         <flux:badge color="green" size="sm">Published</flux:badge>
@@ -257,9 +161,9 @@ new class extends Component
                                     @endif
                                 </button>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm" wire:click.stop>
+                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm" onclick="event.stopPropagation()">
                                 <div class="flex items-center justify-end gap-2">
-                                    <flux:button variant="ghost" size="sm" icon="pencil" wire:click="openEditModal({{ $faq->id }})" />
+                                    <flux:button href="{{ route('admin.faqs.edit', $faq->id) }}" wire:navigate variant="ghost" size="sm" icon="pencil" />
                                     <flux:button variant="ghost" size="sm" icon="trash" wire:click="confirmDelete({{ $faq->id }})" class="text-red-600 hover:text-red-700" />
                                 </div>
                             </td>
@@ -273,116 +177,6 @@ new class extends Component
             {{ $this->faqs->links() }}
         </div>
     @endif
-
-    {{-- Create FAQ Modal --}}
-    <flux:modal wire:model.self="showCreateModal" class="w-[50vw]! max-w-[50vw]! max-h-[90vh] overflow-y-auto">
-        <div class="space-y-6">
-            <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
-                <div class="flex items-center gap-3">
-                    <flux:icon.question-mark-circle class="size-6 text-blue-600 dark:text-blue-400" />
-                    <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Create FAQ</flux:heading>
-                </div>
-            </div>
-
-            <form wire:submit="createFaq" class="space-y-4">
-                <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800 space-y-4">
-                    <flux:field>
-                        <flux:label>Question</flux:label>
-                        <flux:input wire:model="question" placeholder="What is the frequently asked question?" />
-                        <flux:error name="question" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Answer</flux:label>
-                        <flux:textarea wire:model="answer" placeholder="Provide a detailed answer..." rows="8" />
-                        <flux:description>Markdown is supported. Use **bold**, *italic*, [links](url), lists, headings, and more.</flux:description>
-                        <flux:error name="answer" />
-                    </flux:field>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <flux:field>
-                            <flux:label>Sort Order</flux:label>
-                            <flux:input type="number" wire:model="sortOrder" min="0" />
-                            <flux:error name="sortOrder" />
-                            <flux:text size="sm" class="text-zinc-500">Lower numbers appear first.</flux:text>
-                        </flux:field>
-
-                        <flux:field class="flex items-center pt-6">
-                            <flux:checkbox wire:model="isPublished" label="Published" />
-                            <flux:text size="sm" class="text-zinc-500 ml-2">Make visible on the public FAQ page.</flux:text>
-                        </flux:field>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-                    <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
-                        Create FAQ
-                    </flux:button>
-                    <flux:button type="button" wire:click="closeCreateModal" variant="ghost">
-                        Cancel
-                    </flux:button>
-                </div>
-            </form>
-        </div>
-    </flux:modal>
-
-    {{-- Edit FAQ Modal --}}
-    <flux:modal wire:model.self="showEditModal" class="w-[50vw]! max-w-[50vw]! max-h-[90vh] overflow-y-auto">
-        <div class="space-y-6">
-            <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
-                <div class="flex items-center gap-3">
-                    <flux:icon.question-mark-circle class="size-6 text-blue-600 dark:text-blue-400" />
-                    <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Edit FAQ</flux:heading>
-                </div>
-            </div>
-
-            @if($modalMessage)
-                <flux:callout variant="{{ $modalMessageType }}" icon="{{ $modalMessageType === 'success' ? 'check-circle' : 'exclamation-circle' }}" dismissible>
-                    {{ $modalMessage }}
-                </flux:callout>
-            @endif
-
-            <form wire:submit="updateFaq" class="space-y-4">
-                <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800 space-y-4">
-                    <flux:field>
-                        <flux:label>Question</flux:label>
-                        <flux:input wire:model="question" placeholder="What is the frequently asked question?" />
-                        <flux:error name="question" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Answer</flux:label>
-                        <flux:textarea wire:model="answer" placeholder="Provide a detailed answer..." rows="8" />
-                        <flux:description>Markdown is supported. Use **bold**, *italic*, [links](url), lists, headings, and more.</flux:description>
-                        <flux:error name="answer" />
-                    </flux:field>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <flux:field>
-                            <flux:label>Sort Order</flux:label>
-                            <flux:input type="number" wire:model="sortOrder" min="0" />
-                            <flux:error name="sortOrder" />
-                            <flux:text size="sm" class="text-zinc-500">Lower numbers appear first.</flux:text>
-                        </flux:field>
-
-                        <flux:field class="flex items-center pt-6">
-                            <flux:checkbox wire:model="isPublished" label="Published" />
-                            <flux:text size="sm" class="text-zinc-500 ml-2">Make visible on the public FAQ page.</flux:text>
-                        </flux:field>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-                    <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
-                        Update FAQ
-                    </flux:button>
-                    <flux:button type="button" wire:click="closeEditModal" variant="ghost">
-                        Cancel
-                    </flux:button>
-                </div>
-            </form>
-        </div>
-    </flux:modal>
 
     {{-- Delete Confirmation Modal --}}
     <flux:modal wire:model.self="showDeleteConfirmation" class="w-[30vw]! max-w-[30vw]!">
