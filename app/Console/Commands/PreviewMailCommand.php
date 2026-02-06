@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\NewTicketNotification;
 use App\Notifications\TicketAutoClosedNotification;
 use App\Notifications\TicketReplyNotification;
+use App\Notifications\UserInvitation;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Console\Command;
@@ -48,6 +49,7 @@ class PreviewMailCommand extends Command
         'ticket-reply-to-customer' => 'Reply notification to customer (TicketReplyNotification)',
         'ticket-reply-to-admin' => '[Admin] Customer reply notification (TicketReplyNotification)',
         'ticket-auto-closed' => 'Ticket auto-closed notification (TicketAutoClosedNotification)',
+        'user-invitation' => 'User invitation email (UserInvitation)',
     ];
 
     /**
@@ -127,6 +129,7 @@ class PreviewMailCommand extends Command
             'ticket-reply-to-customer' => $this->sendTicketReplyToCustomerNotification($toEmail),
             'ticket-reply-to-admin' => $this->sendTicketReplyToAdminNotification($toEmail),
             'ticket-auto-closed' => $this->sendTicketAutoClosedNotification($toEmail),
+            'user-invitation' => $this->sendUserInvitationNotification($toEmail),
         };
 
         $this->info("  Sent: {$this->emailTypes[$type]}");
@@ -256,5 +259,14 @@ class PreviewMailCommand extends Command
         $ticket->setRelation('user', $customer);
 
         $customer->notifyNow(new TicketAutoClosedNotification($ticket));
+    }
+
+    protected function sendUserInvitationNotification(string $toEmail): void
+    {
+        $user = $this->createTestUser($toEmail);
+        $token = 'test-invitation-token-'.str()->random(32);
+        $inviterName = 'Support Admin';
+
+        $user->notifyNow(new UserInvitation($token, $inviterName));
     }
 }
