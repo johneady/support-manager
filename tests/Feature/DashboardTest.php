@@ -34,7 +34,7 @@ test('admin users see admin-specific stats', function () {
         ->assertSee('Open Tickets')
         ->assertSee('Needs Response')
         ->assertSee('Recently Resolved')
-        ->assertSee('Recent Tickets');
+        ->assertSee('Tickets Requiring a Response');
 });
 
 test('admin users see recent tickets table instead of quick actions', function () {
@@ -47,7 +47,7 @@ test('admin users see recent tickets table instead of quick actions', function (
 
     $response = $this->get(route('dashboard'));
     $response->assertOk()
-        ->assertSee('Recent Tickets')
+        ->assertSee('Tickets Requiring a Response')
         ->assertDontSee('Quick Actions');
 });
 
@@ -69,5 +69,5 @@ test('non-admin users see original stats and quick actions', function () {
         ->assertSee('In Progress')
         ->assertSee('Resolved')
         ->assertSee('Quick Actions')
-        ->assertDontSee('Recent Tickets');
+        ->assertDontSee('Tickets Requiring a Response');
 });

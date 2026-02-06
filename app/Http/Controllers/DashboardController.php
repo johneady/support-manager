@@ -25,10 +25,12 @@ class DashboardController extends Controller
                 ->where('closed_at', '>=', now()->subDays(7))
                 ->count();
 
-            // Get 3 most recent tickets (descending by creation datetime)
+            // Get top 3 tickets needing a response, ordered by priority descending
             $recentTickets = Ticket::query()
+                ->open()
+                ->needsResponse()
                 ->with(['user', 'replies' => fn ($query) => $query->latest()->limit(1)])
-                ->latest('created_at')
+                ->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 END")
                 ->limit(3)
                 ->get();
 
