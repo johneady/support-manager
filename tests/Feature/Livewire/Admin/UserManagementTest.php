@@ -237,6 +237,30 @@ describe('user editing', function () {
             ->call('updateUser')
             ->assertHasNoErrors();
     });
+
+    it('cannot change own admin status', function () {
+        Livewire::actingAs($this->admin)
+            ->test('admin.user-management')
+            ->call('openEditModal', $this->admin->id)
+            ->set('isAdmin', false)
+            ->call('updateUser')
+            ->assertHasNoErrors();
+
+        expect($this->admin->fresh()->is_admin)->toBeTrue();
+    });
+
+    it('can change other user admin status', function () {
+        $otherUser = User::factory()->create(['is_admin' => false]);
+
+        Livewire::actingAs($this->admin)
+            ->test('admin.user-management')
+            ->call('openEditModal', $otherUser->id)
+            ->set('isAdmin', true)
+            ->call('updateUser')
+            ->assertHasNoErrors();
+
+        expect($otherUser->fresh()->is_admin)->toBeTrue();
+    });
 });
 
 describe('user deletion', function () {

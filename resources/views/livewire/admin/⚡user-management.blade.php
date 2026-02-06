@@ -122,6 +122,11 @@ new class extends Component
         $this->resetValidation();
     }
 
+    public function isEditingSelf(): bool
+    {
+        return $this->editingUserId === auth()->id();
+    }
+
     public function updateUser(): void
     {
         $this->validate([
@@ -131,11 +136,16 @@ new class extends Component
 
         $user = User::findOrFail($this->editingUserId);
 
-        $user->update([
+        $data = [
             'name' => $this->name,
             'email' => $this->email,
-            'is_admin' => $this->isAdmin,
-        ]);
+        ];
+
+        if (! $this->isEditingSelf()) {
+            $data['is_admin'] = $this->isAdmin;
+        }
+
+        $user->update($data);
 
         unset($this->users);
 
@@ -357,8 +367,12 @@ new class extends Component
                     </flux:field>
 
                     <flux:field>
-                        <flux:checkbox wire:model="isAdmin" label="Administrator" />
-                        <flux:text size="sm" class="text-zinc-500">Administrators can manage users, FAQs, and view all tickets.</flux:text>
+                        <flux:checkbox wire:model="isAdmin" label="Administrator" :disabled="$this->isEditingSelf()" />
+                        @if($this->isEditingSelf())
+                            <flux:text size="sm" class="text-amber-600 dark:text-amber-400">You cannot change your own administrator status.</flux:text>
+                        @else
+                            <flux:text size="sm" class="text-zinc-500">Administrators can manage users, FAQs, and view all tickets.</flux:text>
+                        @endif
                     </flux:field>
                 </div>
 
