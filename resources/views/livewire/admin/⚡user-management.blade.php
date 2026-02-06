@@ -21,6 +21,8 @@ new class extends Component
 
     public bool $showDeleteConfirmation = false;
 
+    public bool $showResendConfirmation = false;
+
     public string $modalMessage = '';
 
     public string $modalMessageType = '';
@@ -30,6 +32,9 @@ new class extends Component
 
     #[Locked]
     public ?int $deletingUserId = null;
+
+    #[Locked]
+    public ?int $resendingUserId = null;
 
     #[Validate('required|string|max:255')]
     public string $name = '';
@@ -162,6 +167,24 @@ new class extends Component
         $this->showDeleteConfirmation = false;
     }
 
+    public function confirmResendInvitation(User $user): void
+    {
+        if (! $user->hasPendingInvitation()) {
+            session()->flash('error', 'This user does not have a pending invitation.');
+
+            return;
+        }
+
+        $this->resendingUserId = $user->id;
+        $this->showResendConfirmation = true;
+    }
+
+    public function cancelResendInvitation(): void
+    {
+        $this->resendingUserId = null;
+        $this->showResendConfirmation = false;
+    }
+
     public function deleteUser(): void
     {
         $user = User::findOrFail($this->deletingUserId);
@@ -182,16 +205,13 @@ new class extends Component
         session()->flash('success', 'User deleted successfully.');
     }
 
-    public function resendInvitation(User $user): void
+    public function resendInvitation(): void
     {
-        if (! $user->hasPendingInvitation()) {
-            session()->flash('error', 'This user does not have a pending invitation.');
-
-            return;
-        }
+        $user = User::findOrFail($this->resendingUserId);
 
         $user->resendInvitation(auth()->user()->name);
 
+        $this->cancelResendInvitation();
         session()->flash('success', 'Invitation email has been resent successfully.');
     }
 };
@@ -298,7 +318,7 @@ new class extends Component
                             <td class="whitespace-nowrap px-4 py-4 text-right text-sm" wire:click.stop>
                                 <div class="flex items-center justify-end gap-2">
                                     @if($user->hasPendingInvitation())
-                                        <flux:button variant="ghost" size="sm" icon="paper-airplane" wire:click="resendInvitation({{ $user->id }})" class="text-blue-600 hover:text-blue-700" />
+                                        <flux:button variant="ghost" size="sm" icon="paper-airplane" wire:click="confirmResendInvitation({{ $user->id }})" class="text-blue-600 hover:text-blue-700" />
                                     @endif
                                     <flux:button variant="ghost" size="sm" icon="pencil" wire:click="openEditModal({{ $user->id }})" />
                                     <flux:button variant="ghost" size="sm" icon="trash" wire:click="confirmDelete({{ $user->id }})" class="text-red-600 hover:text-red-700" />
@@ -430,6 +450,33 @@ new class extends Component
                     Delete User
                 </flux:button>
                 <flux:button wire:click="cancelDelete" variant="ghost">
+                    Cancel
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    {{-- Resend Invitation Confirmation Modal --}}
+    <flux:modal wire:model.self="showResendConfirmation" class="w-[30vw]! max-w-[30vw]!">
+        <div class="space-y-6">
+            <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <flux:icon.paper-airplane class="size-6 text-blue-600 dark:text-blue-400" />
+                    <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Resend Invitation</flux:heading>
+                </div>
+            </div>
+
+            <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800">
+                <flux:text class="text-blue-700 dark:text-blue-300">
+                    Are you sure you want to resend the invitation email to this user?
+                </flux:text>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                <flux:button wire:click="resendInvitation" variant="primary" class="bg-blue-600 hover:bg-blue-700">
+                    Resend Invitation
+                </flux:button>
+                <flux:button wire:click="cancelResendInvitation" variant="ghost">
                     Cancel
                 </flux:button>
             </div>

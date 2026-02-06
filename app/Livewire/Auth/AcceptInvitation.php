@@ -4,6 +4,7 @@ namespace App\Livewire\Auth;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -65,6 +66,7 @@ class AcceptInvitation extends Component
         $this->redirect(route('dashboard'), navigate: true);
     }
 
+    #[Computed]
     public function isTokenValid(): bool
     {
         return $this->user !== null && $this->user->isInvitationValid($this->token);

@@ -6,7 +6,7 @@
             <flux:callout variant="danger" icon="exclamation-circle" dismissible>
                 {{ $errorMessage }}
             </flux:callout>
-        @elseif(!$isTokenValid())
+        @elseif(!$this->isTokenValid)
             <flux:callout variant="danger" icon="exclamation-circle">
                 {{ __('Invalid or expired invitation token. Please contact support.') }}
             </flux:callout>
