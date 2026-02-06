@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Health\Checks\EmailCheck;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -12,7 +13,6 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Health\Checks\Checks\CacheCheck;
 use Spatie\Health\Checks\Checks\DatabaseCheck;
-use Spatie\Health\Checks\Checks\DebugModeCheck;
 use Spatie\Health\Checks\Checks\OptimizedAppCheck;
 use Spatie\Health\Checks\Checks\QueueCheck;
 use Spatie\Health\Checks\Checks\ScheduleCheck;
@@ -65,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
         Health::checks([
             CacheCheck::new(),
             DatabaseCheck::new(),
-            DebugModeCheck::new(),
+            EmailCheck::new(),
             OptimizedAppCheck::new(),
             QueueCheck::new(),
             ScheduleCheck::new(),
