@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Notifications\TicketReplyNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
@@ -14,6 +16,8 @@ new class extends Component
     use WithPagination;
 
     public string $search = '';
+
+    public ?string $categoryFilter = null;
 
     public bool $showEditModal = false;
 
@@ -41,6 +45,20 @@ new class extends Component
         $this->resetPage();
     }
 
+    public function updatedCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    #[Computed]
+    public function categories(): Collection
+    {
+        return TicketCategory::query()
+            ->active()
+            ->ordered()
+            ->get();
+    }
+
     #[Computed]
     public function tickets(): LengthAwarePaginator
     {
@@ -55,6 +73,9 @@ new class extends Component
                                 ->orWhere('email', 'like', '%'.$this->search.'%');
                         });
                 });
+            })
+            ->when($this->categoryFilter, function ($query) {
+                $query->where('ticket_category_id', $this->categoryFilter);
             })
             ->orderByRaw("
                 CASE
@@ -181,13 +202,23 @@ new class extends Component
         </div>
     </div>
 
-    {{-- Search --}}
-    <div class="w-full sm:w-80">
-        <flux:input
-            wire:model.live.debounce.300ms="search"
-            placeholder="Search subject, name, or email..."
-            icon="magnifying-glass"
-        />
+    {{-- Search and Filters --}}
+    <div class="flex flex-col sm:flex-row gap-4">
+        <div class="w-full sm:w-80">
+            <flux:input
+                wire:model.live.debounce.300ms="search"
+                placeholder="Search subject, name, or email..."
+                icon="magnifying-glass"
+            />
+        </div>
+        <div class="w-full sm:w-64">
+            <flux:select wire:model.live="categoryFilter">
+                <flux:select.option value="">All Categories</flux:select.option>
+                @foreach($this->categories as $category)
+                    <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
     </div>
 
     @if($this->tickets->isEmpty())

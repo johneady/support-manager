@@ -116,7 +116,7 @@
         @if($isAdmin)
             {{-- Tickets Requiring a Response --}}
             <div class="relative flex-1 overflow-hidden rounded-xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-blue-100 dark:border-zinc-700 p-6">
-                <h2 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Tickets Requiring a Response</h2>
+                <h2 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Latest 3 Tickets Requiring a Response</h2>
                 @if($recentTickets->isEmpty())
                     <div class="text-center py-12 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white/50 dark:bg-zinc-900/50">
                         <flux:icon.inbox class="mx-auto h-12 w-12 text-zinc-400" />
