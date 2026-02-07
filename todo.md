@@ -8,3 +8,7 @@ make session encrypted by default by updating the /config/session.php and update
 * Give the customer a fancy looking 6 or 7 digit "reference number" and put that prominently in the emails for the customer and on the customer's My Tickets page. I like something like TX-1138-000001. The last part could be the id number from the database.
 
 * Add filter at the top of the Ticket Queue (tickets/queue) by category. Have a reset or all as well. Default to all.
+
+* what happens if I delete a category that has tickets? THe delete should fail.
+
+* Create an all tickets below the ticket queue that shows all tickets (opened or closed) in descending sequence. If they are closed, they can be opened, but all fields must be read only.

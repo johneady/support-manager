@@ -27,8 +27,9 @@ class TicketAutoClosedNotification extends Notification implements ShouldQueue
         $url = url('/tickets/'.$this->ticket->id);
 
         return (new MailMessage)
-            ->subject("Your Ticket Has Been Closed: {$this->ticket->subject}")
+            ->subject("Ticket {$this->ticket->reference_number} Closed: {$this->ticket->subject}")
             ->greeting("Hello {$notifiable->name},")
+            ->line("**Reference Number:** {$this->ticket->reference_number}")
             ->line("We hope this message finds you well. We're writing to let you know that your support ticket has been automatically closed.")
             ->line("**Ticket:** {$this->ticket->subject}")
             ->line('Since we haven\'t heard back from you for 7 days after our last response, we\'ve marked this ticket as resolved. This helps us keep our support system organized and ensures we can focus on helping customers who currently need assistance.')

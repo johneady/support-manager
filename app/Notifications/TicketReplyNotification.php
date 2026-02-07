@@ -33,8 +33,9 @@ class TicketReplyNotification extends Notification implements ShouldQueue
             $url = url('/tickets/'.$ticket->id);
 
             return (new MailMessage)
-                ->subject("Reply to Your Ticket: {$ticket->subject}")
+                ->subject("Reply to Ticket {$ticket->reference_number}: {$ticket->subject}")
                 ->greeting("Hello {$notifiable->name},")
+                ->line("**Reference Number:** {$ticket->reference_number}")
                 ->line('You have received a reply to your support ticket.')
                 ->line("**Ticket:** {$ticket->subject}")
                 ->line('**Reply:**')
@@ -46,8 +47,9 @@ class TicketReplyNotification extends Notification implements ShouldQueue
         $url = url('/admin/tickets/'.$ticket->id);
 
         return (new MailMessage)
-            ->subject("Customer Reply: {$ticket->subject}")
+            ->subject("Customer Reply to Ticket {$ticket->reference_number}: {$ticket->subject}")
             ->greeting('New Customer Reply')
+            ->line("**Reference Number:** {$ticket->reference_number}")
             ->line("{$this->reply->user->name} has replied to a support ticket.")
             ->line("**Ticket:** {$ticket->subject}")
             ->line('**Reply:**')

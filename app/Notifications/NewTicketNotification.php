@@ -28,8 +28,9 @@ class NewTicketNotification extends Notification implements ShouldQueue
         $adminUrl = url('/admin/tickets/'.$this->ticket->id);
 
         return (new MailMessage)
-            ->subject("New Support Ticket: {$this->ticket->subject}")
+            ->subject("New Support Ticket: {$this->ticket->reference_number} - {$this->ticket->subject}")
             ->greeting('New Support Ticket')
+            ->line("**Reference Number:** {$this->ticket->reference_number}")
             ->line("A new support ticket has been submitted by {$this->ticket->user->name}.")
             ->line("**Subject:** {$this->ticket->subject}")
             ->line("**Priority:** {$priorityLabel}")

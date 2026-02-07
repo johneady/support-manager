@@ -73,7 +73,8 @@ new class extends Component
                         {{ $ticket->subject }}
                     </h2>
                     <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                        Ticket #{{ $ticket->id }} &middot; Created {{ $ticket->created_at->diffForHumans() }}
+                        <span class="font-mono text-zinc-600 dark:text-zinc-400">{{ $ticket->reference_number }}</span>
+                        &middot; Created {{ $ticket->created_at->diffForHumans() }}
                     </p>
                 </div>
                 <div class="flex items-center gap-2">

@@ -138,4 +138,12 @@ class Ticket extends Model
             'closed_at' => null,
         ]);
     }
+
+    /**
+     * Get the ticket's reference number.
+     */
+    public function getReferenceNumberAttribute(): string
+    {
+        return sprintf('TX-1138-%06d', $this->id);
+    }
 }
