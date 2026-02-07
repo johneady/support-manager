@@ -1,9 +1,7 @@
 <?php
 
-use App\Enums\TicketCategory;
-use App\Enums\TicketPriority;
-use App\Enums\TicketStatus;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\User;
 use App\Notifications\NewTicketNotification;
 use App\Notifications\TicketReplyNotification;
@@ -41,8 +39,8 @@ new class extends Component
     #[Validate('required|string|min:10')]
     public string $newDescription = '';
 
-    #[Validate('required|in:technical_issue,feature_request,general_inquiry')]
-    public string $newCategory = 'general_inquiry';
+    #[Validate('required|exists:ticket_categories,id')]
+    public int $newTicketCategoryId = 1;
 
     #[Validate('required|in:low,medium,high')]
     public string $newPriority = 'medium';
@@ -55,6 +53,15 @@ new class extends Component
             ->with(['replies' => fn ($query) => $query->latest()->limit(1)])
             ->when($this->statusFilter, fn ($query) => $query->where('status', $this->statusFilter))
             ->latest()
+            ->get();
+    }
+
+    #[Computed]
+    public function categories(): Collection
+    {
+        return TicketCategory::query()
+            ->active()
+            ->ordered()
             ->get();
     }
 
@@ -90,8 +97,11 @@ new class extends Component
 
     public function openCreateModal(): void
     {
-        $this->reset(['newSubject', 'newDescription', 'newCategory', 'newPriority']);
-        $this->newCategory = 'general_inquiry';
+        $this->reset(['newSubject', 'newDescription', 'newTicketCategoryId', 'newPriority']);
+        $technicalSupport = TicketCategory::where('slug', 'technical-support')->first();
+        if ($technicalSupport) {
+            $this->newTicketCategoryId = $technicalSupport->id;
+        }
         $this->newPriority = 'medium';
         $this->resetValidation();
         $this->showCreateModal = true;
@@ -100,7 +110,7 @@ new class extends Component
     public function closeCreateModal(): void
     {
         $this->showCreateModal = false;
-        $this->reset(['newSubject', 'newDescription', 'newCategory', 'newPriority']);
+        $this->reset(['newSubject', 'newDescription', 'newTicketCategoryId', 'newPriority']);
         $this->resetValidation();
     }
 
@@ -109,7 +119,7 @@ new class extends Component
         $this->validate([
             'newSubject' => 'required|string|max:255',
             'newDescription' => 'required|string|min:10',
-            'newCategory' => 'required|in:technical_issue,feature_request,general_inquiry',
+            'newTicketCategoryId' => 'required|exists:ticket_categories,id',
             'newPriority' => 'required|in:low,medium,high',
         ]);
 
@@ -117,7 +127,7 @@ new class extends Component
             'user_id' => auth()->id(),
             'subject' => $this->newSubject,
             'description' => $this->newDescription,
-            'category' => $this->newCategory,
+            'ticket_category_id' => $this->newTicketCategoryId,
             'priority' => $this->newPriority,
         ]);
 
@@ -185,6 +195,12 @@ new class extends Component
         </flux:callout>
     @endif
 
+    @if(session('error'))
+        <flux:callout variant="danger" icon="exclamation-circle" dismissible>
+            {{ session('error') }}
+        </flux:callout>
+    @endif
+
     {{-- Header Banner --}}
     <div class="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8 text-white shadow-lg">
         <div class="flex items-center justify-between">
@@ -208,7 +224,7 @@ new class extends Component
         <div class="max-w-xs">
             <flux:select wire:model.live="statusFilter" placeholder="All Statuses">
                 <flux:select.option value="">All Statuses</flux:select.option>
-                @foreach(TicketStatus::cases() as $status)
+                @foreach(\App\Enums\TicketStatus::cases() as $status)
                     <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
                 @endforeach
             </flux:select>
@@ -258,16 +274,20 @@ new class extends Component
                                 </span>
                             </td>
                             <td class="whitespace-nowrap px-4 py-4">
-                                <flux:badge color="{{ $ticket->category->color() }}" size="sm">
-                                    {{ $ticket->category->label() }}
-                                </flux:badge>
+                                @if($ticket->ticketCategory)
+                                    <flux:badge color="{{ $ticket->ticketCategory->color }}" size="sm">
+                                        {{ $ticket->ticketCategory->name }}
+                                    </flux:badge>
+                                @else
+                                    <flux:badge color="zinc" size="sm">No Category</flux:badge>
+                                @endif
                             </td>
                             <td class="whitespace-nowrap px-4 py-4">
                                 <div class="flex items-center gap-2">
                                     <flux:badge color="{{ $ticket->status->color() }}" size="sm">
                                         {{ $ticket->status->label() }}
                                     </flux:badge>
-                                    @if($ticket->status === TicketStatus::Open && ! $ticket->needsResponse())
+                                    @if($ticket->status === \App\Enums\TicketStatus::Open && ! $ticket->needsResponse())
                                         <flux:badge color="sky" size="sm">
                                             Responded
                                         </flux:badge>
@@ -282,7 +302,7 @@ new class extends Component
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                                 {{ $ticket->created_at->diffForHumans() }}
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm">
+                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm" wire:click.stop>
                                 <flux:button wire:click.stop="openEditModal({{ $ticket->id }})" size="sm" variant="ghost" icon="pencil">
                                     Edit
                                 </flux:button>
@@ -301,8 +321,8 @@ new class extends Component
                 <div class="flex items-center gap-3">
                     <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
                     <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Create New Ticket</flux:heading>
+                    <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Submit a new support request.</flux:text>
                 </div>
-                <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Submit a new support request.</flux:text>
             </div>
 
             <form wire:submit="createTicket" class="space-y-4">
@@ -322,14 +342,14 @@ new class extends Component
                         required
                     />
 
-                    <flux:select wire:model="newCategory" label="Category">
-                        @foreach(TicketCategory::cases() as $category)
-                            <flux:select.option value="{{ $category->value }}">{{ $category->label() }}</flux:select.option>
+                    <flux:select wire:model="newTicketCategoryId" label="Category">
+                        @foreach($this->categories as $category)
+                            <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
                         @endforeach
                     </flux:select>
 
                     <flux:select wire:model="newPriority" label="Priority">
-                        @foreach(TicketPriority::cases() as $priority)
+                        @foreach(\App\Enums\TicketPriority::cases() as $priority)
                             <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
                         @endforeach
                     </flux:select>
@@ -355,8 +375,8 @@ new class extends Component
                     <div class="flex items-center gap-3">
                         <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
                         <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Edit Ticket</flux:heading>
+                        <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Update your support ticket details and add replies.</flux:text>
                     </div>
-                    <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Update your support ticket details and add replies.</flux:text>
                 </div>
 
                 {{-- Modal Message --}}
@@ -382,7 +402,7 @@ new class extends Component
 
                     <form wire:submit="updateTicket" class="space-y-4">
                         <flux:select wire:model="editPriority" label="Priority">
-                            @foreach(TicketPriority::cases() as $priority)
+                            @foreach(\App\Enums\TicketPriority::cases() as $priority)
                                 <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
                             @endforeach
                         </flux:select>
@@ -436,12 +456,16 @@ new class extends Component
                     <div class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-6">
                         <h3 class="text-base font-semibold text-blue-900 dark:text-blue-100 mb-4">Add a Reply</h3>
                         <form wire:submit="submitReply" class="space-y-4">
-                            <flux:textarea
-                                wire:model="replyBody"
-                                placeholder="Type your reply..."
-                                rows="4"
-                                required
-                            />
+                            <flux:field>
+                                <flux:label>Your Reply</flux:label>
+                                <flux:textarea
+                                    wire:model="replyBody"
+                                    placeholder="Type your reply..."
+                                    rows="4"
+                                />
+                                <flux:error name="replyBody" />
+                            </flux:field>
+
                             <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
                                 Send Reply
                             </flux:button>
@@ -464,4 +488,3 @@ new class extends Component
         @endif
     </flux:modal>
 </div>
-

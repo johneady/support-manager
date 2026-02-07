@@ -8,9 +8,11 @@ use App\Models\Ticket;
 use App\Models\TicketReply;
 use App\Models\User;
 use App\Notifications\TicketAutoClosedNotification;
+use Database\Seeders\TicketCategorySeeder;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
+    $this->seed(TicketCategorySeeder::class);
     Notification::fake();
 });
 

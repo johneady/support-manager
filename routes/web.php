@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('tickets/{ticket}', 'tickets.show')->name('tickets.show');
 
     Route::view('admin/users', 'admin.users')->name('admin.users');
+    Route::view('admin/categories', 'admin.categories')->name('admin.categories');
     Route::view('admin/faqs', 'admin.faqs')->name('admin.faqs');
     Route::view('admin/faqs/create', 'admin.faqs-create')->name('admin.faqs.create');
     Route::view('admin/faqs/{faq}/edit', 'admin.faqs-edit')->name('admin.faqs.edit');

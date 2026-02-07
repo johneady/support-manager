@@ -5,7 +5,12 @@ declare(strict_types=1);
 use App\Models\Ticket;
 use App\Models\TicketReply;
 use App\Models\User;
+use Database\Seeders\TicketCategorySeeder;
 use Illuminate\Support\Facades\DB;
+
+beforeEach(function () {
+    $this->seed(TicketCategorySeeder::class);
+});
 
 test('ticket list does not have n+1 query issue', function () {
     $user = User::factory()->create();

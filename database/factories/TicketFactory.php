@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\TicketCategory;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\User;
@@ -25,7 +24,7 @@ class TicketFactory extends Factory
             'subject' => fake()->sentence(),
             'description' => fake()->paragraphs(3, true),
             'status' => TicketStatus::Open,
-            'category' => fake()->randomElement(TicketCategory::cases()),
+            'ticket_category_id' => \App\Models\TicketCategory::inRandomOrder()->first()?->id ?? 1,
             'priority' => fake()->randomElement(TicketPriority::cases()),
         ];
     }

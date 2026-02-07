@@ -3,10 +3,12 @@
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketReplyNotification;
+use Database\Seeders\TicketCategorySeeder;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    $this->seed(TicketCategorySeeder::class);
     $this->customer = User::factory()->create(['is_admin' => false]);
     $this->ticket = Ticket::factory()->create([
         'user_id' => $this->customer->id,

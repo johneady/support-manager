@@ -1,8 +1,5 @@
 <?php
 
-use App\Enums\TicketCategory;
-use App\Enums\TicketPriority;
-use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Notifications\TicketReplyNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -48,7 +45,7 @@ new class extends Component
     public function tickets(): LengthAwarePaginator
     {
         return Ticket::query()
-            ->with(['user', 'replies' => fn ($q) => $q->latest()->limit(1)])
+            ->with(['user', 'ticketCategory', 'replies' => fn ($q) => $q->latest()->limit(1)])
             ->open()
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
@@ -96,7 +93,7 @@ new class extends Component
             return null;
         }
 
-        return Ticket::with('replies.user', 'user')->find($this->editingTicketId);
+        return Ticket::with('replies.user', 'user', 'ticketCategory')->find($this->editingTicketId);
     }
 
     public function openEditModal(Ticket $ticket): void
@@ -159,12 +156,18 @@ new class extends Component
         </flux:callout>
     @endif
 
+    @if(session('error'))
+        <flux:callout variant="danger" icon="exclamation-circle" dismissible>
+            {{ session('error') }}
+        </flux:callout>
+    @endif
+
     {{-- Header Banner --}}
     <div class="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8 text-white shadow-lg">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <div class="rounded-full bg-white/20 p-3">
-                    <flux:icon.inbox class="size-8 text-white" />
+                    <flux:icon.inbox-stack class="size-8 text-white" />
                 </div>
                 <div>
                     <flux:heading size="2xl" class="text-white">Ticket Queue</flux:heading>
@@ -225,9 +228,13 @@ new class extends Component
                                 </span>
                             </td>
                             <td class="whitespace-nowrap px-4 py-4">
-                                <flux:badge color="{{ $ticket->category->color() }}" size="sm">
-                                    {{ $ticket->category->label() }}
-                                </flux:badge>
+                                @if($ticket->ticketCategory)
+                                    <flux:badge color="{{ $ticket->ticketCategory->color }}" size="sm">
+                                        {{ $ticket->ticketCategory->name }}
+                                    </flux:badge>
+                                @else
+                                    <flux:badge color="zinc" size="sm">No Category</flux:badge>
+                                @endif
                             </td>
                             <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                                 <div>{{ $ticket->user->name }}</div>
@@ -272,10 +279,10 @@ new class extends Component
                         <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">
                             Ticket #{{ $this->editingTicket->id }}
                         </flux:heading>
+                        <flux:text class="mt-2 text-blue-700 dark:text-blue-300">
+                            Submitted by {{ $this->editingTicket->user->name }} ({{ $this->editingTicket->user->email }})
+                        </flux:text>
                     </div>
-                    <flux:text class="mt-2 text-blue-700 dark:text-blue-300">
-                        Submitted by {{ $this->editingTicket->user->name }} ({{ $this->editingTicket->user->email }})
-                    </flux:text>
                 </div>
 
                 {{-- Modal Message --}}
@@ -374,7 +381,7 @@ new class extends Component
                                 <flux:field>
                                     <flux:label>Status</flux:label>
                                     <flux:select wire:model="newStatus">
-                                        @foreach(TicketStatus::cases() as $status)
+                                        @foreach(\App\Enums\TicketStatus::cases() as $status)
                                             <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
                                         @endforeach
                                     </flux:select>
@@ -382,7 +389,7 @@ new class extends Component
                                 <flux:field>
                                     <flux:label>Priority</flux:label>
                                     <flux:select wire:model="newPriority">
-                                        @foreach(TicketPriority::cases() as $priority)
+                                        @foreach(\App\Enums\TicketPriority::cases() as $priority)
                                             <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
                                         @endforeach
                                     </flux:select>

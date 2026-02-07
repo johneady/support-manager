@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->string('status')->default('open');
             $table->string('priority')->default('medium');
-            $table->string('category')->default('general_inquiry');
+            $table->foreignId('ticket_category_id')->nullable()->constrained('ticket_categories')->nullOnDelete();
             $table->timestamp('closed_at')->nullable();
             $table->timestamps();
         });

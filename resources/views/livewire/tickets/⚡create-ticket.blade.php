@@ -1,12 +1,12 @@
 <?php
 
-use App\Enums\TicketCategory;
-use App\Enums\TicketPriority;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\User;
 use App\Notifications\NewTicketNotification;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
-use Livewire\Attributes\Rule;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -18,11 +18,29 @@ new class extends Component
     #[Validate('required|string|min:10')]
     public string $description = '';
 
-    #[Validate('required|in:technical_issue,feature_request,general_inquiry')]
-    public string $category = 'general_inquiry';
+    #[Validate('required|exists:ticket_categories,id')]
+    public int $ticketCategoryId = 1;
 
     #[Validate('required|in:low,medium,high')]
     public string $priority = 'medium';
+
+    #[Computed]
+    public function categories(): Collection
+    {
+        return TicketCategory::query()
+            ->active()
+            ->ordered()
+            ->get();
+    }
+
+    public function mount(): void
+    {
+        // Set default to Technical Support category
+        $technicalSupport = TicketCategory::where('slug', 'technical-support')->first();
+        if ($technicalSupport) {
+            $this->ticketCategoryId = $technicalSupport->id;
+        }
+    }
 
     public function submit(): void
     {
@@ -32,7 +50,7 @@ new class extends Component
             'user_id' => auth()->id(),
             'subject' => $this->subject,
             'description' => $this->description,
-            'category' => $this->category,
+            'ticket_category_id' => $this->ticketCategoryId,
             'priority' => $this->priority,
         ]);
 
@@ -64,14 +82,14 @@ new class extends Component
             required
         />
 
-        <flux:select wire:model="category" label="Category">
-            @foreach(TicketCategory::cases() as $category)
-                <flux:select.option value="{{ $category->value }}">{{ $category->label() }}</flux:select.option>
+        <flux:select wire:model="ticketCategoryId" label="Category">
+            @foreach($this->categories as $category)
+                <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
             @endforeach
         </flux:select>
 
         <flux:select wire:model="priority" label="Priority">
-            @foreach(TicketPriority::cases() as $priority)
+            @foreach(\App\Enums\TicketPriority::cases() as $priority)
                 <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
             @endforeach
         </flux:select>

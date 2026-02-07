@@ -2,6 +2,11 @@
 
 use App\Models\Ticket;
 use App\Models\User;
+use Database\Seeders\TicketCategorySeeder;
+
+beforeEach(function () {
+    $this->seed(TicketCategorySeeder::class);
+});
 
 test('guests are redirected to login page', function () {
     $response = $this->get(route('dashboard'));

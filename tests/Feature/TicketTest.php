@@ -6,10 +6,12 @@ use App\Models\Ticket;
 use App\Models\TicketReply;
 use App\Models\User;
 use App\Notifications\NewTicketNotification;
+use Database\Seeders\TicketCategorySeeder;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    $this->seed(TicketCategorySeeder::class);
     $this->user = User::factory()->create();
 });
 
