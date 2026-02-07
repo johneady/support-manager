@@ -325,11 +325,15 @@ new class extends Component
                 </div>
             </div>
 
-            <form wire:submit="createCategory" class="space-y-4">
+            <form wire:submit="createCategory" class="space-y-4" x-data>
                 <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800 space-y-4">
                     <flux:field>
                         <flux:label>Name</flux:label>
-                        <flux:input wire:model="name" placeholder="Category name" />
+                        <flux:input
+                            wire:model="name"
+                            placeholder="Category name"
+                            x-on:input="$wire.set('slug', $el.value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-'))"
+                        />
                         <flux:error name="name" />
                     </flux:field>
 

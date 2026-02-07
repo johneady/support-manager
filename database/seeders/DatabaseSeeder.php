@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             TicketCategorySeeder::class,
             FaqSeeder::class,
-            // TicketSeeder::class,
+            TicketSeeder::class,
         ]);
     }
 }
