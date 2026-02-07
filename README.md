@@ -2,7 +2,7 @@
 
 A modern, open-source support ticket management system built with Laravel 12, Livewire, and Flux UI. Manage customer support tickets, FAQs, and team members through a clean, reactive interface.
 
-I created this project simply becuse I needed a very simple ticket system that met my needs (single developer). It supports multiple developers, but I didn't add any features like ticket assignment, as I'm the only users. All tickets needing a response are in a single queue for all admins to see and manage. It could be improved.
+I created this project simply becuse I needed a very simple ticket system that met my needs (single developer). It supports multiple developers, but I didn't add any features like ticket assignment, as I'm the only user. All tickets needing a response are in a single queue for all admins to see and manage. As it's only me, I never added the ability to assign tickets. That could be a future feature.
 
 ## Features
 
