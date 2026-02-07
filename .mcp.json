@@ -1,1 +1,1 @@
-{"mcpServers":{"laravel-boost":{"command":"php","args":["artisan","boost:mcp"],"alwaysAllow":["search-docs","database-schema","database-query","tinker","list-routes","last-error","browser-logs","get-absolute-url"]}}}
+{"mcpServers":{"laravel-boost":{"command":"php","args":["artisan","boost:mcp"],"alwaysAllow":["search-docs","database-schema","database-query","tinker","list-routes","last-error","browser-logs","get-absolute-url","read-log-entries"]}}}
