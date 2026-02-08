@@ -67,29 +67,39 @@ new class extends Component
     {{-- Ticket Details --}}
     <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
         <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
-                        {{ $ticket->subject }}
-                    </h2>
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                        <span class="font-mono text-zinc-600 dark:text-zinc-400">{{ $ticket->reference_number }}</span>
-                        &middot; Created {{ $ticket->created_at->diffForHumans() }}
-                    </p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <flux:badge color="{{ $ticket->status->color() }}">
-                        {{ $ticket->status->label() }}
-                    </flux:badge>
-                    <flux:badge color="{{ $ticket->priority->color() }}">
-                        {{ $ticket->priority->label() }}
-                    </flux:badge>
-                </div>
+            <div>
+                <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                    {{ $ticket->subject }}
+                </h2>
+                <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                    <span class="font-mono text-zinc-600 dark:text-zinc-400">{{ $ticket->reference_number }}</span>
+                    &middot; Created {{ $ticket->created_at->diffForHumans() }}
+                </p>
             </div>
         </div>
         <div class="px-6 py-4">
             <div class="prose dark:prose-invert prose-sm max-w-none">
                 {!! nl2br(e($ticket->description)) !!}
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <flux:label>Status</flux:label>
+                    <div class="mt-1">
+                        <flux:badge color="{{ $ticket->status->color() }}" size="sm">
+                            {{ $ticket->status->label() }}
+                        </flux:badge>
+                    </div>
+                </div>
+                <div>
+                    <flux:label>Priority</flux:label>
+                    <div class="mt-1">
+                        <flux:badge color="{{ $ticket->priority->color() }}" size="sm">
+                            {{ $ticket->priority->label() }}
+                        </flux:badge>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

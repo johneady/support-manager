@@ -29,6 +29,15 @@ class TicketFactory extends Factory
         ];
     }
 
+    public function configure(): static
+    {
+        return $this->afterCreating(function (\App\Models\Ticket $ticket) {
+            if (empty($ticket->ticket_reference_number)) {
+                $ticket->update(['ticket_reference_number' => sprintf('TX-1138-%06d', $ticket->id)]);
+            }
+        });
+    }
+
     public function open(): static
     {
         return $this->state(fn (array $attributes) => [

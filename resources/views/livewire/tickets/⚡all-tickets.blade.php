@@ -71,15 +71,27 @@ new class extends Component
     #[Computed]
     public function tickets(): LengthAwarePaginator
     {
+        $searchIdPrefix = null;
+        if (preg_match('/TX-1138-(\d+)/', $this->search, $matches)) {
+            $searchIdPrefix = $matches[1];
+        }
+
         $query = Ticket::query()
             ->with(['user', 'ticketCategory', 'replies' => fn ($q) => $q->latest()->limit(1)])
-            ->when($this->search, function ($query) {
-                $query->where(function ($q) {
+            ->when($this->search, function ($query) use ($searchIdPrefix) {
+                $query->where(function ($q) use ($searchIdPrefix) {
                     $q->where('subject', 'like', '%'.$this->search.'%')
                         ->orWhereHas('user', function ($userQuery) {
                             $userQuery->where('name', 'like', '%'.$this->search.'%')
                                 ->orWhere('email', 'like', '%'.$this->search.'%');
                         });
+                    if ($searchIdPrefix !== null) {
+                        $q->orWhere('id', (int) $searchIdPrefix);
+                    }
+                    // Also search by ID if the search is a plain number
+                    if ($searchIdPrefix === null && is_numeric($this->search)) {
+                        $q->orWhere('id', (int) $this->search);
+                    }
                 });
             })
             ->when($this->categoryFilter, function ($query) {
@@ -196,7 +208,7 @@ new class extends Component
         <div class="w-full sm:w-80">
             <flux:input
                 wire:model.live.debounce.300ms="search"
-                placeholder="Search subject, name, or email..."
+                placeholder="Search subject, reference, name, or email..."
                 icon="magnifying-glass"
             />
         </div>

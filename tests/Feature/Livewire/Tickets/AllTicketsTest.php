@@ -111,6 +111,62 @@ describe('all tickets page', function () {
             ->assertDontSee('Non Matching Email Ticket');
     });
 
+    it('search filters by ticket reference number (id)', function () {
+        $matchingTicket = Ticket::factory()->closed()->create([
+            'user_id' => $this->user->id,
+            'subject' => 'Matching Reference Ticket',
+        ]);
+        $nonMatchingTicket = Ticket::factory()->closed()->create([
+            'user_id' => $this->user->id,
+            'subject' => 'Non Matching Reference Ticket',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->set('search', (string) $matchingTicket->id)
+            ->assertSee('Matching Reference Ticket')
+            ->assertDontSee('Non Matching Reference Ticket');
+    });
+
+    it('search filters by full ticket reference number', function () {
+        $matchingTicket = Ticket::factory()->closed()->create([
+            'user_id' => $this->user->id,
+            'subject' => 'Full Reference Ticket',
+        ]);
+        $nonMatchingTicket = Ticket::factory()->closed()->create([
+            'user_id' => $this->user->id,
+            'subject' => 'Non Full Reference Ticket',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->set('search', $matchingTicket->reference_number)
+            ->assertSee('Full Reference Ticket')
+            ->assertDontSee('Non Full Reference Ticket');
+    });
+
+    it('search filters by partial ticket reference number', function () {
+        $ticket1 = Ticket::factory()->closed()->create([
+            'user_id' => $this->user->id,
+            'subject' => 'Ticket One',
+        ]);
+        $ticket2 = Ticket::factory()->closed()->create([
+            'user_id' => $this->user->id,
+            'subject' => 'Ticket Two',
+        ]);
+        $ticket3 = Ticket::factory()->closed()->create([
+            'user_id' => $this->user->id,
+            'subject' => 'Ticket Three',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->set('search', 'TX-1138-0000'.$ticket1->id)
+            ->assertSee('Ticket One')
+            ->assertDontSee('Ticket Two')
+            ->assertDontSee('Ticket Three');
+    });
+
     it('category filter works correctly', function () {
         $category1 = TicketCategory::where('slug', 'technical-support')->first();
         $category2 = TicketCategory::where('slug', 'general-inquiry')->first();

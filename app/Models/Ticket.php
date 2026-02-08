@@ -23,7 +23,17 @@ class Ticket extends Model
         'priority',
         'ticket_category_id',
         'closed_at',
+        'ticket_reference_number',
     ];
+
+    protected static function booted(): void
+    {
+        static::created(function (Ticket $ticket) {
+            if (empty($ticket->ticket_reference_number)) {
+                $ticket->update(['ticket_reference_number' => sprintf('TX-1138-%06d', $ticket->id)]);
+            }
+        });
+    }
 
     protected function casts(): array
     {

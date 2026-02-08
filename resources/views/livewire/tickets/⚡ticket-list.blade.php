@@ -372,14 +372,9 @@ new class extends Component
         @if($this->editingTicket)
             <div class="space-y-6">
                 <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
-                            <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Edit Ticket</flux:heading>
-                        </div>
-                        <flux:badge color="{{ $this->editingTicket->status->color() }}">
-                            {{ $this->editingTicket->status->label() }}
-                        </flux:badge>
+                    <div class="flex items-center gap-3">
+                        <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
+                        <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Edit Ticket</flux:heading>
                     </div>
                     <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Update your support ticket details and add replies.</flux:text>
                 </div>
@@ -403,6 +398,25 @@ new class extends Component
                     <div>
                         <flux:label>Description</flux:label>
                         <div class="mt-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 whitespace-pre-wrap">{{ $this->editingTicket->description }}</div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <flux:label>Status</flux:label>
+                            <div class="mt-1">
+                                <flux:badge color="{{ $this->editingTicket->status->color() }}" size="sm">
+                                    {{ $this->editingTicket->status->label() }}
+                                </flux:badge>
+                            </div>
+                        </div>
+                        <div>
+                            <flux:label>Priority</flux:label>
+                            <div class="mt-1">
+                                <flux:badge color="{{ $this->editingTicket->priority->color() }}" size="sm">
+                                    {{ $this->editingTicket->priority->label() }}
+                                </flux:badge>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
