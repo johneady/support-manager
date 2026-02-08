@@ -19,10 +19,7 @@
                         {{ __('My Tickets') }}
                     </flux:sidebar.item>
                     @if(auth()->user()?->isAdmin())
-                        @php($needsResponseCount = \App\Models\Ticket::query()->open()->needsResponse()->count())
-                        <flux:sidebar.item icon="inbox-stack" :href="route('tickets.queue')" :current="request()->routeIs('tickets.queue')" :badge="$needsResponseCount > 0 ? $needsResponseCount : null" wire:navigate class="text-zinc-900 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800 font-medium">
-                            {{ __('Ticket Queue') }}
-                        </flux:sidebar.item>
+                        <livewire:ticket-queue-badge />
                         <flux:sidebar.item icon="layout-grid" :href="route('tickets.all')" :current="request()->routeIs('tickets.all')" wire:navigate class="text-zinc-900 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800 font-medium">
                             {{ __('All Tickets') }}
                         </flux:sidebar.item>

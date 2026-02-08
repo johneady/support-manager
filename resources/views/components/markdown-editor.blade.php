@@ -17,6 +17,12 @@
         <button type="button" x-on:click="toggleCode()" :class="isActive('code') && 'bg-zinc-200 dark:bg-zinc-600'" class="rounded p-1.5 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors" title="Inline Code">
             <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
         </button>
+        <button type="button" x-on:click="toggleStrike()" :class="isActive('strike') && 'bg-zinc-200 dark:bg-zinc-600'" class="rounded p-1.5 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors" title="Strikethrough">
+            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="4" x2="8" y2="4"/><line x1="12" y1="4" x2="12" y2="10"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="14" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/></svg>
+        </button>
+        <button type="button" x-on:click="toggleHighlight()" :class="isActive('highlight') && 'bg-zinc-200 dark:bg-zinc-600'" class="rounded p-1.5 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors" title="Highlight">
+            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </button>
 
         <div class="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-600"></div>
 
@@ -26,6 +32,9 @@
         </button>
         <button type="button" x-on:click="toggleHeading(3)" :class="isActive('heading', { level: 3 }) && 'bg-zinc-200 dark:bg-zinc-600'" class="rounded px-1.5 py-1 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors" title="Heading 3">
             H3
+        </button>
+        <button type="button" x-on:click="toggleHeading(4)" :class="isActive('heading', { level: 4 }) && 'bg-zinc-200 dark:bg-zinc-600'" class="rounded px-1.5 py-1 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors" title="Heading 4">
+            H4
         </button>
 
         <div class="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-600"></div>
