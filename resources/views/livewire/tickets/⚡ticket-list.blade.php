@@ -5,6 +5,7 @@ use App\Models\TicketCategory;
 use App\Models\User;
 use App\Notifications\NewTicketNotification;
 use App\Notifications\TicketReplyNotification;
+use App\Notifications\TicketClosedNotification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Locked;
@@ -20,12 +21,17 @@ new class extends Component
 
     public bool $showCreateModal = false;
 
+    public bool $showCloseModal = false;
+
     public string $modalMessage = '';
 
     public string $modalMessageType = '';
 
     #[Locked]
     public ?int $editingTicketId = null;
+
+    #[Locked]
+    public ?int $closingTicketId = null;
 
     public function mount(?string $create = null): void
     {
@@ -102,6 +108,47 @@ new class extends Component
         $this->resetValidation();
     }
 
+    public function openCloseModal(Ticket $ticket): void
+    {
+        $this->authorize('update', $ticket);
+
+        $this->closingTicketId = $ticket->id;
+        $this->showCloseModal = true;
+    }
+
+    public function closeCloseModal(): void
+    {
+        $this->showCloseModal = false;
+        $this->closingTicketId = null;
+    }
+
+    public function closeTicket(): void
+    {
+        $ticket = Ticket::findOrFail($this->closingTicketId);
+        $this->authorize('update', $ticket);
+
+        $user = auth()->user();
+
+        // Add system reply
+        $ticket->replies()->create([
+            'user_id' => null,
+            'body' => "Closed by {$user->name}",
+            'is_from_admin' => true,
+        ]);
+
+        // Close the ticket
+        $ticket->close();
+
+        // Send notification to user
+        $ticket->user->notify(new TicketClosedNotification($ticket, $user->name));
+
+        $this->closeCloseModal();
+
+        session()->flash('success', 'Your ticket has been closed successfully.');
+
+        redirect()->route('tickets.index');
+    }
+
     public function openCreateModal(): void
     {
         $this->reset(['newSubject', 'newDescription', 'newTicketCategoryId', 'newPriority']);
@@ -145,6 +192,8 @@ new class extends Component
         $this->closeCreateModal();
 
         session()->flash('success', 'Your support ticket has been submitted successfully.');
+
+        redirect()->route('tickets.index');
     }
 
     public function updateTicket(): void
@@ -310,9 +359,16 @@ new class extends Component
                                 {{ $ticket->created_at->diffForHumans() }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-4 text-right text-sm" wire:click.stop>
-                                <flux:button wire:click.stop="openEditModal({{ $ticket->id }})" size="sm" variant="ghost" icon="pencil">
-                                    Edit
-                                </flux:button>
+                                <div class="flex items-center justify-end gap-1">
+                                    <flux:button wire:click.stop="openEditModal({{ $ticket->id }})" size="sm" variant="ghost" icon="pencil">
+                                        Edit
+                                    </flux:button>
+                                    @if($ticket->status->value === 'open')
+                                        <flux:button wire:click.stop="openCloseModal({{ $ticket->id }})" size="sm" variant="ghost" icon="x-mark">
+                                            Close
+                                        </flux:button>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -444,7 +500,7 @@ new class extends Component
                                     <div class="flex items-center justify-between mb-2">
                                         <div class="flex items-center gap-2">
                                             <span class="font-medium text-sm {{ $reply->is_from_admin ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-white' }}">
-                                                {{ $reply->user?->name ?? 'Unknown' }}
+                                                {{ $reply->user?->name ?? ($reply->is_from_admin ? 'System' : 'Unknown') }}
                                             </span>
                                             @if($reply->is_from_admin)
                                                 <flux:badge color="sky" size="sm">Support</flux:badge>
@@ -498,5 +554,34 @@ new class extends Component
                 </div>
             </div>
         @endif
+    </flux:modal>
+
+    {{-- Close Ticket Confirmation Modal --}}
+    <flux:modal wire:model.self="showCloseModal" class="w-[40vw]! max-w-[40vw]!">
+        <div class="space-y-6">
+            <div class="border-b border-red-200 dark:border-red-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <flux:icon.exclamation-triangle class="size-6 text-red-600 dark:text-red-400" />
+                    <flux:heading size="lg" class="text-red-900 dark:text-red-100">Close Ticket</flux:heading>
+                </div>
+                <flux:text class="mt-2 text-red-700 dark:text-red-300">Are you sure you want to close this ticket?</flux:text>
+            </div>
+
+            <div class="rounded-lg bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+                <flux:callout variant="warning" icon="exclamation-triangle">
+                    <p class="font-medium">Warning</p>
+                    <p class="text-sm mt-1">This action cannot be undone. The ticket will be closed.</p>
+                </flux:callout>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-red-200 dark:border-red-800">
+                <flux:button wire:click="closeTicket" variant="danger">
+                    Yes, Close Ticket
+                </flux:button>
+                <flux:button wire:click="closeCloseModal" variant="ghost">
+                    No, Keep Ticket
+                </flux:button>
+            </div>
+        </div>
     </flux:modal>
 </div>
