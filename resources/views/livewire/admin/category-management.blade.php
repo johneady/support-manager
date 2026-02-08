@@ -195,6 +195,26 @@ new class extends Component
         $this->cancelDelete();
         session()->flash('success', 'Category deleted successfully.');
     }
+
+    public function reorderCategories(int $id, int $position): void
+    {
+        $orderedIds = $this->categories->pluck('id')->toArray();
+
+        $oldIndex = array_search($id, $orderedIds);
+
+        if ($oldIndex === false || $oldIndex === $position) {
+            return;
+        }
+
+        array_splice($orderedIds, $oldIndex, 1);
+        array_splice($orderedIds, $position, 0, $id);
+
+        foreach ($orderedIds as $index => $categoryId) {
+            TicketCategory::where('id', $categoryId)->update(['sort_order' => $index]);
+        }
+
+        unset($this->categories);
+    }
 };
 ?>
 
@@ -262,18 +282,23 @@ new class extends Component
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
                 <thead class="bg-zinc-50 dark:bg-zinc-800">
                     <tr>
+                        <th class="w-10 px-2 py-3"></th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Name</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Slug</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Color</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Active</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Sort Order</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Created</th>
                         <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
+                <tbody wire:sort="reorderCategories" class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
                     @foreach($this->categories as $category)
-                        <tr wire:key="category-{{ $category->id }}" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50" wire:click="openEditModal({{ $category->id }})">
+                        <tr wire:key="category-{{ $category->id }}" wire:sort:item="{{ $category->id }}" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50" wire:click="openEditModal({{ $category->id }})">
+                            <td class="w-10 px-2 py-4 text-center" wire:click.stop>
+                                <div wire:sort:handle class="cursor-grab text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                                    <flux:icon.bars-3 class="mx-auto size-4" />
+                                </div>
+                            </td>
                             <td class="px-4 py-4 text-sm font-medium text-zinc-900 dark:text-white">
                                 {{ $category->name }}
                             </td>
@@ -291,9 +316,6 @@ new class extends Component
                                 @else
                                     <flux:badge color="zinc" size="sm">Inactive</flux:badge>
                                 @endif
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $category->sort_order }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                                 {{ $category->created_at->format('M j, Y') }}

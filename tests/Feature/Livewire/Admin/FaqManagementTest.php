@@ -120,6 +120,46 @@ describe('faq deletion', function () {
     });
 });
 
+describe('faq sort order', function () {
+    it('reorders faqs via drag and drop', function () {
+        $faqA = Faq::factory()->create(['question' => 'Alpha', 'sort_order' => 0]);
+        $faqB = Faq::factory()->create(['question' => 'Bravo', 'sort_order' => 1]);
+        $faqC = Faq::factory()->create(['question' => 'Charlie', 'sort_order' => 2]);
+
+        Livewire::actingAs($this->admin)
+            ->test('admin.faq-management')
+            ->call('reorderFaqs', $faqC->id, 0);
+
+        expect(Faq::ordered()->pluck('question')->toArray())
+            ->toBe(['Charlie', 'Alpha', 'Bravo']);
+    });
+
+    it('reorders faqs moving item down', function () {
+        $faqA = Faq::factory()->create(['question' => 'Alpha', 'sort_order' => 0]);
+        $faqB = Faq::factory()->create(['question' => 'Bravo', 'sort_order' => 1]);
+        $faqC = Faq::factory()->create(['question' => 'Charlie', 'sort_order' => 2]);
+
+        Livewire::actingAs($this->admin)
+            ->test('admin.faq-management')
+            ->call('reorderFaqs', $faqA->id, 2);
+
+        expect(Faq::ordered()->pluck('question')->toArray())
+            ->toBe(['Bravo', 'Charlie', 'Alpha']);
+    });
+
+    it('does not change order when position is the same', function () {
+        $faqA = Faq::factory()->create(['question' => 'Alpha', 'sort_order' => 0]);
+        $faqB = Faq::factory()->create(['question' => 'Bravo', 'sort_order' => 1]);
+
+        Livewire::actingAs($this->admin)
+            ->test('admin.faq-management')
+            ->call('reorderFaqs', $faqA->id, 0);
+
+        expect(Faq::ordered()->pluck('question')->toArray())
+            ->toBe(['Alpha', 'Bravo']);
+    });
+});
+
 describe('faq toggle published', function () {
     it('can toggle published status from list', function () {
         $faq = Faq::factory()->unpublished()->create();

@@ -71,6 +71,26 @@ new class extends Component
         $faq->update(['is_published' => ! $faq->is_published]);
         unset($this->faqs);
     }
+
+    public function reorderFaqs(int $id, int $position): void
+    {
+        $orderedIds = $this->faqs->pluck('id')->toArray();
+
+        $oldIndex = array_search($id, $orderedIds);
+
+        if ($oldIndex === false || $oldIndex === $position) {
+            return;
+        }
+
+        array_splice($orderedIds, $oldIndex, 1);
+        array_splice($orderedIds, $position, 0, $id);
+
+        foreach ($orderedIds as $index => $faqId) {
+            Faq::where('id', $faqId)->update(['sort_order' => $index]);
+        }
+
+        unset($this->faqs);
+    }
 };
 ?>
 
@@ -132,17 +152,19 @@ new class extends Component
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
                 <thead class="bg-zinc-50 dark:bg-zinc-800">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Order</th>
+                        <th class="w-10 px-2 py-3"></th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Question</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
                         <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
+                <tbody wire:sort="reorderFaqs" class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
                     @foreach($this->faqs as $faq)
-                        <tr wire:key="faq-{{ $faq->id }}" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50" onclick="window.location='{{ route('admin.faqs.edit', $faq->id) }}'">
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $faq->sort_order }}
+                        <tr wire:key="faq-{{ $faq->id }}" wire:sort:item="{{ $faq->id }}" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50" onclick="window.location='{{ route('admin.faqs.edit', $faq->id) }}'">
+                            <td class="w-10 px-2 py-4 text-center" onclick="event.stopPropagation()">
+                                <div wire:sort:handle class="cursor-grab text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                                    <flux:icon.bars-3 class="mx-auto size-4" />
+                                </div>
                             </td>
                             <td class="px-4 py-4">
                                 <div class="text-sm font-medium text-zinc-900 dark:text-white">

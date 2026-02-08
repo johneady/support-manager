@@ -449,4 +449,42 @@ describe('category sort order', function () {
         expect($categories[1]->name)->toBe('Second Category');
         expect($categories[2]->name)->toBe('First Category');
     });
+
+    it('reorders categories via drag and drop', function () {
+        $catA = TicketCategory::factory()->create(['name' => 'Alpha', 'sort_order' => 0]);
+        $catB = TicketCategory::factory()->create(['name' => 'Bravo', 'sort_order' => 1]);
+        $catC = TicketCategory::factory()->create(['name' => 'Charlie', 'sort_order' => 2]);
+
+        Livewire::actingAs($this->admin)
+            ->test('admin.category-management')
+            ->call('reorderCategories', $catC->id, 0);
+
+        expect(TicketCategory::ordered()->pluck('name')->toArray())
+            ->toBe(['Charlie', 'Alpha', 'Bravo']);
+    });
+
+    it('reorders categories moving item down', function () {
+        $catA = TicketCategory::factory()->create(['name' => 'Alpha', 'sort_order' => 0]);
+        $catB = TicketCategory::factory()->create(['name' => 'Bravo', 'sort_order' => 1]);
+        $catC = TicketCategory::factory()->create(['name' => 'Charlie', 'sort_order' => 2]);
+
+        Livewire::actingAs($this->admin)
+            ->test('admin.category-management')
+            ->call('reorderCategories', $catA->id, 2);
+
+        expect(TicketCategory::ordered()->pluck('name')->toArray())
+            ->toBe(['Bravo', 'Charlie', 'Alpha']);
+    });
+
+    it('does not change order when position is the same', function () {
+        $catA = TicketCategory::factory()->create(['name' => 'Alpha', 'sort_order' => 0]);
+        $catB = TicketCategory::factory()->create(['name' => 'Bravo', 'sort_order' => 1]);
+
+        Livewire::actingAs($this->admin)
+            ->test('admin.category-management')
+            ->call('reorderCategories', $catA->id, 0);
+
+        expect(TicketCategory::ordered()->pluck('name')->toArray())
+            ->toBe(['Alpha', 'Bravo']);
+    });
 });
