@@ -36,13 +36,19 @@
                         <p class="text-sm text-zinc-500 dark:text-zinc-400">Our support team is ready to assist you.</p>
                     </div>
                     @auth
-                        <flux:button href="{{ route('tickets.create') }}" variant="primary" class="bg-linear-to-r! from-blue-500! to-sky-500! hover:from-blue-600! hover:to-sky-600! border-0!">
-                            Create a Ticket
+                        <flux:button href="{{ url('/dashboard') }}" variant="primary" icon="ticket" class="bg-linear-to-r! from-blue-500! to-sky-500! hover:from-blue-600! hover:to-sky-600! border-0! shadow-lg! shadow-blue-500/25!">
+                            Submit a Ticket
                         </flux:button>
                     @else
-                        <flux:button href="{{ route('login') }}" variant="primary" class="bg-linear-to-r! from-blue-500! to-sky-500! hover:from-blue-600! hover:to-sky-600! border-0!">
-                            Sign in to Submit
-                        </flux:button>
+                        <div class="flex flex-col sm:flex-row items-center gap-4">
+                            <flux:button href="{{ route('register') }}" variant="primary" icon="ticket" class="bg-linear-to-r! from-blue-500! to-sky-500! hover:from-blue-600! hover:to-sky-600! border-0! shadow-lg! shadow-blue-500/25!">
+                                Submit a Ticket
+                            </flux:button>
+                            <flux:text size="sm" class="text-zinc-500">
+                                Already have an account?
+                                <flux:link href="{{ route('login') }}" class="text-blue-600! dark:text-blue-400!">Log in</flux:link>
+                            </flux:text>
+                        </div>
                     @endauth
                 </div>
             </div>
