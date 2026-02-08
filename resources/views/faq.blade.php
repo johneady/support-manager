@@ -102,8 +102,8 @@
                             &copy; {{ date('Y') }} Support Manager. All rights reserved.
                         </flux:text>
                         <div class="flex items-center gap-6">
-                            <flux:link href="#" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Privacy Policy</flux:link>
-                            <flux:link href="#" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Terms of Service</flux:link>
+                            <flux:link href="{{ route('privacy-policy') }}" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Privacy Policy</flux:link>
+                            <flux:link href="{{ route('terms-of-service') }}" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Terms of Service</flux:link>
                         </div>
                     </div>
                 </div>

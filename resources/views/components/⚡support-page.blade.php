@@ -125,66 +125,6 @@ new class extends Component
             @endif
         </div>
     </section>
-
-    {{-- Contact Section --}}
-    <section class="py-16 bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm border-t border-blue-100 dark:border-zinc-700">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <flux:heading size="lg" level="2" class="bg-linear-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent">Still need help?</flux:heading>
-                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">
-                    Our support team is here to assist you.
-                </flux:text>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <flux:card class="text-center bg-white/80! dark:bg-zinc-800/80! backdrop-blur-sm border-blue-100! dark:border-zinc-700! hover:shadow-lg hover:shadow-blue-200/30 dark:hover:shadow-blue-900/20 transition-all duration-300 group">
-                    <div class="w-14 h-14 mx-auto rounded-xl bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <flux:icon name="ticket" class="size-7 text-white" />
-                    </div>
-                    <flux:heading class="mt-4">Submit a Ticket</flux:heading>
-                    <flux:text size="sm" class="mt-2 text-zinc-500">
-                        Create a support ticket and we'll respond within 24 hours.
-                    </flux:text>
-                    @auth
-                        <flux:button href="{{ url('/dashboard') }}" variant="ghost" size="sm" class="mt-4 text-blue-600! dark:text-blue-400!">
-                            Go to Dashboard
-                        </flux:button>
-                    @else
-                        <flux:button href="{{ route('register') }}" variant="ghost" size="sm" class="mt-4 text-blue-600! dark:text-blue-400!">
-                            Get Started
-                        </flux:button>
-                    @endauth
-                </flux:card>
-
-                <flux:card class="text-center bg-white/80! dark:bg-zinc-800/80! backdrop-blur-sm border-sky-100! dark:border-zinc-700! hover:shadow-lg hover:shadow-sky-200/30 dark:hover:shadow-sky-900/20 transition-all duration-300 group">
-                    <div class="w-14 h-14 mx-auto rounded-xl bg-linear-to-br from-sky-500 to-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <flux:icon name="envelope" class="size-7 text-white" />
-                    </div>
-                    <flux:heading class="mt-4">Email Us</flux:heading>
-                    <flux:text size="sm" class="mt-2 text-zinc-500">
-                        Send us an email and we'll get back to you soon.
-                    </flux:text>
-                    <flux:button href="mailto:support@example.com" variant="ghost" size="sm" class="mt-4 text-sky-600! dark:text-sky-400!">
-                        support@example.com
-                    </flux:button>
-                </flux:card>
-
-                <flux:card class="text-center bg-white/80! dark:bg-zinc-800/80! backdrop-blur-sm border-cyan-100! dark:border-zinc-700! hover:shadow-lg hover:shadow-cyan-200/30 dark:hover:shadow-cyan-900/20 transition-all duration-300 group">
-                    <div class="w-14 h-14 mx-auto rounded-xl bg-linear-to-br from-cyan-500 to-teal-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <flux:icon name="book-open" class="size-7 text-white" />
-                    </div>
-                    <flux:heading class="mt-4">Documentation</flux:heading>
-                    <flux:text size="sm" class="mt-2 text-zinc-500">
-                        Browse our documentation for detailed guides.
-                    </flux:text>
-                    <flux:button href="#" variant="ghost" size="sm" class="mt-4 text-cyan-600! dark:text-cyan-400!">
-                        View Docs
-                    </flux:button>
-                </flux:card>
-            </div>
-        </div>
-    </section>
-
     {{-- Footer --}}
     <footer class="bg-white/40 dark:bg-zinc-900/80 backdrop-blur-sm border-t border-blue-100 dark:border-zinc-700 py-8">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -193,8 +133,8 @@ new class extends Component
                     &copy; {{ date('Y') }} Support Manager. All rights reserved.
                 </flux:text>
                 <div class="flex items-center gap-6">
-                    <flux:link href="#" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Privacy Policy</flux:link>
-                    <flux:link href="#" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Terms of Service</flux:link>
+                    <flux:link href="{{ route('privacy-policy') }}" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Privacy Policy</flux:link>
+                    <flux:link href="{{ route('terms-of-service') }}" variant="subtle" class="text-sm text-blue-600! dark:text-blue-400!">Terms of Service</flux:link>
                 </div>
             </div>
         </div>

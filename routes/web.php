@@ -9,6 +9,8 @@ Route::get('/', function () {
 })->name('home');
 
 Route::view('faq', 'faq')->name('faq');
+Route::view('privacy-policy', 'privacy-policy')->name('privacy-policy');
+Route::view('terms-of-service', 'terms-of-service')->name('terms-of-service');
 Route::get('faq/{faq}', function (\App\Models\Faq $faq) {
     abort_unless($faq->is_published, 404);
 
