@@ -68,10 +68,10 @@ test('non-admin users see original stats and quick actions', function () {
     $response->assertOk()
         ->assertViewHas('isAdmin', false)
         ->assertViewHas('openTickets')
-        ->assertViewHas('inProgressTickets')
+        ->assertViewHas('awaitingResponseCount')
         ->assertViewHas('resolvedTickets')
         ->assertSee('Open Tickets')
-        ->assertSee('In Progress')
+        ->assertSee('Awaiting Your Response')
         ->assertSee('Resolved')
         ->assertSee('Quick Actions')
         ->assertDontSee('Tickets Requiring a Response');

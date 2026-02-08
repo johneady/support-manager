@@ -54,7 +54,7 @@ new class extends Component
             'priority' => $this->priority,
         ]);
 
-        $admins = User::where('is_admin', true)->get();
+        $admins = User::admins();
 
         Notification::send($admins, new NewTicketNotification($ticket));
 

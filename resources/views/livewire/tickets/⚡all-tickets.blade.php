@@ -77,7 +77,7 @@ new class extends Component
         }
 
         $query = Ticket::query()
-            ->with(['user', 'ticketCategory', 'replies' => fn ($q) => $q->latest()->limit(1)])
+            ->with(['user', 'ticketCategory', 'latestReply'])
             ->when($this->search, function ($query) use ($searchIdPrefix) {
                 $query->where(function ($q) use ($searchIdPrefix) {
                     $q->where('subject', 'like', '%'.$this->search.'%')

@@ -6,15 +6,19 @@ use App\Models\User;
 use App\Notifications\NewTicketNotification;
 use App\Notifications\TicketReplyNotification;
 use App\Notifications\TicketClosedNotification;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 new class extends Component
 {
+    use WithPagination;
+
     public string $statusFilter = '';
 
     public bool $showEditModal = false;
@@ -58,15 +62,20 @@ new class extends Component
     #[Validate('required|in:low,medium,high')]
     public string $newPriority = 'medium';
 
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
     #[Computed]
-    public function tickets(): Collection
+    public function tickets(): LengthAwarePaginator
     {
         return Ticket::query()
             ->forUser(auth()->id())
-            ->with(['user', 'ticketCategory', 'replies' => fn ($query) => $query->latest()->limit(1)])
+            ->with(['user', 'ticketCategory', 'latestReply'])
             ->when($this->statusFilter, fn ($query) => $query->where('status', $this->statusFilter))
             ->latest()
-            ->get();
+            ->paginate(10);
     }
 
     #[Computed]
@@ -185,7 +194,7 @@ new class extends Component
             'priority' => $this->newPriority,
         ]);
 
-        $admins = User::where('is_admin', true)->get();
+        $admins = User::admins();
 
         Notification::send($admins, new NewTicketNotification($ticket));
 
@@ -227,7 +236,7 @@ new class extends Component
             'is_from_admin' => false,
         ]);
 
-        $admins = User::where('is_admin', true)->get();
+        $admins = User::admins();
 
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new TicketReplyNotification($reply));
@@ -374,6 +383,10 @@ new class extends Component
                     @endforeach
                 </tbody>
             </table>
+        </div>
+
+        <div class="mt-6">
+            {{ $this->tickets->links() }}
         </div>
     @endif
 

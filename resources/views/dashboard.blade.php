@@ -77,14 +77,14 @@
                             </svg>
                         </div>
                     </div>
-                    <p class="mt-3 text-xs text-zinc-500">Awaiting response</p>
+                    <p class="mt-3 text-xs text-zinc-500">Currently active tickets</p>
                 </div>
 
                 <div class="relative overflow-hidden rounded-xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-pink-100 dark:border-zinc-700 p-5 shadow-sm hover:shadow-lg hover:shadow-pink-200/30 dark:hover:shadow-pink-900/20 transition-all duration-300 group">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">In Progress</p>
-                            <p class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">{{ $inProgressTickets }}</p>
+                            <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Awaiting Your Response</p>
+                            <p class="mt-1 text-3xl font-bold text-zinc-900 dark:text-white">{{ $awaitingResponseCount }}</p>
                         </div>
                         <div class="w-12 h-12 rounded-xl bg-linear-to-br from-pink-500 to-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg class="size-6 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -92,7 +92,7 @@
                             </svg>
                         </div>
                     </div>
-                    <p class="mt-3 text-xs text-zinc-500">Being worked on</p>
+                    <p class="mt-3 text-xs text-zinc-500">Admin has replied</p>
                 </div>
 
                 <div class="relative overflow-hidden rounded-xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-amber-100 dark:border-zinc-700 p-5 shadow-sm hover:shadow-lg hover:shadow-amber-200/30 dark:hover:shadow-amber-900/20 transition-all duration-300 group">

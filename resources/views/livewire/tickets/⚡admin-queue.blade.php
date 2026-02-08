@@ -61,7 +61,7 @@ new class extends Component {
     public function tickets(): LengthAwarePaginator
     {
         return Ticket::query()
-            ->with(['user', 'ticketCategory', 'replies' => fn($q) => $q->latest()->limit(1)])
+            ->with(['user', 'ticketCategory', 'latestReply'])
             ->open()
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
@@ -79,14 +79,9 @@ new class extends Component {
             ->orderByRaw(
                 "
                 CASE
-                    WHEN id IN (
-                        SELECT t.id FROM tickets t
-                        LEFT JOIN ticket_replies tr ON tr.ticket_id = t.id
-                        WHERE t.status = 'open'
-                        GROUP BY t.id
-                        HAVING COUNT(tr.id) = 0
-                           OR MAX(CASE WHEN tr.is_from_admin = 0 THEN tr.id ELSE 0 END) = MAX(tr.id)
-                    ) THEN 0
+                    WHEN NOT EXISTS (SELECT 1 FROM ticket_replies tr WHERE tr.ticket_id = tickets.id)
+                         OR (SELECT tr.is_from_admin FROM ticket_replies tr WHERE tr.ticket_id = tickets.id ORDER BY tr.id DESC LIMIT 1) = 0
+                    THEN 0
                     ELSE 1
                 END ASC
             ",

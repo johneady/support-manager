@@ -6,10 +6,12 @@ use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
 use App\Notifications\UserInvitation;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
@@ -84,6 +86,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isAdmin(): bool
     {
         return (bool) $this->is_admin;
+    }
+
+    /**
+     * Get all admin users, cached for 5 minutes.
+     *
+     * @return Collection<int, User>
+     */
+    public static function admins(): Collection
+    {
+        return Cache::remember('admin_users', 300, fn () => static::where('is_admin', true)->get());
     }
 
     public function sendEmailVerificationNotification(): void

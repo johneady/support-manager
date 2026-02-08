@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Ticket extends Model
 {
@@ -69,6 +70,14 @@ class Ticket extends Model
     }
 
     /**
+     * @return HasOne<TicketReply, $this>
+     */
+    public function latestReply(): HasOne
+    {
+        return $this->hasOne(TicketReply::class)->latestOfMany();
+    }
+
+    /**
      * @param  Builder<Ticket>  $query
      * @return Builder<Ticket>
      */
@@ -117,15 +126,36 @@ class Ticket extends Model
     }
 
     /**
+     * Scope to tickets awaiting the user's response.
+     * The last reply is from an admin, so the ball is in the user's court.
+     *
+     * @param  Builder<Ticket>  $query
+     * @return Builder<Ticket>
+     */
+    public function scopeAwaitingUserResponse(Builder $query): Builder
+    {
+        return $query->whereHas('replies', function (Builder $subQuery) {
+            $subQuery->where('id', function ($latestQuery) {
+                $latestQuery->selectRaw('MAX(id)')
+                    ->from('ticket_replies')
+                    ->whereColumn('ticket_id', 'tickets.id');
+            })->where('is_from_admin', true);
+        });
+    }
+
+    /**
      * Check if this ticket needs an admin response.
      */
     public function needsResponse(): bool
     {
-        // Use eager-loaded replies if available, otherwise query the database
-        if ($this->relationLoaded('replies')) {
-            $replies = $this->replies;
+        if ($this->relationLoaded('latestReply')) {
+            return $this->latestReply === null || ! $this->latestReply->is_from_admin;
+        }
 
-            return $replies->isEmpty() || ! $replies->first()?->is_from_admin;
+        if ($this->relationLoaded('replies')) {
+            $lastReply = $this->replies->sortByDesc('id')->first();
+
+            return $lastReply === null || ! $lastReply->is_from_admin;
         }
 
         $lastReply = $this->replies()->latest()->first();

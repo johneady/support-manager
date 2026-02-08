@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TicketStatus;
 use App\Models\Ticket;
 
 class DashboardController extends Controller
@@ -12,61 +13,50 @@ class DashboardController extends Controller
         $isAdmin = $user->isAdmin();
 
         if ($isAdmin) {
-            // Admin-specific stats
-            $openTicketsCount = Ticket::query()->open()->count();
+            $stats = Ticket::query()
+                ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) as open_count', [TicketStatus::Open->value])
+                ->selectRaw('COUNT(CASE WHEN status = ? AND closed_at >= ? THEN 1 END) as resolved_count', [TicketStatus::Closed->value, now()->subDays(7)])
+                ->first();
 
             $needsResponseCount = Ticket::query()
                 ->open()
                 ->needsResponse()
                 ->count();
 
-            $recentlyResolvedCount = Ticket::query()
-                ->closed()
-                ->where('closed_at', '>=', now()->subDays(7))
-                ->count();
-
-            // Get top 3 tickets needing a response, ordered by priority descending
             $recentTickets = Ticket::query()
                 ->open()
                 ->needsResponse()
-                ->with(['user', 'replies' => fn ($query) => $query->latest()->limit(1)])
+                ->with(['user', 'latestReply'])
                 ->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 END")
                 ->limit(3)
                 ->get();
 
             return view('dashboard', [
                 'isAdmin' => $isAdmin,
-                'openTicketsCount' => $openTicketsCount,
+                'openTicketsCount' => $stats->open_count,
                 'needsResponseCount' => $needsResponseCount,
-                'recentlyResolvedCount' => $recentlyResolvedCount,
+                'recentlyResolvedCount' => $stats->resolved_count,
                 'recentTickets' => $recentTickets,
             ]);
         }
 
-        // Non-admin stats (existing behavior)
-        $openTickets = Ticket::query()
+        $stats = Ticket::query()
+            ->forUser($user->id)
+            ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) as open_count', [TicketStatus::Open->value])
+            ->selectRaw('COUNT(CASE WHEN status = ? AND closed_at >= ? THEN 1 END) as resolved_count', [TicketStatus::Closed->value, now()->startOfMonth()])
+            ->first();
+
+        $awaitingResponseCount = Ticket::query()
             ->forUser($user->id)
             ->open()
-            ->count();
-
-        $inProgressTickets = Ticket::query()
-            ->forUser($user->id)
-            ->open()
-            ->needsResponse()
-            ->count();
-
-        $resolvedTickets = Ticket::query()
-            ->forUser($user->id)
-            ->closed()
-            ->whereMonth('closed_at', now()->month)
-            ->whereYear('closed_at', now()->year)
+            ->awaitingUserResponse()
             ->count();
 
         return view('dashboard', [
             'isAdmin' => $isAdmin,
-            'openTickets' => $openTickets,
-            'inProgressTickets' => $inProgressTickets,
-            'resolvedTickets' => $resolvedTickets,
+            'openTickets' => $stats->open_count,
+            'awaitingResponseCount' => $awaitingResponseCount,
+            'resolvedTickets' => $stats->resolved_count,
         ]);
     }
 }

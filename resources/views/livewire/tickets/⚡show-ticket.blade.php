@@ -4,7 +4,9 @@ use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketReplyNotification;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -27,6 +29,12 @@ new class extends Component
         $this->ticket = $ticket;
     }
 
+    #[Computed]
+    public function replies(): Collection
+    {
+        return $this->ticket->replies()->with('user')->orderBy('created_at')->get();
+    }
+
     public function submitReply(): void
     {
         $this->validate();
@@ -37,13 +45,14 @@ new class extends Component
             'is_from_admin' => false,
         ]);
 
-        $admins = User::where('is_admin', true)->get();
+        $admins = User::admins();
 
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new TicketReplyNotification($reply));
         }
 
         $this->replyBody = '';
+        unset($this->replies);
         $this->ticket->refresh();
 
         session()->flash('success', 'Your reply has been submitted.');
@@ -108,15 +117,11 @@ new class extends Component
     <div class="space-y-4">
         <h3 class="text-base font-semibold text-zinc-900 dark:text-white">Conversation</h3>
 
-        @php
-            $replies = $ticket->replies()->with('user')->orderBy('created_at')->get();
-        @endphp
-
-        @if($replies->isEmpty())
+        @if($this->replies->isEmpty())
             <p class="text-sm text-zinc-500 dark:text-zinc-400">No replies yet. We'll respond as soon as possible.</p>
         @else
             <div class="space-y-4">
-                @foreach($replies as $reply)
+                @foreach($this->replies as $reply)
                     <div wire:key="reply-{{ $reply->id }}" class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 {{ $reply->is_from_admin ? 'bg-blue-50 dark:bg-blue-900/20 ml-8' : 'bg-zinc-50 dark:bg-zinc-800 mr-8' }}">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
