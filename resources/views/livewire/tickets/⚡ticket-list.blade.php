@@ -372,11 +372,16 @@ new class extends Component
         @if($this->editingTicket)
             <div class="space-y-6">
                 <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
-                    <div class="flex items-center gap-3">
-                        <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
-                        <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Edit Ticket</flux:heading>
-                        <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Update your support ticket details and add replies.</flux:text>
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
+                            <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Edit Ticket</flux:heading>
+                        </div>
+                        <flux:badge color="{{ $this->editingTicket->status->color() }}">
+                            {{ $this->editingTicket->status->label() }}
+                        </flux:badge>
                     </div>
+                    <flux:text class="mt-2 text-blue-700 dark:text-blue-300">Update your support ticket details and add replies.</flux:text>
                 </div>
 
                 {{-- Modal Message --}}
@@ -399,20 +404,6 @@ new class extends Component
                         <flux:label>Description</flux:label>
                         <div class="mt-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 whitespace-pre-wrap">{{ $this->editingTicket->description }}</div>
                     </div>
-
-                    <form wire:submit="updateTicket" class="space-y-4">
-                        <flux:select wire:model="editPriority" label="Priority">
-                            @foreach(\App\Enums\TicketPriority::cases() as $priority)
-                                <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-
-                        <div class="flex items-center gap-4 pt-4">
-                            <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
-                                Save Changes
-                            </flux:button>
-                        </div>
-                    </form>
                 </div>
 
                 {{-- Conversation --}}
@@ -424,7 +415,7 @@ new class extends Component
                     @endphp
 
                     @if($replies->isEmpty())
-                        <p class="text-sm text-zinc-500 dark:text-zinc-400">No replies yet. We'll respond as soon as possible.</p>
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400">No responses received yet. Our team will review your request and respond promptly. Please note that adding a reply will not affect your ticket's position in the queue.</p>
                     @else
                         <div class="space-y-4">
                             @foreach($replies as $reply)
