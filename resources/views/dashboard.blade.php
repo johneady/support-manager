@@ -158,7 +158,7 @@
             <div class="relative flex-1 overflow-hidden rounded-xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-blue-100 dark:border-zinc-700 p-6">
                 <h2 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Quick Actions</h2>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <a href="{{ route('tickets.create') }}" class="flex items-center gap-4 p-4 rounded-xl bg-linear-to-br from-blue-50 to-sky-50 dark:from-zinc-700/50 dark:to-zinc-700/30 border border-blue-100 dark:border-zinc-600 hover:shadow-md hover:shadow-blue-200/30 dark:hover:shadow-blue-900/20 transition-all duration-300 group">
+                    <a href="{{ route('tickets.index', ['create' => 'true']) }}" class="flex items-center gap-4 p-4 rounded-xl bg-linear-to-br from-blue-50 to-sky-50 dark:from-zinc-700/50 dark:to-zinc-700/30 border border-blue-100 dark:border-zinc-600 hover:shadow-md hover:shadow-blue-200/30 dark:hover:shadow-blue-900/20 transition-all duration-300 group">
                         <div class="w-10 h-10 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg class="size-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />

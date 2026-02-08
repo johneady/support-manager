@@ -27,6 +27,13 @@ new class extends Component
     #[Locked]
     public ?int $editingTicketId = null;
 
+    public function mount(?string $create = null): void
+    {
+        if ($create === 'true') {
+            $this->openCreateModal();
+        }
+    }
+
     #[Validate('required|in:low,medium,high')]
     public string $editPriority = 'medium';
 
