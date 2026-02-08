@@ -26,7 +26,7 @@ test('ticket list does not have n+1 query issue', function () {
     // Load tickets with eager loading (simulating the ticket-list component)
     $tickets = Ticket::query()
         ->forUser($user->id)
-        ->with(['replies' => fn ($query) => $query->latest()->limit(1)])
+        ->with(['user', 'ticketCategory', 'replies' => fn ($query) => $query->latest()->limit(1)])
         ->latest()
         ->get();
 
@@ -37,10 +37,12 @@ test('ticket list does not have n+1 query issue', function () {
 
     $queries = DB::getQueryLog();
 
-    // We should have exactly 2 queries:
+    // We should have exactly 4 queries:
     // 1. SELECT * FROM tickets WHERE user_id = ? ORDER BY created_at DESC
-    // 2. SELECT * FROM ticket_replies WHERE ticket_id IN (...) ORDER BY created_at DESC LIMIT 1
-    expect($queries)->toHaveCount(2);
+    // 2. SELECT * FROM users WHERE id IN (...)
+    // 3. SELECT * FROM ticket_categories WHERE id IN (...)
+    // 4. SELECT * FROM ticket_replies WHERE ticket_id IN (...) ORDER BY created_at DESC LIMIT 1
+    expect($queries)->toHaveCount(4);
 });
 
 test('admin queue does not have n+1 query issue', function () {

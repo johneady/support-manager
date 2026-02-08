@@ -50,7 +50,7 @@ new class extends Component
     {
         return Ticket::query()
             ->forUser(auth()->id())
-            ->with(['replies' => fn ($query) => $query->latest()->limit(1)])
+            ->with(['user', 'ticketCategory', 'replies' => fn ($query) => $query->latest()->limit(1)])
             ->when($this->statusFilter, fn ($query) => $query->where('status', $this->statusFilter))
             ->latest()
             ->get();
