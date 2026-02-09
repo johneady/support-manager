@@ -39,16 +39,22 @@ new class extends Component
     {
         $this->validate();
 
+        $isAdmin = auth()->user()->isAdmin();
+
         $reply = $this->ticket->replies()->create([
             'user_id' => auth()->id(),
             'body' => $this->replyBody,
-            'is_from_admin' => false,
+            'is_from_admin' => $isAdmin,
         ]);
 
-        $admins = User::admins();
+        if ($isAdmin) {
+            $this->ticket->user->notify(new TicketReplyNotification($reply));
+        } else {
+            $admins = User::admins();
 
-        if ($admins->isNotEmpty()) {
-            Notification::send($admins, new TicketReplyNotification($reply));
+            if ($admins->isNotEmpty()) {
+                Notification::send($admins, new TicketReplyNotification($reply));
+            }
         }
 
         $this->replyBody = '';

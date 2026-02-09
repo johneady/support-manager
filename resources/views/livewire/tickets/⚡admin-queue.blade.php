@@ -159,8 +159,6 @@ new class extends Component {
         unset($this->editingTicket);
 
         $this->replyBody = '';
-        $this->modalMessage = 'Reply sent successfully.';
-        $this->modalMessageType = 'success';
 
         $this->dispatch('ticket-replied');
 
