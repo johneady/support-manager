@@ -126,7 +126,7 @@ new class extends Component
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
                                 <span class="font-medium text-sm {{ $reply->is_from_admin ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-white' }}">
-                                    {{ $reply->user->name }}
+                                    {{ $reply->user?->name ?? ($reply->is_from_admin ? 'System' : 'Unknown') }}
                                 </span>
                                 @if($reply->is_from_admin)
                                     <flux:badge color="sky" size="sm">Support</flux:badge>

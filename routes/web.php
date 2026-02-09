@@ -28,7 +28,7 @@ Route::get('dashboard', DashboardController::class)
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('tickets', 'tickets.index')->name('tickets.index');
     Route::view('tickets/create', 'tickets.create')->name('tickets.create');
-    Route::view('tickets/{ticket}', 'tickets.show')->name('tickets.show');
+    Route::view('tickets/{ticket}', 'tickets.show')->whereNumber('ticket')->name('tickets.show');
 
     Route::middleware('admin')->group(function () {
         Route::get('health', HealthController::class)->name('health');

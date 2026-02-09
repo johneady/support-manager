@@ -44,7 +44,7 @@ class TicketReplyNotification extends Notification implements ShouldQueue
                 ->line('Thank you for using our support system.');
         }
 
-        $url = url('/admin/tickets/'.$ticket->id);
+        $url = url('/tickets/'.$ticket->id);
 
         return (new MailMessage)
             ->subject("Customer Reply to Ticket {$ticket->reference_number}: {$ticket->subject}")
