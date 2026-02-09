@@ -309,33 +309,33 @@ new class extends Component
                 <thead class="bg-zinc-50 dark:bg-zinc-800">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('id')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer">
+                            <button wire:click="sortBy('id')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
                                 Reference
                                 <flux:icon.{{ $this->getSortIcon('id') }} class="size-3" />
                             </button>
                         </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">User</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('subject')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer">
+                            <button wire:click="sortBy('subject')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
                                 Subject
                                 <flux:icon.{{ $this->getSortIcon('subject') }} class="size-3" />
                             </button>
                         </th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Category</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">User</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('status')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer">
+                            <button wire:click="sortBy('status')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
                                 Status
                                 <flux:icon.{{ $this->getSortIcon('status') }} class="size-3" />
                             </button>
                         </th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('priority')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer">
+                            <button wire:click="sortBy('priority')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
                                 Priority
                                 <flux:icon.{{ $this->getSortIcon('priority') }} class="size-3" />
                             </button>
                         </th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('created_at')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer">
+                            <button wire:click="sortBy('created_at')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
                                 Created
                                 <flux:icon.{{ $this->getSortIcon('created_at') }} class="size-3" />
                             </button>
@@ -347,6 +347,10 @@ new class extends Component
                         <tr wire:key="ticket-{{ $ticket->id }}" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50" wire:click="openViewModal({{ $ticket->id }})">
                             <td class="whitespace-nowrap px-4 py-4 text-sm font-mono text-zinc-600 dark:text-zinc-400">
                                 {{ $ticket->reference_number }}
+                            </td>
+                            <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+                                <div>{{ $ticket->user->name }}</div>
+                                <div class="text-xs">{{ $ticket->user->email }}</div>
                             </td>
                             <td class="px-4 py-4">
                                 <span class="font-medium text-zinc-900 dark:text-white">
@@ -361,10 +365,6 @@ new class extends Component
                                 @else
                                     <flux:badge color="zinc" size="sm">No Category</flux:badge>
                                 @endif
-                            </td>
-                            <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                                <div>{{ $ticket->user->name }}</div>
-                                <div class="text-xs">{{ $ticket->user->email }}</div>
                             </td>
                             <td class="whitespace-nowrap px-4 py-4">
                                 <flux:badge color="{{ $ticket->status->color() }}" size="sm">
