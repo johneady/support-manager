@@ -94,9 +94,9 @@ new class extends Component
             'name' => $this->name,
             'email' => $this->email,
             'password' => null,
-            'is_admin' => $this->isAdmin,
         ]);
 
+        $user->is_admin = $this->isAdmin;
         $user->email_verified_at = now();
         $user->save();
 
@@ -146,18 +146,17 @@ new class extends Component
 
         $user = User::findOrFail($this->editingUserId);
 
-        $data = [
+        $user->update([
             'name' => $this->name,
             'email' => $this->email,
-        ];
-
-        if (! $this->isEditingSelf()) {
-            $data['is_admin'] = $this->isAdmin;
-        }
+        ]);
 
         $adminChanged = ! $this->isEditingSelf() && $user->is_admin !== $this->isAdmin;
 
-        $user->update($data);
+        if (! $this->isEditingSelf()) {
+            $user->is_admin = $this->isAdmin;
+            $user->save();
+        }
 
         if ($adminChanged) {
             Cache::forget('admin_users');

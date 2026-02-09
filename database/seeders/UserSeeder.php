@@ -10,17 +10,14 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Create admin users
-        User::factory()->createMany([
-            [
-                'name' => 'Admin User',
-                'email' => 'admin@example.com',
-                'is_admin' => true,
-            ],
-            [
-                'name' => 'Support Manager',
-                'email' => 'support@example.com',
-                'is_admin' => true,
-            ],
+        User::factory()->admin()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+        ]);
+
+        User::factory()->admin()->create([
+            'name' => 'Support Manager',
+            'email' => 'support@example.com',
         ]);
 
         // Create regular users
