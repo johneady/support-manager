@@ -6,6 +6,7 @@ use App\Notifications\TicketReplyNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
@@ -137,6 +138,16 @@ new class extends Component {
     public function submitReply(): void
     {
         $this->validate();
+
+        $key = 'ticket-reply:'.auth()->id();
+
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->addError('replyBody', 'Too many replies. Please try again later.');
+
+            return;
+        }
+
+        RateLimiter::increment($key);
 
         $ticket = Ticket::findOrFail($this->editingTicketId);
 

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Notifications\NewTicketNotification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -45,6 +46,16 @@ new class extends Component
     public function submit(): void
     {
         $this->validate();
+
+        $key = 'create-ticket:'.auth()->id();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $this->addError('subject', 'Too many tickets created. Please try again later.');
+
+            return;
+        }
+
+        RateLimiter::increment($key);
 
         $ticket = Ticket::create([
             'user_id' => auth()->id(),

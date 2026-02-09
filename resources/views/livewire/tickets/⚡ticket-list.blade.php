@@ -9,6 +9,7 @@ use App\Notifications\TicketClosedNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
@@ -186,6 +187,16 @@ new class extends Component
             'newPriority' => 'required|in:low,medium,high',
         ]);
 
+        $key = 'create-ticket:'.auth()->id();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $this->addError('newSubject', 'Too many tickets created. Please try again later.');
+
+            return;
+        }
+
+        RateLimiter::increment($key);
+
         $ticket = Ticket::create([
             'user_id' => auth()->id(),
             'subject' => $this->newSubject,
@@ -227,6 +238,16 @@ new class extends Component
         $this->validate([
             'replyBody' => 'required|string|min:5',
         ]);
+
+        $key = 'ticket-reply:'.auth()->id();
+
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->addError('replyBody', 'Too many replies. Please try again later.');
+
+            return;
+        }
+
+        RateLimiter::increment($key);
 
         $ticket = Ticket::findOrFail($this->editingTicketId);
         $this->authorize('reply', $ticket);
