@@ -229,6 +229,7 @@ new class extends Component
         ]);
 
         $ticket = Ticket::findOrFail($this->editingTicketId);
+        $this->authorize('reply', $ticket);
 
         $reply = $ticket->replies()->create([
             'user_id' => auth()->id(),
@@ -583,7 +584,7 @@ new class extends Component
             <div class="rounded-lg bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
                 <flux:callout variant="warning" icon="exclamation-triangle">
                     <p class="font-medium">Warning</p>
-                    <p class="text-sm mt-1">This action cannot be undone. The ticket will be closed.</p>
+                    <p class="text-sm mt-1">The ticket will be marked as closed. You can contact support if you need it reopened.</p>
                 </flux:callout>
             </div>
 

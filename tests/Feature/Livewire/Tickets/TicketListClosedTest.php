@@ -52,7 +52,7 @@ describe('ticket closing', function () {
             ->assertSee('Close Ticket')
             ->assertSee('Are you sure you want to close this ticket?')
             ->assertSee('Warning')
-            ->assertSee('This action cannot be undone');
+            ->assertSee('The ticket will be marked as closed');
     });
 
     it('closes close modal when close button is clicked', function () {

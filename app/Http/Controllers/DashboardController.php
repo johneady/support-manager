@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke()
+    public function __invoke(): View
     {
         $user = auth()->user();
         $isAdmin = $user->isAdmin();
@@ -27,7 +29,7 @@ class DashboardController extends Controller
                 ->open()
                 ->needsResponse()
                 ->with(['user', 'latestReply'])
-                ->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 END")
+                ->orderByRaw(TicketPriority::orderBySql())
                 ->limit(3)
                 ->get();
 

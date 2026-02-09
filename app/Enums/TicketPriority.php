@@ -25,4 +25,25 @@ enum TicketPriority: string
             self::High => 'red',
         };
     }
+
+    public function sortOrder(): int
+    {
+        return match ($this) {
+            self::High => 1,
+            self::Medium => 2,
+            self::Low => 3,
+        };
+    }
+
+    /**
+     * Generate a SQL CASE expression for ordering by priority.
+     */
+    public static function orderBySql(): string
+    {
+        $cases = collect(self::cases())
+            ->map(fn (self $p) => "WHEN '{$p->value}' THEN {$p->sortOrder()}")
+            ->implode(' ');
+
+        return "CASE priority {$cases} END";
+    }
 }

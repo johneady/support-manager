@@ -26,18 +26,20 @@ Route::get('dashboard', DashboardController::class)
     ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('health', HealthController::class)->name('health');
     Route::view('tickets', 'tickets.index')->name('tickets.index');
     Route::view('tickets/create', 'tickets.create')->name('tickets.create');
-    Route::view('tickets/queue', 'tickets.admin-queue')->name('tickets.queue');
-    Route::view('tickets/all', 'tickets.all')->name('tickets.all');
     Route::view('tickets/{ticket}', 'tickets.show')->name('tickets.show');
 
-    Route::view('admin/users', 'admin.users')->name('admin.users');
-    Route::view('admin/categories', 'admin.categories')->name('admin.categories');
-    Route::view('admin/faqs', 'admin.faqs')->name('admin.faqs');
-    Route::view('admin/faqs/create', 'admin.faqs-create')->name('admin.faqs.create');
-    Route::view('admin/faqs/{faq}/edit', 'admin.faqs-edit')->name('admin.faqs.edit');
+    Route::middleware('admin')->group(function () {
+        Route::get('health', HealthController::class)->name('health');
+        Route::view('tickets/queue', 'tickets.admin-queue')->name('tickets.queue');
+        Route::view('tickets/all', 'tickets.all')->name('tickets.all');
+        Route::view('admin/users', 'admin.users')->name('admin.users');
+        Route::view('admin/categories', 'admin.categories')->name('admin.categories');
+        Route::view('admin/faqs', 'admin.faqs')->name('admin.faqs');
+        Route::view('admin/faqs/create', 'admin.faqs-create')->name('admin.faqs.create');
+        Route::view('admin/faqs/{faq}/edit', 'admin.faqs-edit')->name('admin.faqs.edit');
+    });
 });
 
 require __DIR__.'/settings.php';

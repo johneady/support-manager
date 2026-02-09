@@ -103,7 +103,7 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->notify(new QueuedVerifyEmail);
     }
 
-    public function sendPasswordResetNotification($token): void
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
     {
         $this->notify(new QueuedResetPassword($token));
     }

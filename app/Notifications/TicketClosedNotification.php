@@ -33,7 +33,7 @@ class TicketClosedNotification extends Notification implements ShouldQueue
             ->subject("Ticket {$this->ticket->reference_number} Closed: {$this->ticket->subject}")
             ->greeting("Hello {$notifiable->name},")
             ->line("**Reference Number:** {$this->ticket->reference_number}")
-            ->line('Your support ticket has been closed.')
+            ->line("Your support ticket was closed by {$this->closedByName}.")
             ->line("**Ticket:** {$this->ticket->subject}")
             ->line('If you have any questions or need further assistance, please create a new ticket.')
             ->action('View Ticket', $url)

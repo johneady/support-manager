@@ -13,20 +13,14 @@ class CloseInactiveTickets implements ShouldQueue
     use Queueable;
 
     /**
-     * Create a new job instance.
-     */
-    public function __construct()
-    {
-        //
-    }
-
-    /**
-     * Execute the job.
+     * Close open tickets that have had no activity for 7 days after the last admin reply.
+     *
+     * A ticket is considered inactive when:
+     * - It has at least one admin reply older than 7 days
+     * - No replies (from anyone) have been added in the last 7 days
      */
     public function handle(): void
     {
-        // Find open tickets where the last reply was from an admin
-        // and was created more than 7 days ago
         Ticket::query()
             ->open()
             ->whereHas('replies', function ($query) {
@@ -36,7 +30,7 @@ class CloseInactiveTickets implements ShouldQueue
             ->whereDoesntHave('replies', function ($query) {
                 $query->where('created_at', '>', now()->subDays(7));
             })
-            ->with(['user', 'replies'])
+            ->with(['user', 'replies' => fn ($q) => $q->where('is_from_admin', true)->latest()->limit(1)])
             ->chunk(100, function ($tickets) {
                 foreach ($tickets as $ticket) {
                     $this->closeTicket($ticket);
@@ -49,11 +43,7 @@ class CloseInactiveTickets implements ShouldQueue
      */
     protected function closeTicket(Ticket $ticket): void
     {
-        // Get the last admin reply to use as the user for the automated reply
-        $lastAdminReply = $ticket->replies()
-            ->where('is_from_admin', true)
-            ->latest()
-            ->first();
+        $lastAdminReply = $ticket->replies->first();
 
         // Add an automated reply explaining why the ticket was closed
         TicketReply::create([

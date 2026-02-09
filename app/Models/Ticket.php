@@ -31,7 +31,7 @@ class Ticket extends Model
     {
         static::created(function (Ticket $ticket) {
             if (empty($ticket->ticket_reference_number)) {
-                $ticket->update(['ticket_reference_number' => sprintf('TX-1138-%06d', $ticket->id)]);
+                $ticket->updateQuietly(['ticket_reference_number' => sprintf('TX-1138-%06d', $ticket->id)]);
             }
         });
     }
@@ -180,10 +180,10 @@ class Ticket extends Model
     }
 
     /**
-     * Get the ticket's reference number.
+     * Get the ticket's reference number from the stored column.
      */
     public function getReferenceNumberAttribute(): string
     {
-        return sprintf('TX-1138-%06d', $this->id);
+        return $this->ticket_reference_number ?? sprintf('TX-1138-%06d', $this->id);
     }
 }

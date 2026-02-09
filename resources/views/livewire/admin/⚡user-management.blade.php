@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -101,6 +102,10 @@ new class extends Component
 
         $user->sendInvitationNotification(auth()->user()->name);
 
+        if ($this->isAdmin) {
+            Cache::forget('admin_users');
+        }
+
         unset($this->users);
 
         $this->closeCreateModal();
@@ -150,7 +155,13 @@ new class extends Component
             $data['is_admin'] = $this->isAdmin;
         }
 
+        $adminChanged = ! $this->isEditingSelf() && $user->is_admin !== $this->isAdmin;
+
         $user->update($data);
+
+        if ($adminChanged) {
+            Cache::forget('admin_users');
+        }
 
         unset($this->users);
 
@@ -200,7 +211,13 @@ new class extends Component
             return;
         }
 
+        $wasAdmin = $user->is_admin;
+
         $user->delete();
+
+        if ($wasAdmin) {
+            Cache::forget('admin_users');
+        }
 
         unset($this->users);
 
