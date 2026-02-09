@@ -59,6 +59,7 @@ new class extends Component
     public function users(): LengthAwarePaginator
     {
         return User::query()
+            ->withCount('tickets')
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%'.$this->search.'%')
@@ -303,7 +304,7 @@ new class extends Component
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Name</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Email</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Role</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Tickets</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Created</th>
                         <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
                     </tr>
@@ -325,11 +326,7 @@ new class extends Component
                                 @endif
                             </td>
                             <td class="whitespace-nowrap px-4 py-4">
-                                @if($user->getInvitationStatus() === 'pending')
-                                    <flux:badge color="amber" size="sm">Pending</flux:badge>
-                                @elseif($user->getInvitationStatus() === 'accepted')
-                                    <flux:badge color="emerald" size="sm">Accepted</flux:badge>
-                                @endif
+                                <flux:badge color="blue" size="sm">{{ $user->tickets_count }}</flux:badge>
                             </td>
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                                 {{ $user->created_at->format('M j, Y') }}
