@@ -131,7 +131,7 @@ return [
     |
     */
 
-    'invitation_token_expiration_days' => 7,
+    'invitation_token_expiration_days' => 3,
 
     /*
     |--------------------------------------------------------------------------
