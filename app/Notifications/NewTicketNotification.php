@@ -25,7 +25,7 @@ class NewTicketNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $priorityLabel = $this->ticket->priority->label();
-        $adminUrl = url('/admin/tickets/'.$this->ticket->id);
+        $adminUrl = route('tickets.queue');
 
         return (new MailMessage)
             ->subject("New Support Ticket: {$this->ticket->reference_number} - {$this->ticket->subject}")
@@ -34,7 +34,7 @@ class NewTicketNotification extends Notification implements ShouldQueue
             ->line("A new support ticket has been submitted by {$this->ticket->user->name}.")
             ->line("**Subject:** {$this->ticket->subject}")
             ->line("**Priority:** {$priorityLabel}")
-            ->action('View Ticket', $adminUrl)
+            ->action('View Tickets', $adminUrl)
             ->line('Please review and respond to this ticket.');
     }
 

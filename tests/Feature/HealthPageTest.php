@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 
 test('health page loads', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
 
     $this->actingAs($user)
         ->get(route('health'))
@@ -16,7 +16,7 @@ test('health page loads', function () {
 });
 
 test('health page triggers check with fresh parameter', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     Artisan::spy();
 
     $this->actingAs($user)
