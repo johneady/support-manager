@@ -16,7 +16,7 @@ new class extends Component
     #[Validate('required|string|max:255')]
     public string $subject = '';
 
-    #[Validate('required|string|min:10')]
+    #[Validate('required|string|min:10|max:5000')]
     public string $description = '';
 
     #[Validate('required|exists:ticket_categories,id')]

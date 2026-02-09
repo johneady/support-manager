@@ -48,13 +48,13 @@ new class extends Component
     #[Validate('required|in:low,medium,high')]
     public string $editPriority = 'medium';
 
-    #[Validate('required|string|min:5')]
+    #[Validate('required|string|min:5|max:5000')]
     public string $replyBody = '';
 
     #[Validate('required|string|max:255')]
     public string $newSubject = '';
 
-    #[Validate('required|string|min:10')]
+    #[Validate('required|string|min:10|max:5000')]
     public string $newDescription = '';
 
     #[Validate('required|exists:ticket_categories,id')]
@@ -182,7 +182,7 @@ new class extends Component
     {
         $this->validate([
             'newSubject' => 'required|string|max:255',
-            'newDescription' => 'required|string|min:10',
+            'newDescription' => 'required|string|min:10|max:5000',
             'newTicketCategoryId' => 'required|exists:ticket_categories,id',
             'newPriority' => 'required|in:low,medium,high',
         ]);
@@ -236,7 +236,7 @@ new class extends Component
     public function submitReply(): void
     {
         $this->validate([
-            'replyBody' => 'required|string|min:5',
+            'replyBody' => 'required|string|min:5|max:5000',
         ]);
 
         $key = 'ticket-reply:'.auth()->id();

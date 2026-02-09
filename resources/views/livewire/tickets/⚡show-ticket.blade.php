@@ -17,7 +17,7 @@ new class extends Component
     #[Locked]
     public Ticket $ticket;
 
-    #[Validate('required|string|min:5')]
+    #[Validate('required|string|min:5|max:5000')]
     public string $replyBody = '';
 
     public function mount(Ticket $ticket): void

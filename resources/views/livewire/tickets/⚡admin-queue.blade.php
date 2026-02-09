@@ -29,7 +29,7 @@ new class extends Component {
     #[Locked]
     public ?int $editingTicketId = null;
 
-    #[Validate('required|string|min:5')]
+    #[Validate('required|string|min:5|max:5000')]
     public string $replyBody = '';
 
     public ?string $newStatus = null;
