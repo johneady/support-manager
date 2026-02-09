@@ -20,7 +20,7 @@ new class extends Component
 
     public ?string $categoryFilter = null;
 
-    public ?string $statusFilter = 'closed';
+    public ?string $statusFilter = null;
 
     public ?string $priorityFilter = null;
 

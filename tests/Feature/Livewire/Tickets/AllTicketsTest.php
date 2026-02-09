@@ -47,14 +47,14 @@ describe('all tickets page', function () {
             ->assertSee('Closed Ticket For Admin');
     });
 
-    it('shows default filter of closed tickets', function () {
+    it('shows all tickets by default', function () {
         $openTicket = Ticket::factory()->create(['user_id' => $this->user->id, 'status' => 'open', 'subject' => 'Open Ticket Subject']);
         $closedTicket = Ticket::factory()->closed()->create(['user_id' => $this->user->id, 'subject' => 'Closed Ticket Subject']);
 
         Livewire::actingAs($this->admin)
             ->test('tickets.all-tickets')
             ->assertSee('Closed Ticket Subject')
-            ->assertDontSee('Open Ticket Subject');
+            ->assertSee('Open Ticket Subject');
     });
 
     it('search filters by subject', function () {
