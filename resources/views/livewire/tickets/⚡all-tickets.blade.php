@@ -2,10 +2,13 @@
 
 use App\Models\Ticket;
 use App\Models\TicketCategory;
+use App\Notifications\TicketReplyNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Livewire\Attributes\Locked;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -33,6 +36,13 @@ new class extends Component
 
     #[Locked]
     public ?int $viewingTicketId = null;
+
+    #[Validate('required|string|min:5|max:5000')]
+    public string $replyBody = '';
+
+    public ?string $newStatus = null;
+
+    public ?string $newPriority = null;
 
     public function mount(): void
     {
@@ -127,6 +137,9 @@ new class extends Component
     public function openViewModal(Ticket $ticket): void
     {
         $this->viewingTicketId = $ticket->id;
+        $this->replyBody = '';
+        $this->newStatus = $ticket->status->value;
+        $this->newPriority = $ticket->priority->value;
         $this->modalMessage = '';
         $this->modalMessageType = '';
         $this->showViewModal = true;
@@ -136,7 +149,8 @@ new class extends Component
     {
         $this->showViewModal = false;
         $this->viewingTicketId = null;
-        $this->reset(['modalMessage', 'modalMessageType']);
+        $this->reset(['replyBody', 'newStatus', 'newPriority', 'modalMessage', 'modalMessageType']);
+        $this->resetValidation();
     }
 
     public function sortBy(string $column): void
@@ -162,6 +176,45 @@ new class extends Component
         $this->modalMessageType = 'success';
 
         session()->flash('success', 'Ticket reopened successfully.');
+    }
+
+    public function submitReply(): void
+    {
+        $this->validate();
+
+        $key = 'ticket-reply:'.auth()->id();
+
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->addError('replyBody', 'Too many replies. Please try again later.');
+
+            return;
+        }
+
+        RateLimiter::increment($key);
+
+        $ticket = Ticket::findOrFail($this->viewingTicketId);
+
+        $reply = $ticket->replies()->create([
+            'user_id' => auth()->id(),
+            'body' => $this->replyBody,
+            'is_from_admin' => true,
+        ]);
+
+        $ticket->update([
+            'status' => $this->newStatus,
+            'priority' => $this->newPriority,
+            'closed_at' => $this->newStatus === 'closed' ? now() : null,
+        ]);
+
+        $ticket->user->notify(new TicketReplyNotification($reply));
+
+        unset($this->tickets);
+        unset($this->viewingTicket);
+
+        $this->replyBody = '';
+
+        $this->closeViewModal();
+        session()->flash('success', 'Reply sent successfully.');
     }
 
     public function getSortIcon(string $column): string
@@ -442,23 +495,59 @@ new class extends Component
                     @endif
                 </div>
 
-                {{-- Reopen Button --}}
-                @if($this->viewingTicket->status->value === 'closed')
-                    <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                {{-- Reply Form / Reopen --}}
+                @if($this->viewingTicket->status->value === 'open')
+                    <div class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-6">
+                        <h3 class="text-base font-semibold text-blue-900 dark:text-blue-100 mb-4">Send Reply</h3>
+                        <form wire:submit="submitReply" class="space-y-4">
+                            <flux:field>
+                                <flux:label>Your Reply</flux:label>
+                                <flux:textarea wire:model="replyBody" placeholder="Type your response..." rows="4" />
+                                <flux:error name="replyBody" />
+                            </flux:field>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <flux:field>
+                                    <flux:label>Status</flux:label>
+                                    <flux:select wire:model="newStatus">
+                                        @foreach(\App\Enums\TicketStatus::cases() as $status)
+                                            <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                                        @endforeach
+                                    </flux:select>
+                                </flux:field>
+                                <flux:field>
+                                    <flux:label>Priority</flux:label>
+                                    <flux:select wire:model="newPriority">
+                                        @foreach(\App\Enums\TicketPriority::cases() as $priority)
+                                            <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
+                                        @endforeach
+                                    </flux:select>
+                                </flux:field>
+                            </div>
+
+                            <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
+                                Send Reply
+                            </flux:button>
+                        </form>
+                    </div>
+                @else
+                    <div class="rounded-lg bg-zinc-100 dark:bg-zinc-800 p-4 text-center">
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                            This ticket is closed.
+                        </p>
+                    </div>
+                @endif
+
+                <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                    @if($this->viewingTicket->status->value === 'closed')
                         <flux:button wire:click="reopenTicket({{ $this->viewingTicket->id }})" variant="primary" class="bg-green-600 hover:bg-green-700">
                             Reopen Ticket
                         </flux:button>
-                        <flux:button type="button" wire:click="closeViewModal" variant="ghost">
-                            Close
-                        </flux:button>
-                    </div>
-                @else
-                    <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-                        <flux:button type="button" wire:click="closeViewModal" variant="ghost">
-                            Close
-                        </flux:button>
-                    </div>
-                @endif
+                    @endif
+                    <flux:button type="button" wire:click="closeViewModal" variant="ghost">
+                        Close
+                    </flux:button>
+                </div>
             </div>
         @endif
     </flux:modal>

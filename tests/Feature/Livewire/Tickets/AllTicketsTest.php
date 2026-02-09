@@ -1,11 +1,14 @@
 <?php
 
+use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketReply;
 use App\Models\User;
+use App\Notifications\TicketReplyNotification;
 use Database\Seeders\TicketCategorySeeder;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -386,5 +389,129 @@ describe('all tickets page', function () {
             ->test('tickets.all-tickets')
             ->set('statusFilter', '')
             ->assertSee('No tickets');
+    });
+});
+
+describe('all tickets reply functionality', function () {
+    it('can submit a reply to an open ticket', function () {
+        Notification::fake();
+
+        $ticket = Ticket::factory()->open()->create(['user_id' => $this->user->id]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->set('replyBody', 'This is an admin reply from all tickets')
+            ->call('submitReply')
+            ->assertHasNoErrors();
+
+        expect($ticket->replies()->count())->toBe(1)
+            ->and($ticket->replies()->first()->body)->toBe('This is an admin reply from all tickets')
+            ->and($ticket->replies()->first()->is_from_admin)->toBeTrue();
+
+        Notification::assertSentTo($ticket->user, TicketReplyNotification::class);
+    });
+
+    it('can update ticket status when replying', function () {
+        Notification::fake();
+
+        $ticket = Ticket::factory()->open()->create(['user_id' => $this->user->id]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->set('replyBody', 'Closing this ticket now')
+            ->set('newStatus', 'closed')
+            ->call('submitReply')
+            ->assertHasNoErrors();
+
+        expect($ticket->fresh()->status)->toBe(TicketStatus::Closed)
+            ->and($ticket->fresh()->closed_at)->not->toBeNull();
+    });
+
+    it('can update ticket priority when replying', function () {
+        Notification::fake();
+
+        $ticket = Ticket::factory()->open()->create([
+            'user_id' => $this->user->id,
+            'priority' => 'low',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->set('replyBody', 'Escalating priority')
+            ->set('newPriority', 'high')
+            ->call('submitReply')
+            ->assertHasNoErrors();
+
+        expect($ticket->fresh()->priority)->toBe(TicketPriority::High);
+    });
+
+    it('validates reply body is required', function () {
+        $ticket = Ticket::factory()->open()->create(['user_id' => $this->user->id]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->set('replyBody', '')
+            ->call('submitReply')
+            ->assertHasErrors(['replyBody' => 'required']);
+    });
+
+    it('validates reply body minimum length', function () {
+        $ticket = Ticket::factory()->open()->create(['user_id' => $this->user->id]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->set('replyBody', 'Hi')
+            ->call('submitReply')
+            ->assertHasErrors(['replyBody' => 'min']);
+    });
+
+    it('shows reply form for open tickets in modal', function () {
+        $ticket = Ticket::factory()->open()->create(['user_id' => $this->user->id]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->assertSee('Send Reply');
+    });
+
+    it('does not show reply form for closed tickets in modal', function () {
+        $ticket = Ticket::factory()->closed()->create(['user_id' => $this->user->id]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->assertDontSee('Send Reply')
+            ->assertSee('This ticket is closed.');
+    });
+
+    it('initializes status and priority from ticket when opening modal', function () {
+        $ticket = Ticket::factory()->open()->create([
+            'user_id' => $this->user->id,
+            'priority' => 'high',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->assertSet('newStatus', 'open')
+            ->assertSet('newPriority', 'high');
+    });
+
+    it('resets reply state when closing modal', function () {
+        $ticket = Ticket::factory()->open()->create(['user_id' => $this->user->id]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->set('replyBody', 'Some text')
+            ->call('closeViewModal')
+            ->assertSet('replyBody', '')
+            ->assertSet('newStatus', null)
+            ->assertSet('newPriority', null);
     });
 });
