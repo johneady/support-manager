@@ -35,7 +35,8 @@ new class extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('question', 'like', '%'.$this->search.'%')
-                        ->orWhere('answer', 'like', '%'.$this->search.'%');
+                        ->orWhere('answer', 'like', '%'.$this->search.'%')
+                        ->orWhere('slug', 'like', '%'.$this->search.'%');
                 });
             })
             ->ordered()
@@ -129,7 +130,7 @@ new class extends Component
         <div class="w-full sm:w-80">
             <flux:input
                 wire:model.live.debounce.300ms="search"
-                placeholder="Search questions or answers..."
+                placeholder="Search questions, answers, or slugs..."
                 icon="magnifying-glass"
             />
         </div>
@@ -154,6 +155,7 @@ new class extends Component
                     <tr>
                         <th class="w-10 px-2 py-3"></th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Question</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Slug</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
                         <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
                     </tr>
@@ -173,6 +175,9 @@ new class extends Component
                                 <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                                     {{ Str::limit($faq->answer, 100) }}
                                 </div>
+                            </td>
+                            <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ $faq->slug }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-4" onclick="event.stopPropagation()">
                                 <button wire:click="togglePublished({{ $faq->id }})" class="cursor-pointer">

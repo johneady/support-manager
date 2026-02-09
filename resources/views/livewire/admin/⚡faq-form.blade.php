@@ -13,6 +13,9 @@ new class extends Component
     #[Validate('required|string|max:500')]
     public string $question = '';
 
+    #[Validate('required|string|max:255|unique:faqs,slug')]
+    public string $slug = '';
+
     #[Validate('required|string')]
     public string $answer = '';
 
@@ -29,6 +32,7 @@ new class extends Component
             $faq = Faq::findOrFail($faqId);
             $this->faqId = $faq->id;
             $this->question = $faq->question;
+            $this->slug = $faq->slug;
             $this->answer = $faq->answer;
             $this->isPublished = $faq->is_published;
             $this->sortOrder = $faq->sort_order;
@@ -44,12 +48,18 @@ new class extends Component
 
     public function save(): void
     {
-        $this->validate();
+        $this->validate([
+            'question' => 'required|string|max:500',
+            'slug' => 'required|string|max:255|unique:faqs,slug'.($this->isEditing() ? ','.$this->faqId : ''),
+            'answer' => 'required|string',
+            'sortOrder' => 'integer|min:0',
+        ]);
 
         if ($this->isEditing()) {
             $faq = Faq::findOrFail($this->faqId);
             $faq->update([
                 'question' => $this->question,
+                'slug' => $this->slug,
                 'answer' => $this->answer,
                 'is_published' => $this->isPublished,
                 'sort_order' => $this->sortOrder,
@@ -58,6 +68,7 @@ new class extends Component
         } else {
             Faq::create([
                 'question' => $this->question,
+                'slug' => $this->slug,
                 'answer' => $this->answer,
                 'is_published' => $this->isPublished,
                 'sort_order' => $this->sortOrder,
@@ -93,8 +104,21 @@ new class extends Component
         <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800 space-y-4">
             <flux:field>
                 <flux:label>Question</flux:label>
-                <flux:input wire:model="question" placeholder="What is the frequently asked question?" />
+                <flux:input
+                    wire:model="question"
+                    placeholder="What is the frequently asked question?"
+                    @if(!$this->isEditing())
+                        x-on:input="$wire.set('slug', $el.value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-'))"
+                    @endif
+                />
                 <flux:error name="question" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Slug</flux:label>
+                <flux:input wire:model="slug" placeholder="URL-friendly identifier" />
+                <flux:text size="sm" class="text-zinc-500">Used in URLs and database queries. Must be unique.</flux:text>
+                <flux:error name="slug" />
             </flux:field>
 
             <flux:field>

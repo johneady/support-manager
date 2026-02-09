@@ -57,6 +57,7 @@ describe('faq creation', function () {
             ->test('admin.faq-form')
             ->assertSet('faqId', null)
             ->assertSet('question', '')
+            ->assertSet('slug', '')
             ->assertSet('answer', '')
             ->assertSet('isPublished', false);
     });
@@ -74,6 +75,7 @@ describe('faq creation', function () {
         Livewire::actingAs($this->admin)
             ->test('admin.faq-form')
             ->set('question', 'What is the refund policy?')
+            ->set('slug', 'refund-policy')
             ->set('answer', 'Refunds are processed within 30 days.')
             ->set('isPublished', true)
             ->set('sortOrder', 5)
@@ -83,6 +85,7 @@ describe('faq creation', function () {
 
         $this->assertDatabaseHas('faqs', [
             'question' => 'What is the refund policy?',
+            'slug' => 'refund-policy',
             'answer' => 'Refunds are processed within 30 days.',
             'is_published' => true,
             'sort_order' => 5,
@@ -93,12 +96,14 @@ describe('faq creation', function () {
         Livewire::actingAs($this->admin)
             ->test('admin.faq-form')
             ->set('question', 'Draft question')
+            ->set('slug', 'draft-question')
             ->set('answer', 'Draft answer')
             ->call('save')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('faqs', [
             'question' => 'Draft question',
+            'slug' => 'draft-question',
             'is_published' => false,
         ]);
     });
@@ -116,9 +121,42 @@ describe('faq creation', function () {
         Livewire::actingAs($this->admin)
             ->test('admin.faq-form')
             ->set('question', str_repeat('a', 501))
+            ->set('slug', 'valid-slug')
             ->set('answer', 'Valid answer')
             ->call('save')
             ->assertHasErrors(['question']);
+    });
+
+    it('validates slug is required', function () {
+        Livewire::actingAs($this->admin)
+            ->test('admin.faq-form')
+            ->set('question', 'Valid question')
+            ->set('slug', '')
+            ->set('answer', 'Valid answer')
+            ->call('save')
+            ->assertHasErrors(['slug']);
+    });
+
+    it('validates slug is unique', function () {
+        Faq::factory()->create(['slug' => 'existing-slug']);
+
+        Livewire::actingAs($this->admin)
+            ->test('admin.faq-form')
+            ->set('question', 'New question')
+            ->set('slug', 'existing-slug')
+            ->set('answer', 'Valid answer')
+            ->call('save')
+            ->assertHasErrors(['slug']);
+    });
+
+    it('validates slug max length', function () {
+        Livewire::actingAs($this->admin)
+            ->test('admin.faq-form')
+            ->set('question', 'Valid question')
+            ->set('slug', str_repeat('a', 256))
+            ->set('answer', 'Valid answer')
+            ->call('save')
+            ->assertHasErrors(['slug']);
     });
 });
 
@@ -126,6 +164,7 @@ describe('faq editing', function () {
     it('renders edit form with existing faq data', function () {
         $faq = Faq::factory()->create([
             'question' => 'Edit Me',
+            'slug' => 'edit-me',
             'answer' => 'Some answer',
             'is_published' => true,
             'sort_order' => 7,
@@ -135,6 +174,7 @@ describe('faq editing', function () {
             ->test('admin.faq-form', ['faqId' => $faq->id])
             ->assertSet('faqId', $faq->id)
             ->assertSet('question', 'Edit Me')
+            ->assertSet('slug', 'edit-me')
             ->assertSet('answer', 'Some answer')
             ->assertSet('isPublished', true)
             ->assertSet('sortOrder', 7);
@@ -143,12 +183,14 @@ describe('faq editing', function () {
     it('updates faq details and redirects to list', function () {
         $faq = Faq::factory()->create([
             'question' => 'Old Question',
+            'slug' => 'old-question',
             'answer' => 'Old Answer',
         ]);
 
         Livewire::actingAs($this->admin)
             ->test('admin.faq-form', ['faqId' => $faq->id])
             ->set('question', 'New Question')
+            ->set('slug', 'new-question')
             ->set('answer', 'New Answer')
             ->call('save')
             ->assertHasNoErrors()
@@ -157,6 +199,7 @@ describe('faq editing', function () {
         $this->assertDatabaseHas('faqs', [
             'id' => $faq->id,
             'question' => 'New Question',
+            'slug' => 'new-question',
             'answer' => 'New Answer',
         ]);
     });
