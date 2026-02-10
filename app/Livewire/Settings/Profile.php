@@ -5,6 +5,7 @@ namespace App\Livewire\Settings;
 use App\Concerns\ProfileValidationRules;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -58,6 +59,16 @@ class Profile extends Component
 
             return;
         }
+
+        $key = 'verify-email:'.$user->id;
+
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            $this->addError('email', 'Too many verification attempts. Please try again later.');
+
+            return;
+        }
+
+        RateLimiter::increment($key, 3600);
 
         $user->sendEmailVerificationNotification();
 
