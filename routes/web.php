@@ -8,11 +8,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-// Temporary test route to demonstrate error exposure
-Route::get('/test-error', function () {
-    throw new Exception('This is a test error to demonstrate what users see');
-})->name('test.error');
-
 Route::view('faq', 'faq')->name('faq');
 Route::view('privacy-policy', 'privacy-policy')->name('privacy-policy');
 Route::view('terms-of-service', 'terms-of-service')->name('terms-of-service');

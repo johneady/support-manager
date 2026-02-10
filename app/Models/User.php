@@ -159,7 +159,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isInvitationValid(string $token): bool
     {
-        if ($this->invitation_token !== $token) {
+        if ($this->invitation_token === null || ! hash_equals($this->invitation_token, $token)) {
             return false;
         }
 
