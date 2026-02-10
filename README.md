@@ -1,8 +1,8 @@
 # Support Manager
 
-A modern, open-source support ticket management system built with Laravel 12, Livewire, and Flux UI. Manage customer support tickets, FAQs, and team members through a clean, reactive interface.
+A modern, open-source support ticket management system built with Laravel 12, Livewire, and Flux UI. Manage customer support tickets, FAQs, and team members through a clean, interface.
 
-I created this project simply becuse I needed a very simple ticket system that met my needs (single developer). It supports multiple developers, but I didn't add any features like ticket assignment, as I'm the only user. All tickets needing a response are in a single queue for all admins to see and manage. As it's only me, I never added the ability to assign tickets. That could be a future feature.
+I created this project simply becuse I needed a very simple ticket system that met my needs (single developer). It supports multiple admins, but I didn't add features like ticket assignment, as I'm the only user! All tickets needing a response are in a single queue for all admins to see and manage. As it's only me, I never added the ability to assign tickets. Maybe that can be a future enhancement.
 
 ## Features
 
@@ -26,7 +26,7 @@ I created this project simply becuse I needed a very simple ticket system that m
 | Frontend | Livewire 4, Flux UI Free, Tailwind CSS 4 |
 | Rich Text | Tiptap Editor |
 | Authentication | Laravel Fortify |
-| Database | SQLite (default), MySQL/PostgreSQL supported |
+| Database | SQLite, MySQL, PostgreSQL supported |
 | Testing | Pest 4 |
 | Code Style | Laravel Pint |
 | Asset Bundling | Vite 7 |
@@ -37,7 +37,7 @@ I created this project simply becuse I needed a very simple ticket system that m
 - Composer
 - Node.js >= 22
 - NPM
-- SQLite (default) or MySQL/PostgreSQL
+- SQLite, MySQL, PostgreSQL
 
 ## Installation
 
@@ -48,44 +48,21 @@ git clone https://github.com/johneady/support-manager.git
 cd support-manager
 ```
 
-### 2. Install dependencies
+### 2. Install and setup
 
-Install all dependencies:
-
-```bash
-composer install
-npm install
-```
-
-### 3. Environment setup
+Run the composer setup command which handles dependency installation, environment configuration, database migration, and frontend asset building:
 
 ```bash
-cp .env.example .env
-php artisan key:generate
+composer setup
 ```
 
-### 4. Database setup
-
-The default configuration uses SQLite. The database file will be created automatically:
-
-```bash
-touch database/database.sqlite
-php artisan migrate
-```
-
-Optionally seed the database with sample data:
+Optionally seed the database with sample data. For development, this simplifies the login flow by creating an admin user with simple credentials. This project leverages the [spatie/laravel-login-link](https://github.com/spatie/laravel-login-link) package to streamline development logins via one-click authentication links. **Security Warning:** Never run the seeder in production, as this creates a significant security vulnerability with predictable credentials.
 
 ```bash
 php artisan db:seed
 ```
 
-### 5. Build frontend assets
-
-```bash
-npm run build
-```
-
-### 6. Start the application
+### 3. Start the application
 
 For development with all services (server, queue worker, log viewer, and Vite):
 
@@ -133,8 +110,6 @@ To create an admin user, register a new account and then promote it via Tinker:
 php artisan tinker
 >>> User::where('email', 'admin@example.com')->update(['is_admin' => true]);
 ```
-
-Or use the invitation system from an existing admin account.
 
 ## Testing
 
