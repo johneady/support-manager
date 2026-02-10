@@ -105,6 +105,10 @@ window.tiptapEditorInit = (wireModelName = '') => {
                 editor?.chain().focus().extendMarkRange('link').unsetLink().run()
                 return
             }
+            if (!/^https?:\/\//i.test(url) && !url.startsWith('/') && !url.startsWith('mailto:')) {
+                alert('Only http, https, mailto, and relative URLs are allowed.')
+                return
+            }
             editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
         },
 
