@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             Route::post('/register', [\Laravel\Fortify\Http\Controllers\RegisteredUserController::class, 'store'])
-                ->middleware(['web', 'guest:web', ProtectAgainstSpam::class])
+                ->middleware(['web', 'guest:web', 'throttle:registration', ProtectAgainstSpam::class])
                 ->name('register.store');
         },
     )
