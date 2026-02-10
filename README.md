@@ -88,20 +88,6 @@ MAIL_FROM_ADDRESS="support@example.com"
 MAIL_FROM_NAME="Support Manager"
 ```
 
-### Queue
-
-The default queue driver is `database`. For production, consider using Redis:
-
-```env
-QUEUE_CONNECTION=redis
-```
-
-Run the queue worker:
-
-```bash
-php artisan queue:work
-```
-
 ### Admin Users
 
 To create an admin user, register a new account and then promote it via Tinker:
@@ -110,6 +96,43 @@ To create an admin user, register a new account and then promote it via Tinker:
 php artisan tinker
 >>> User::where('email', 'admin@example.com')->update(['is_admin' => true]);
 ```
+
+## Developer Tips
+
+### Previewing Emails
+
+Use the `mail:preview` command to preview and send test emails during development. This command creates test data on-the-fly without saving to your database and sends emails immediately.
+
+```bash
+# Interactive mode - prompts for email and email type
+php artisan mail:preview
+
+# Send a specific email type
+php artisan mail:preview password-reset
+php artisan mail:preview new-ticket
+php artisan mail:preview ticket-reply-to-customer
+
+# Send to a specific email address
+php artisan mail:preview --to=you@example.com new-ticket
+
+# Send all email types at once
+php artisan mail:preview --all
+php artisan mail:preview --to=you@example.com --all
+```
+
+**Available Email Types:**
+
+| Type | Description |
+|------|-------------|
+| `password-reset` | Password reset link (ResetPassword) |
+| `email-verification` | Email verification link (VerifyEmail) |
+| `new-ticket` | Admin notification for new support tickets |
+| `ticket-reply-to-customer` | Reply notification to customer |
+| `ticket-reply-to-admin` | Admin notification for customer replies |
+| `ticket-auto-closed` | Ticket auto-closed notification |
+| `user-invitation` | User invitation email |
+
+The command uses Laravel Prompts for an interactive selection menu when run without arguments. All test data (users, tickets, replies) is created in-memory using model factories, so no database records are created.
 
 ## Testing
 
