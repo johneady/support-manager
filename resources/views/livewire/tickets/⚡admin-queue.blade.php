@@ -141,7 +141,7 @@ new class extends Component {
 
         $key = 'ticket-reply:'.auth()->id();
 
-        if (RateLimiter::tooManyAttempts($key, 10)) {
+        if (RateLimiter::tooManyAttempts($key, 2)) {
             $this->addError('replyBody', 'Too many replies. Please try again later.');
 
             return;

@@ -49,7 +49,7 @@ new class extends Component
 
         $key = 'create-ticket:'.auth()->id();
 
-        if (RateLimiter::tooManyAttempts($key, 5)) {
+        if (RateLimiter::tooManyAttempts($key, 2)) {
             $this->addError('subject', 'Too many tickets created. Please try again later.');
 
             return;
