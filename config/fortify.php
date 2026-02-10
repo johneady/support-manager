@@ -122,6 +122,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Lockout Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure the lockout settings for failed login attempts.
+    | This helps protect against brute force attacks by temporarily locking
+    | accounts after a specified number of failed attempts.
+    |
+    */
+
+    'lockout' => [
+        'time' => 15, // 15 minutes
+        'max_attempts' => 5,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Invitation Token Expiration
     |--------------------------------------------------------------------------
     |
