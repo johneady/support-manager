@@ -68,7 +68,10 @@ class Faq extends Model
      */
     public function renderedAnswer(): string
     {
-        return Str::markdown($this->answer);
+        return Str::markdown($this->answer, [
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]);
     }
 
     /**
