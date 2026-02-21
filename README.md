@@ -1,54 +1,81 @@
-# Support Manager
+<div align="center">
 
-A modern, open-source support ticket management system built with Laravel 12, Livewire, and Flux UI. Manage customer support tickets, FAQs, and team members through a clean, interface.
+# 🎫 Support Manager
 
-I created this project simply becuse I needed a very simple ticket system that met my needs (single developer). It supports multiple admins, but I didn't add features like ticket assignment, as I'm the only user! All tickets needing a response are in a single queue for all admins to see and manage. As it's only me, I never added the ability to assign tickets. Maybe that can be a future enhancement.
+### ✨ A modern, open-source support ticket management system
 
-## Features
+[![Latest Stable Version](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
+[![PHP Version](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
+[![Livewire](https://img.shields.io/badge/Livewire-4-pink.svg)](https://livewire.laravel.com)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-- **Ticket Management** -- Create, track, and resolve support tickets with priority levels (Low, Medium, High) and categorization
-- **Admin Dashboard** -- Overview of open tickets, tickets needing response, and recently resolved issues
-- **User Dashboard** -- Customers can view and manage their own tickets
-- **FAQ System** -- Markdown-powered FAQ pages with auto-slug generation and reading time estimates
-- **User Invitations** -- Invite team members via token-based email invitations
-- **Two-Factor Authentication** -- Built-in 2FA with recovery codes via Laravel Fortify
-- **Email Notifications** -- Queued notifications for new tickets, replies, and auto-closures
-- **Auto-Close Inactive Tickets** -- Scheduled job to automatically close stale tickets
-- **Spam Protection** -- Honeypot fields via Spatie Laravel Honeypot
-- **Health Monitoring** -- Application health checks via Spatie Laravel Health
-- **Dark Mode** -- Theme appearance settings with light/dark mode support
+Manage customer support tickets, FAQs, and team members through a clean, intuitive interface.
 
-## Tech Stack
+---
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Laravel 12 |
-| Frontend | Livewire 4, Flux UI Free, Tailwind CSS 4 |
-| Rich Text | Tiptap Editor |
-| Authentication | Laravel Fortify |
-| Database | SQLite, MySQL, PostgreSQL supported |
-| Testing | Pest 4 |
-| Code Style | Laravel Pint |
-| Asset Bundling | Vite 7 |
+</div>
 
-## Requirements
+## 📖 About
 
-- PHP >= 8.2
-- Composer
-- Node.js >= 22
-- NPM
-- SQLite, MySQL, PostgreSQL
+I created this project simply because I needed a very simple ticket system that met my needs (single developer). It supports multiple admins, but I didn't add features like ticket assignment, as I'm the only user! All tickets needing a response are in a single queue for all admins to see and manage. As it's only me, I never added the ability to assign tickets. Maybe that can be a future enhancement.
 
-## Installation
+---
 
-### 1. Clone the repository
+## 🚀 Features
+
+| Feature | Description |
+|---------|-------------|
+| 🎯 **Ticket Management** | Create, track, and resolve support tickets with priority levels (Low, Medium, High) and categorization |
+| 📊 **Admin Dashboard** | Overview of open tickets, tickets needing response, and recently resolved issues |
+| 👤 **User Dashboard** | Customers can view and manage their own tickets |
+| ❓ **FAQ System** | Markdown-powered FAQ pages with auto-slug generation and reading time estimates |
+| ✉️ **User Invitations** | Invite team members via token-based email invitations |
+| 🔐 **Two-Factor Authentication** | Built-in 2FA with recovery codes via Laravel Fortify |
+| 📧 **Email Notifications** | Queued notifications for new tickets, replies, and auto-closures |
+| ⏰ **Auto-Close Inactive Tickets** | Scheduled job to automatically close stale tickets |
+| 🛡️ **Spam Protection** | Honeypot fields via Spatie Laravel Honeypot |
+| ❤️ **Health Monitoring** | Application health checks via Spatie Laravel Health |
+| 🌙 **Dark Mode** | Theme appearance settings with light/dark mode support |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Version |
+|-------|------------|---------|
+| **Framework** | Laravel | 12 |
+| **Frontend** | Livewire | 4 |
+| **UI Library** | Flux UI Free | - |
+| **Styling** | Tailwind CSS | 4 |
+| **Rich Text** | Tiptap Editor | - |
+| **Authentication** | Laravel Fortify | 1 |
+| **Database** | SQLite / MySQL / PostgreSQL | - |
+| **Testing** | Pest | 4 |
+| **Code Style** | Laravel Pint | 1 |
+| **Asset Bundling** | Vite | 7 |
+
+---
+
+## 📋 Requirements
+
+- **PHP** >= 8.2
+- **Composer**
+- **Node.js** >= 22
+- **NPM**
+- **SQLite**, **MySQL**, or **PostgreSQL**
+
+---
+
+## 🚀 Installation
+
+### 1️⃣ Clone the repository
 
 ```bash
 git clone https://github.com/johneady/support-manager.git
 cd support-manager
 ```
 
-### 2. Install and setup
+### 2️⃣ Install and setup
 
 Run the composer setup command which handles dependency installation, environment configuration, database migration, and frontend asset building:
 
@@ -56,13 +83,15 @@ Run the composer setup command which handles dependency installation, environmen
 composer setup
 ```
 
-Optionally seed the database with sample data. For development, this simplifies the login flow by creating an admin user with simple credentials. This project leverages the [spatie/laravel-login-link](https://github.com/spatie/laravel-login-link) package to streamline development logins via one-click authentication links. **Security Warning:** Never run the seeder in production, as this creates a significant security vulnerability with predictable credentials.
+> 💡 **Tip:** Optionally seed the database with sample data. For development, this simplifies the login flow by creating an admin user with simple credentials. This project leverages the [spatie/laravel-login-link](https://github.com/spatie/laravel-login-link) package to streamline development logins via one-click authentication links.
 
 ```bash
 php artisan db:seed
 ```
 
-### 3. Start the application
+> ⚠️ **Security Warning:** Never run the seeder in production, as this creates a significant security vulnerability with predictable credentials.
+
+### 3️⃣ Start the application
 
 For development with all services (server, queue worker, log viewer, and Vite):
 
@@ -72,9 +101,11 @@ composer run dev
 
 The application will be available at `http://localhost:8000`.
 
-## Configuration
+---
 
-### Mail
+## ⚙️ Configuration
+
+### 📧 Mail Configuration
 
 Configure your mail driver in `.env` to enable email notifications:
 
@@ -88,7 +119,7 @@ MAIL_FROM_ADDRESS="support@example.com"
 MAIL_FROM_NAME="Support Manager"
 ```
 
-### Admin Users
+### 👑 Admin Users
 
 To create an admin user, register a new account and then promote it via Tinker:
 
@@ -97,9 +128,11 @@ php artisan tinker
 >>> User::where('email', 'admin@example.com')->update(['is_admin' => true]);
 ```
 
-## Developer Tips
+---
 
-### Previewing Emails
+## 💡 Developer Tips
+
+### 📧 Previewing Emails
 
 Use the `mail:preview` command to preview and send test emails during development. This command creates test data on-the-fly without saving to your database and sends emails immediately.
 
@@ -134,7 +167,9 @@ php artisan mail:preview --to=you@example.com --all
 
 The command uses Laravel Prompts for an interactive selection menu when run without arguments. All test data (users, tickets, replies) is created in-memory using model factories, so no database records are created.
 
-## Testing
+---
+
+## 🧪 Testing
 
 This project uses [Pest](https://pestphp.com) for testing.
 
@@ -155,7 +190,9 @@ vendor/bin/pest --parallel
 composer test
 ```
 
-## Code Style
+---
+
+## 🎨 Code Style
 
 This project follows the [Laravel coding style](https://laravel.com/docs/contributions#coding-style) enforced by [Laravel Pint](https://laravel.com/docs/pint).
 
@@ -167,7 +204,9 @@ vendor/bin/pint
 vendor/bin/pint --test
 ```
 
-## Project Structure
+---
+
+## 📁 Project Structure
 
 ```
 app/
@@ -188,18 +227,42 @@ resources/views/
 └── tickets/              # Ticket management views
 ```
 
-## Contributing
+---
+
+## 🚢 Deployment
+
+For detailed deployment instructions, including setup, configuration, and troubleshooting, see the [DEPLOYMENT.md](DEPLOYMENT.md) guide.
+
+---
+
+## 🤝 Contributing
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.
 
-## Security
+---
+
+## 🔒 Security
 
 If you discover a security vulnerability, please see [SECURITY.md](SECURITY.md) for reporting instructions. Do not open a public issue for security vulnerabilities.
 
-## Changelog
+---
+
+## 📝 Changelog
 
 Please see [CHANGELOG.md](CHANGELOG.md) for a history of notable changes.
 
-## License
+---
+
+## 📄 License
 
 Support Manager is open-sourced software licensed under the [MIT license](LICENSE).
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [John Eady](https://github.com/johneady)**
+
+[⬆ Back to top](#-support-manager)
+
+</div>
