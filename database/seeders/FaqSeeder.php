@@ -10,907 +10,139 @@ class FaqSeeder extends Seeder
     public function run(): void
     {
         $faqs = [
-            // Billing Documents (4)
             [
-                'question' => 'Billing Overview',
-                'answer' => '# Billing Overview
+                'question' => 'Domain Registration',
+                'answer' => '# Domain Registration
 
-This document provides a high-level overview of the billing system for our applications.
+## Choosing a Domain Name
 
-## Billing Cycle
+Keep it short and memorable (under 15 characters), use easy-to-spell words, and avoid hyphens and numbers when possible. Popular extensions include .com (most trusted), .net (tech services), .org (non-profits), and .io (startups).
 
-Billing is processed on a monthly basis. All charges are calculated at the end of each billing cycle and invoices are generated automatically.
+## Registering Your Domain
 
-## Payment Methods
+1. Check availability using a registrar\'s search tool
+2. Choose a registrar (Namecheap, GoDaddy, Cloudflare, etc.)
+3. Create an account and add contact information
+4. Enable WHOIS privacy protection and auto-renewal
+5. Complete payment
 
-We accept the following payment methods:
-- Credit/Debit Cards (Visa, MasterCard, American Express)
-- PayPal
-- Bank Transfer (for enterprise accounts)
+## DNS Configuration
 
-## Invoice Delivery
+Configure basic DNS records:
+- **A Record**: Points domain to an IP address
+- **CNAME**: Points domain to another domain name
+- **MX Record**: Mail exchange for email
+- **TXT Record**: Verification and SPF records
 
-Invoices are delivered via email to the account holder\'s registered email address. You can also access invoices through your account dashboard.
+DNS changes may take 24-48 hours to propagate.
 
-## Late Payments
+## Security & Renewal
 
-Payments are due within 30 days of invoice date. Late payments may incur a late fee of 1.5% per month on the outstanding balance. Accounts with payments overdue by 60 days or more may be suspended.',
+Enable two-factor authentication on your registrar account, use WHOIS privacy, enable domain lock, and set up expiration alerts. Enable auto-renewal or set calendar reminders 30 days before expiration.',
             ],
             [
-                'question' => 'Subscription Plans',
-                'answer' => '# Subscription Plans
+                'question' => 'PHP Script Installation',
+                'answer' => '# PHP Script Installation
 
-We offer several subscription tiers to meet different needs.
+## Prerequisites
 
-## Basic Plan
+- PHP 8.1 or higher
+- MySQL 5.7+ or MariaDB 10.3+
+- Web server (Apache or Nginx)
+- 256MB+ PHP memory limit
+- Cron job access (if script requires scheduled tasks)
+- Required extensions: cURL, JSON, Mbstring, OpenSSL, PDO, XML (check script documentation for specific requirements)
 
-- **Price**: $19/month
-- **Features**: Single project, 5 users, basic support
-- **Storage**: 10GB
-- **Bandwidth**: 50GB/month
+## Installation Steps
 
-## Professional Plan
+1. **Download & Upload**: Extract files and upload to your web directory (e.g., `/home/username/public_html/` or `/var/www/html/`)
 
-- **Price**: $49/month
-- **Features**: 5 projects, 25 users, priority support
-- **Storage**: 50GB
-- **Bandwidth**: 200GB/month
+2. **Create Database**: Create a MySQL database and user with full privileges using your hosting control panel or phpMyAdmin
 
-## Enterprise Plan
+3. **Configure Script**: Edit the configuration file (usually `config.php`, `settings.php`, or similar) and update database credentials, site URL, and any required settings
 
-- **Price**: $149/month
-- **Features**: Unlimited projects, unlimited users, 24/7 dedicated support
-- **Storage**: 500GB
-- **Bandwidth**: Unlimited
+4. **Run Installation**: Visit the installation page (e.g., `install.php` or `setup.php`) in your browser and follow the on-screen instructions, or import the provided SQL file using phpMyAdmin
 
-## Custom Plans
+5. **Set Up Cron Job** (if required): Add a cron job for scheduled tasks: `* * * * * /usr/bin/php /path/to/cron.php` (adjust path and frequency as needed)
 
-For organizations with specific requirements, we offer custom plans. Contact our sales team for a quote.
-
-## Upgrading/Downgrading
-
-You can change your plan at any time. Changes take effect at the start of the next billing cycle. Upgrades are prorated; downgrades are not.',
-            ],
-            [
-                'question' => 'Refund Policy',
-                'answer' => '# Refund Policy
-
-We want you to be satisfied with our services. Here\'s our refund policy.
-
-## 30-Day Money-Back Guarantee
-
-New subscriptions are eligible for a full refund within 30 days of the initial purchase. No questions asked.
-
-## Pro-Rated Refunds
-
-After the initial 30-day period, refunds are calculated on a pro-rated basis based on unused time in the current billing cycle.
-
-## Refund Process
-
-To request a refund:
-1. Submit a support ticket with your account details
-2. Specify the reason for the refund request
-3. Our team will review and process within 5-7 business days
-
-## Non-Refundable Items
-
-- Setup fees
-- Custom development work
-- Third-party services
-- Add-on purchases
-
-## Account Cancellation
-
-Upon cancellation, you will retain access until the end of your current billing period. No refunds are provided for partial months.',
-            ],
-            [
-                'question' => 'Billing Support',
-                'answer' => '# Billing Support
-
-Need help with billing? Here\'s how to get assistance.
-
-## Contact Methods
-
-### Email
-Send billing inquiries to: billing@example.com
-
-### Support Ticket
-Submit a billing ticket through your account dashboard. Select "Billing" as the category.
-
-### Phone
-Call our billing department: 1-800-BILLING (1-800-245-5464)
-Hours: Monday-Friday, 9AM-5PM EST
+6. **Set Permissions**: Set appropriate file permissions using your FTP client or file manager. Typically: `chmod 644` for files and `chmod 755` for directories. For writable directories (uploads, cache, logs): `chmod 755` or `777` depending on server configuration
 
 ## Common Issues
 
-### Invoice Not Received
-- Check your spam folder
-- Verify your email address in account settings
-- Request a resend through the dashboard
+- **500 Internal Server Error**: Check file permissions, verify PHP version meets requirements, review error logs, and ensure all required PHP extensions are enabled
+- **Database Connection**: Verify database credentials in configuration file, ensure user has proper privileges, check DB_HOST (may be `localhost` or IP address), and confirm database exists
+- **Files Not Loading**: Check file paths in configuration, verify all files were uploaded correctly, and ensure directory structure is intact
+- **White Screen**: Enable error reporting in php.ini or add error_reporting(E_ALL) and ini_set(\'display_errors\', 1) to debug
 
-### Payment Failed
-- Verify payment method is valid
-- Check with your bank/card issuer
-- Update payment method in account settings
+## Maintenance
 
-### Plan Changes
-- Changes take effect next billing cycle
-- Upgrades are prorated
-- Downgrades are not prorated
-
-## Dispute Resolution
-
-If you believe there\'s an error on your invoice, please contact us within 30 days of the invoice date. We\'ll investigate and resolve any legitimate discrepancies promptly.',
-            ],
-            // Pet Adoption Documents (4)
-            [
-                'question' => 'Pet Adoption System Overview',
-                'answer' => '# Pet Adoption Management System Overview
-
-The Pet Adoption Management System is a comprehensive Laravel-based application designed to streamline pet adoption operations, foster care management, and assistance applications.
-
-## Core Features
-
-### Pet Management
-- Complete pet profiles with photos, medical records, and behavioral notes
-- Adoption application tracking and approval workflows
-- Foster care assignment and monitoring
-- Medical treatment records and vaccination schedules
-
-### User Management
-- Adopter registration and verification
-- Foster parent applications and background checks
-- Volunteer coordination and scheduling
-- Staff role-based access control
-
-### Application Processing
-- Online adoption applications
-- Application review and approval workflows
-- Home visit scheduling and documentation
-- Adoption contract generation
-
-### Reporting & Analytics
-- Adoption statistics and trends
-- Foster care utilization metrics
-- Volunteer hours tracking
-- Financial reporting for donations and grants
-
-## Technical Architecture
-
-Built on Laravel 12 with PHP 8.3+, the system uses MySQL for data storage and includes:
-- Queue-based job processing for background tasks
-- Scheduled tasks for automated notifications
-- File storage for pet photos and documents
-- Email notifications for application updates
-
-## Security Features
-
-- Secure user authentication with two-factor authentication
-- Role-based access control for staff and volunteers
-- Encrypted sensitive data storage
-- Audit logging for all critical operations',
+Regularly backup your database and files. Keep the script updated by checking for new versions and following the update instructions provided by the developer.',
             ],
             [
-                'question' => 'Pet Adoption Installation Guide',
-                'answer' => '# Pet Adoption System Installation Guide
+                'question' => 'Troubleshooting Guide',
+                'answer' => '# Common Troubleshooting
 
-This guide covers installing the Pet Adoption Management System on shared hosting or VPS environments.
+## Getting Started
 
-## Prerequisites
-
-- PHP 8.2 or higher
-- MySQL 5.7+ or MariaDB
-- Cron job access (mandatory)
-- File manager or FTP access
-- Minimum 256MB PHP memory limit
-
-## Installation Steps
-
-### 1. Server Compatibility Test
-Upload `public/shared_install.php` to your server and access it via browser to verify all requirements are met.
-
-### 2. File Upload
-Extract the application files and upload to a directory outside your public web root (e.g., `/home/username/pet-adoption/`).
-
-### 3. Public Directory Configuration
-Choose one of three options:
-- **Option A (Recommended)**: Create a symbolic link from `public_html` to `pet-adoption/public`
-- **Option B**: Move public folder contents to your web directory and update paths in `index.php`
-- **Option C**: Configure custom document root in hosting control panel
-
-### 4. Database Setup
-Create a new MySQL database and user with all privileges via your hosting control panel.
-
-### 5. Environment Configuration
-Copy `.env.example` to `.env` and update:
-- APP_NAME="Pet Adoption"
-- Database credentials
-- First user account details
-- Generate APP_KEY using `php artisan key:generate`
-
-### 6. Run Installation
-Visit `https://yourdomain.com/update.php` to run migrations, create storage symlink, and optimize the application.
-
-### 7. Cron Job Setup (MANDATORY)
-Add a cron job running every minute:
-```bash
-/usr/bin/php /home/username/pet-adoption/artisan schedule:run >> /dev/null 2>&1
-```
-
-### 8. File Permissions
-Set `storage/` and `bootstrap/cache/` to 775, `.env` to 644.
-
-## Post-Installation
-
-- Verify storage symlink is working
-- Test file uploads
-- Configure email settings
-- Set up backup procedures',
-            ],
-            [
-                'question' => 'Pet Adoption Features',
-                'answer' => '# Pet Adoption System Features
-
-A comprehensive breakdown of the Pet Adoption Management System\'s capabilities.
-
-## Pet Management
-
-### Pet Profiles
-- Detailed pet information including breed, age, gender, weight
-- Multiple photo uploads with gallery view
-- Medical history and vaccination records
-- Behavioral assessments and notes
-- Special needs and dietary requirements
-
-### Adoption Workflow
-- Online adoption application forms
-- Application status tracking (Pending, Under Review, Approved, Rejected)
-- Home visit scheduling and documentation
-- Adoption contract generation with e-signature support
-- Post-adoption follow-up system
-
-### Foster Care Management
-- Foster parent registration and vetting
-- Foster assignment and tracking
-- Foster care duration monitoring
-- Foster home inspection records
-- Foster reimbursement tracking
-
-## User Management
-
-### Adopter Portal
-- Browse available pets with advanced filters
-- Save favorite pets to wishlist
-- Submit adoption applications
-- Track application status
-- View adoption history
-
-### Volunteer Management
-- Volunteer registration and availability
-- Shift scheduling and time tracking
-- Task assignment system
-- Volunteer hours reporting
-
-### Staff Administration
-- Role-based access control (Admin, Staff, Volunteer)
-- Permission management per role
-- Activity audit logs
-- Performance metrics dashboard
-
-## Communication Tools
-
-### Automated Notifications
-- Email notifications for application updates
-- SMS alerts for urgent matters
-- In-app messaging system
-- Reminder scheduling for appointments
-
-### Document Management
-- Generate PDF contracts and agreements
-- Upload and store supporting documents
-- Document version control
-- Secure document sharing with applicants
-
-## Reporting & Analytics
-
-### Operational Reports
-- Monthly adoption statistics
-- Foster care utilization rates
-- Volunteer hours summary
-- Application conversion rates
-
-### Financial Reports
-- Donation tracking and reporting
-- Grant management
-- Expense categorization
-- Budget vs. actual analysis',
-            ],
-            [
-                'question' => 'Pet Adoption Troubleshooting',
-                'answer' => '# Pet Adoption System Troubleshooting
-
-Common issues and solutions for the Pet Adoption Management System.
+Clear browser cache, check browser console for errors, try a different browser, and note the exact error message. Application logs are typically in `logs/` or `storage/logs/` directory.
 
 ## Installation Issues
 
-### 500 Internal Server Error
-**Symptoms**: All pages show 500 error
-**Solutions**:
-- Check `storage/` and `bootstrap/cache/` permissions (should be 775)
-- Verify `.env` file exists and contains valid APP_KEY
-- Check `.htaccess` file is present and correct
-- Review error logs in `storage/logs/laravel.log`
+**500 Internal Server Error**: Check file permissions (`chmod -R 775 storage cache logs`), verify configuration file exists with valid settings, and review error logs.
 
-### Database Connection Errors
-**Symptoms**: Unable to connect to database
-**Solutions**:
-- Verify database credentials in `.env` file
-- Ensure database user has proper privileges
-- Check DB_HOST (may be `localhost` or IP address)
-- Confirm database exists and is accessible
+**Database Connection**: Verify credentials in configuration file, ensure user has proper privileges, check DB_HOST (may be `localhost` or IP address), and confirm database exists.
 
-### Images Not Displaying (404)
-**Symptoms**: Uploaded pet photos show 404 errors
-**Solutions**:
-- Verify storage symlink exists (`public/storage` → `storage/app/public`)
-- Check storage directory permissions
-- If symlink not supported, use file copy or sync script
-- Ensure cron job for storage sync is running
+**404 Not Found**: Verify mod_rewrite is enabled, check `.htaccess` is present (for Apache), ensure virtual host points to correct directory, and clear browser cache.
 
 ## Runtime Issues
 
-### Scheduled Tasks Not Running
-**Symptoms**: Automated notifications not sent, cleanup jobs not executing
-**Solutions**:
-- Verify cron job is configured correctly
-- Check cron job runs every minute (`* * * * *`)
-- Test cron job manually: `php artisan schedule:run`
-- Review scheduler logs in storage/logs/
+**Scheduled Tasks Not Running**: Verify cron job runs every minute, test the scheduled task script manually, and review scheduler logs.
 
-### Email Not Sending
-**Symptoms**: Notifications not delivered
-**Solutions**:
-- Verify mail configuration in `.env`
-- Check mail credentials are correct
-- Test mail settings: `php artisan tinker` → `Mail::raw(\'Test\', fn($m) => $m->to(\'test@example.com\'))`
-- Review mail logs in `storage/logs/laravel.log`
-- Check spam folder
+**Email Not Sending**: Verify mail configuration in configuration file, check credentials, test email functionality using a test script, review mail logs, and check spam folder.
 
-### Queue Jobs Not Processing
-**Symptoms**: Background tasks stuck in queue
-**Solutions**:
-- Verify queue worker is running
-- Check QUEUE_CONNECTION in `.env`
-- Start queue worker: `php artisan queue:work`
-- Configure Supervisor for production to keep worker running
+**File Uploads Failing**: Check PHP upload settings (`upload_max_filesize`, `post_max_size`), verify storage permissions (775), and ensure upload directory exists and is writable.
 
-## Performance Issues
+**Session/Login Issues**: Clear browser cookies and cache, check session configuration in configuration file, verify sessions directory is writable, and try incognito mode.
 
-### Slow Page Load Times
-**Solutions**:
-- Enable caching: `php artisan config:cache`, `route:cache`, `view:cache`
-- Clear cache: `php artisan cache:clear`
-- Check database query performance
-- Verify OPcache is enabled
-- Consider upgrading hosting resources
+## Performance
 
-### High Memory Usage
-**Solutions**:
-- Increase PHP memory limit in `.htaccess` or php.ini
-- Optimize database queries
-- Clear old logs and cache
-- Review and optimize image uploads
+**Slow Page Loads**: Enable application caching (check application documentation), check database queries, verify OPcache is enabled, and optimize images.
 
-## Maintenance Mode
+**High Memory Usage**: Increase PHP memory limit in `php.ini`, optimize database queries, clear old logs and cache, and check for memory leaks.
 
-### Enable Maintenance Mode
-```php
-// Create public/down.php
-<?php
-require __DIR__.\'/../vendor/autoload.php\';
-$app = require_once __DIR__.\'/../bootstrap/app.php\';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->call(\'down\');
-echo \'Maintenance mode enabled. DELETE THIS FILE AFTER UPDATE!\';
-```
+**Background Jobs Stuck**: Verify background job processor is running, check queue configuration in configuration file, start the worker process, and configure Supervisor or similar for production.
 
-### Disable Maintenance Mode
-```php
-// Create public/up.php
-<?php
-require __DIR__.\'/../vendor/autoload.php\';
-$app = require_once __DIR__.\'/../bootstrap/app.php\';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->call(\'up\');
-echo \'Application is now live! DELETE THIS FILE!\';
-```
+## Security
 
-## Getting Additional Help
+**Mixed Content Warnings**: Ensure SSL certificate is installed, force HTTPS, and update HTTP URLs to HTTPS.
 
-If issues persist:
-1. Check the application logs: `storage/logs/laravel.log`
-2. Review browser console for JavaScript errors
-3. Submit a support ticket with detailed error information
-4. Include screenshots when applicable',
-            ],
-            // Affiliate Master Documents (4)
-            [
-                'question' => 'Affiliate Master System Overview',
-                'answer' => '# Affiliate Master System Overview
+**Permission Denied**: Check file and directory permissions, verify ownership, ensure configuration file is not publicly accessible, and review web server configuration.
 
-Affiliate Master is a comprehensive Laravel-based affiliate management platform designed to track, manage, and optimize affiliate programs.
+## Getting Help
 
-## Core Features
-
-### Affiliate Management
-- Affiliate registration and onboarding
-- Tiered commission structures
-- Performance-based bonuses
-- Multi-level referral tracking
-- Affiliate status management (Active, Suspended, Pending)
-
-### Tracking & Analytics
-- Real-time click tracking
-- Conversion tracking and attribution
-- Revenue and commission calculations
-- Performance metrics dashboard
-- Custom reporting capabilities
-
-### Campaign Management
-- Create and manage affiliate campaigns
-- Campaign-specific tracking links
-- A/B testing for creatives
-- Geo-targeting options
-- Campaign performance analytics
-
-### Payout Management
-- Automated commission calculations
-- Multiple payout methods (PayPal, Bank Transfer, Check)
-- Minimum payout thresholds
-- Payout history and reconciliation
-- Tax document generation
-
-## Technical Architecture
-
-Built on Laravel 12 with PHP 8.3+, the system includes:
-- MySQL database for affiliate and transaction data
-- Redis for caching and session management
-- Queue-based job processing for payouts
-- Scheduled tasks for commission calculations
-- Secure payment gateway integration
-
-## Security Features
-
-- Secure affiliate authentication
-- Fraud detection and prevention
-- IP tracking and geolocation
-- Encrypted sensitive data
-- Comprehensive audit logging
-
-## Integration Capabilities
-
-- E-commerce platform integrations
-- CRM system connections
-- Email marketing platform sync
-- Third-party analytics integration
-- Custom API access for developers',
+Check logs, search error messages online, review documentation, and submit support tickets with error details, reproduction steps, screenshots, and environment information.',
             ],
             [
-                'question' => 'Affiliate Master Installation Guide',
-                'answer' => '# Affiliate Master Installation Guide
+                'question' => 'Account Management',
+                'answer' => '# Account Management
 
-Complete installation instructions for the Affiliate Master platform.
+## Creating Your Account
 
-## Prerequisites
+Register with your email and a strong password (minimum 8 characters, mix of letters, numbers, and symbols). Check your inbox (and spam folder) for the verification link and click it within 24 hours.
 
-- PHP 8.2 or higher
-- MySQL 5.7+ or MariaDB
-- Cron job access (mandatory)
-- File manager or FTP access
-- Minimum 256MB PHP memory limit
+## Profile Settings
 
-## Installation Steps
+Update personal information (name, email, phone, timezone, language) in Account Settings. Change your password by entering your current password, then the new password twice. Use password best practices: 12+ characters, mixed case, numbers and symbols, avoid personal info, and use a password manager.
 
-### 1. Server Compatibility Test
-Upload `public/shared_install.php` to your server and access it via browser to verify all requirements are met.
+## Troubleshooting
 
-### 2. File Upload
-Extract the application files and upload to a directory outside your public web root (e.g., `/home/username/affiliate-master/`).
+**Can\'t Log In**: Verify credentials, reset password via "Forgot Password", clear browser cache, try a different browser, or check if account is locked.
 
-### 3. Public Directory Configuration
-Choose one of three options:
-- **Option A (Recommended)**: Create a symbolic link from `public_html` to `affiliate-master/public`
-- **Option B**: Move public folder contents to your web directory and update paths in `index.php`
-- **Option C**: Configure custom document root in hosting control panel
+**Not Receiving Emails**: Check spam folder, verify email address, add sender to whitelist, check notification settings, or contact support.
 
-### 4. Database Setup
-Create a new MySQL database and user with all privileges via your hosting control panel.
+## Best Practices
 
-### 5. Environment Configuration
-Copy `.env.example` to `.env` and update:
-```env
-APP_NAME="Affiliate Master"
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://yourdomain.com
-
-DB_CONNECTION=mysql
-DB_HOST=localhost
-DB_PORT=3306
-DB_DATABASE=your_database
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-
-# Payment Gateway Configuration
-PAYMENT_GATEWAY=stripe
-STRIPE_PUBLIC_KEY=pk_live_xxx
-STRIPE_SECRET_KEY=sk_live_xxx
-```
-
-### 6. Run Installation
-Visit `https://yourdomain.com/update.php` to run migrations, create storage symlink, and optimize the application.
-
-### 7. Cron Job Setup (MANDATORY)
-Add a cron job running every minute:
-```bash
-/usr/bin/php /home/username/affiliate-master/artisan schedule:run >> /dev/null 2>&1
-```
-
-### 8. File Permissions
-Set `storage/` and `bootstrap/cache/` to 775, `.env` to 644.
-
-## Post-Installation Configuration
-
-### Payment Gateway Setup
-1. Create accounts with payment providers (Stripe, PayPal, etc.)
-2. Add API keys to `.env` file
-3. Configure payout methods in admin panel
-4. Set minimum payout thresholds
-
-### Email Configuration
-Configure SMTP settings in `.env` for affiliate notifications:
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=your_username
-MAIL_PASSWORD=your_password
-```
-
-### Security Settings
-- Enable two-factor authentication for admin accounts
-- Configure rate limiting on public endpoints
-- Set up SSL certificate
-- Configure backup schedule
-
-## Testing
-
-After installation:
-1. Test affiliate registration flow
-2. Verify tracking links work correctly
-3. Test commission calculations
-4. Verify email notifications are sent
-5. Test payout process in sandbox mode',
-            ],
-            [
-                'question' => 'Affiliate Master Features',
-                'answer' => '# Affiliate Master Features
-
-Comprehensive feature breakdown for the Affiliate Master platform.
-
-## Affiliate Management
-
-### Registration & Onboarding
-- Customizable registration forms
-- Automatic approval or manual review
-- Welcome email sequences
-- Affiliate agreement acceptance
-- Tax form collection (W-9, W-8BEN)
-
-### Commission Structures
-- Percentage-based commissions
-- Fixed amount per sale
-- Tiered commission rates
-- Performance bonuses
-- Recurring commission options
-- Cookie duration configuration
-
-### Affiliate Portal
-- Dashboard with performance metrics
-- Tracking link generator
-- Creative asset library
-- Earnings and payout history
-- Real-time statistics
-- Referral tracking
-
-## Tracking & Analytics
-
-### Click Tracking
-- Real-time click monitoring
-- Unique vs. total clicks
-- Conversion rate tracking
-- Geographic distribution
-- Device and browser analytics
-- Referrer source tracking
-
-### Conversion Tracking
-- Multi-touch attribution
-- Last-click attribution
-- First-click attribution
-- Custom attribution windows
-- Conversion value tracking
-- Product-level tracking
-
-### Reporting
-- Custom date range reports
-- Export to CSV/PDF
-- Scheduled report delivery
-- Performance comparison
-- Trend analysis
-- ROI calculations
-
-## Campaign Management
-
-### Campaign Creation
-- Campaign-specific commission rates
-- Custom tracking domains
-- A/B testing capabilities
-- Geo-targeting rules
-- Device targeting options
-- Time-based campaigns
-
-### Creative Management
-- Banner ads (multiple sizes)
-- Text links
-- Email templates
-- Social media assets
-- Video creatives
-- Dynamic content insertion
-
-## Payout Management
-
-### Commission Calculation
-- Automated daily/weekly calculations
-- Commission adjustments
-- Clawback processing
-- Bonus calculations
-- Tax withholding (if applicable)
-
-### Payout Methods
-- PayPal integration
-- Bank transfer (ACH, SEPA)
-- Check by mail
-- Cryptocurrency options
-- Custom payout methods
-
-### Payout Processing
-- Minimum payout thresholds
-- Payout scheduling (weekly, bi-weekly, monthly)
-- Batch processing
-- Payout notifications
-- Transaction history
-
-## Fraud Prevention
-
-### Detection Systems
-- IP address monitoring
-- Device fingerprinting
-- Suspicious activity alerts
-- Velocity checks
-- Pattern recognition
-- Manual review queue
-
-### Prevention Measures
-- CAPTCHA on registration
-- Email verification
-- Phone verification (optional)
-- Geographic restrictions
-- Traffic quality scoring
-
-## Integration Capabilities
-
-### E-commerce Platforms
-- Shopify integration
-- WooCommerce integration
-- Magento integration
-- Custom API integration
-- Webhook support
-
-### Marketing Tools
-- Email marketing sync
-- CRM integration
-- Analytics platform connection
-- Social media tracking
-- Mobile app SDK
-
-## Admin Features
-
-### User Management
-- Role-based access control
-- Permission management
-- Activity logs
-- Audit trails
-- Bulk actions
-
-### System Configuration
-- Global commission settings
-- Payment gateway configuration
-- Email template customization
-- Notification preferences
-- API key management
-
-### Support Tools
-- Affiliate messaging system
-- Support ticket integration
-- Knowledge base
-- FAQ management
-- Resource library',
-            ],
-            [
-                'question' => 'Affiliate Master Troubleshooting',
-                'answer' => '# Affiliate Master Troubleshooting
-
-Common issues and solutions for the Affiliate Master platform.
-
-## Installation Issues
-
-### 500 Internal Server Error
-**Symptoms**: All pages show 500 error
-**Solutions**:
-- Check `storage/` and `bootstrap/cache/` permissions (should be 775)
-- Verify `.env` file exists and contains valid APP_KEY
-- Check `.htaccess` file is present and correct
-- Review error logs in `storage/logs/laravel.log`
-
-### Database Connection Errors
-**Symptoms**: Unable to connect to database
-**Solutions**:
-- Verify database credentials in `.env` file
-- Ensure database user has proper privileges
-- Check DB_HOST (may be `localhost` or IP address)
-- Confirm database exists and is accessible
-
-### Images Not Displaying (404)
-**Symptoms**: Uploaded creative assets show 404 errors
-**Solutions**:
-- Verify storage symlink exists (`public/storage` → `storage/app/public`)
-- Check storage directory permissions
-- If symlink not supported, use file copy or sync script
-- Ensure cron job for storage sync is running
-
-## Runtime Issues
-
-### Tracking Not Working
-**Symptoms**: Affiliate clicks not being recorded
-**Solutions**:
-- Verify tracking links are correctly formatted
-- Check JavaScript tracking code is present
-- Review browser console for errors
-- Ensure cookies are enabled in browser
-- Check ad blockers are not interfering
-- Verify affiliate is active (not suspended)
-
-### Commissions Not Calculating
-**Symptoms**: Sales not generating commissions
-**Solutions**:
-- Verify commission structure is configured
-- Check conversion tracking is working
-- Review attribution window settings
-- Ensure product is eligible for commission
-- Check affiliate status is active
-- Review commission calculation logs
-
-### Payouts Not Processing
-**Symptoms**: Scheduled payouts not executing
-**Solutions**:
-- Verify cron job is configured correctly
-- Check payout schedule settings
-- Ensure minimum threshold is met
-- Verify payment gateway credentials
-- Review payout queue: `php artisan queue:work`
-- Check payout logs in storage
-
-### Email Notifications Not Sending
-**Symptoms**: Affiliates not receiving emails
-**Solutions**:
-- Verify mail configuration in `.env`
-- Check mail credentials are correct
-- Test mail settings: `php artisan tinker`
-- Review mail logs in `storage/logs/laravel.log`
-- Check spam folder
-- Verify email templates are configured
-
-## Payment Gateway Issues
-
-### Stripe Integration Problems
-**Symptoms**: Payouts failing via Stripe
-**Solutions**:
-- Verify API keys are correct (use live keys for production)
-- Check Stripe account is verified
-- Ensure sufficient balance in Stripe account
-- Review Stripe dashboard for errors
-- Test with Stripe CLI: `stripe login` → `stripe trigger payout.created`
-
-### PayPal Integration Problems
-**Symptoms**: PayPal payouts failing
-**Solutions**:
-- Verify PayPal API credentials
-- Check PayPal account is business verified
-- Ensure PayPal email is confirmed
-- Review PayPal IPN settings
-- Test PayPal webhook endpoint
-
-## Performance Issues
-
-### Slow Page Load Times
-**Solutions**:
-- Enable caching: `php artisan config:cache`, `route:cache`, `view:cache`
-- Clear cache: `php artisan cache:clear`
-- Check database query performance
-- Verify OPcache is enabled
-- Consider upgrading hosting resources
-- Optimize image sizes for creative assets
-
-### High Database Load
-**Solutions**:
-- Add database indexes on frequently queried columns
-- Implement query result caching
-- Archive old tracking data
-- Use read replicas for reporting queries
-- Optimize commission calculation queries
-
-## Fraud Detection Issues
-
-### False Positives
-**Symptoms**: Legitimate affiliates flagged as suspicious
-**Solutions**:
-- Review fraud detection thresholds
-- Whitelist trusted affiliate IPs
-- Adjust velocity check settings
-- Review manual review queue regularly
-- Provide feedback to improve detection
-
-### False Negatives
-**Symptoms**: Fraudulent activity not detected
-**Solutions**:
-- Lower fraud detection thresholds
-- Enable additional detection rules
-- Implement CAPTCHA on registration
-- Require email verification
-- Enable phone verification for high-risk affiliates
-
-## Maintenance Mode
-
-### Enable Maintenance Mode
-```php
-// Create public/down.php
-<?php
-require __DIR__.\'/../vendor/autoload.php\';
-$app = require_once __DIR__.\'/../bootstrap/app.php\';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->call(\'down\');
-echo \'Maintenance mode enabled. DELETE THIS FILE AFTER UPDATE!\';
-```
-
-### Disable Maintenance Mode
-```php
-// Create public/up.php
-<?php
-require __DIR__.\'/../vendor/autoload.php\';
-$app = require_once __DIR__.\'/../bootstrap/app.php\';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->call(\'up\');
-echo \'Application is now live! DELETE THIS FILE!\';
-```
-
-## Getting Additional Help
-
-If issues persist:
-1. Check the application logs: `storage/logs/laravel.log`
-2. Review browser console for JavaScript errors
-3. Submit a support ticket with detailed error information
-4. Include screenshots when applicable
-5. Provide affiliate ID or transaction ID for tracking issues',
+Use a unique strong password, don\'t share credentials, log out from shared devices, and monitor account activity. Keep contact information current, review security settings periodically, and regularly back up important data.',
             ],
         ];
 
