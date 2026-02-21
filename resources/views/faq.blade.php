@@ -1,6 +1,6 @@
 <x-layouts.guest :title="'FAQ'">
     {{-- Hero Section --}}
-    <section class="relative py-12 sm:py-16 overflow-hidden">
+    <section class="relative py-8 sm:py-10 overflow-hidden">
         {{-- Decorative background elements --}}
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div class="absolute -top-40 -right-40 w-80 h-80 bg-linear-to-br from-blue-300/30 to-sky-300/30 dark:from-blue-600/20 dark:to-sky-600/20 rounded-full blur-3xl"></div>

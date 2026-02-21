@@ -20,7 +20,7 @@ new class extends Component
 
 <div>
     {{-- Hero Section --}}
-    <section class="relative py-16 sm:py-24 overflow-hidden">
+    <section class="relative py-8 sm:py-10 overflow-hidden">
         {{-- Decorative background elements --}}
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div class="absolute -top-40 -right-40 w-80 h-80 bg-linear-to-br from-blue-300/30 to-sky-300/30 dark:from-blue-600/20 dark:to-sky-600/20 rounded-full blur-3xl"></div>
@@ -59,9 +59,9 @@ new class extends Component
     </section>
 
     {{-- FAQs Section --}}
-    <section class="py-16">
+    <section class="py-6">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
+            <div class="text-center mb-6">
                 <flux:heading size="lg" level="2" class="bg-linear-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent">Frequently Asked Questions</flux:heading>
                 <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">
                     Find answers to common questions about our services.
