@@ -1,4 +1,4 @@
-@servers(['your-server-name.com' => 'user@your-server-ip -p 22', 'localhost' => '127.0.0.1'])
+@servers(['your-server-name.com' => 'user@your-server-ip -p 22'])
 
 @setup
     $servers = [
@@ -19,6 +19,11 @@
     $env = $servers[$server]['env'];
     $folder = $servers[$server]['folder'];
     $backups = dirname($path) . '/backups';
+
+    // Database credentials - populate these in the setup area
+    $db_database = 'database name';
+    $db_username = 'database username';
+    $db_password = 'database password';
 @endsetup
 
 @story('update', ['on' => $server])
@@ -42,10 +47,20 @@
 
     cp {{ $env }} .env
 
-    php artisan storage:link
+    # Replace database credentials using PHP
+    php -r "
+    \$envFile = file_get_contents('.env');
+    \$envFile = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE={{ $db_database }}', \$envFile);
+    \$envFile = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME={{ $db_username }}', \$envFile);
+    \$envFile = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD={{ $db_password }}', \$envFile);
+    file_put_contents('.env', \$envFile);
+    "
 
-    php artisan config:clear
-    php artisan optimize
+    # Verify the replacements
+    echo "Database configuration:"
+    grep "^DB_" .env
+
+    php artisan storage:link
 
     php artisan migrate:fresh --force
     php artisan db:seed --force
@@ -107,9 +122,16 @@
 
     cp {{ $env }} .env
 
+    # Replace database credentials using PHP
+    php -r "
+    \$envFile = file_get_contents('.env');
+    \$envFile = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE={{ $db_database }}', \$envFile);
+    \$envFile = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME={{ $db_username }}', \$envFile);
+    \$envFile = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD={{ $db_password }}', \$envFile);
+    file_put_contents('.env', \$envFile);
+    "
+
     php artisan migrate --force
-    php artisan config:clear
-    php artisan optimize
 
     npm install
 
