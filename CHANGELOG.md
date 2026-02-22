@@ -13,6 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), and this 
 - Add DEPLOYMENT.md documentation with setup instructions
 - Update CHANGELOG and README to reflect deployment capabilities
 
+### Updated FAQ Seeder
+
+- Enhanced FAQ seeder with comprehensive documentation content
+- Added detailed FAQ entries covering domain registration, PHP script installation, troubleshooting guide, and account management
+- All FAQ entries include markdown-formatted answers with structured sections, code examples, and best practices
+
 ## Version - 1.0.0
 
 ### Added
