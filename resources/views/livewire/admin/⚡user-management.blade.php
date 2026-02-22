@@ -113,8 +113,9 @@ new class extends Component
         session()->flash('success', 'User created successfully. An invitation email has been sent.');
     }
 
-    public function openEditModal(User $user): void
+    public function openEditModal(int $userId): void
     {
+        $user = User::findOrFail($userId);
         $this->editingUserId = $user->id;
         $this->name = $user->name;
         $this->email = $user->email;
@@ -169,9 +170,9 @@ new class extends Component
         session()->flash('success', 'User updated successfully.');
     }
 
-    public function confirmDelete(User $user): void
+    public function confirmDelete(int $userId): void
     {
-        $this->deletingUserId = $user->id;
+        $this->deletingUserId = $userId;
         $this->showDeleteConfirmation = true;
     }
 
@@ -181,15 +182,17 @@ new class extends Component
         $this->showDeleteConfirmation = false;
     }
 
-    public function confirmResendInvitation(User $user): void
+    public function confirmResendInvitation(int $userId): void
     {
+        $user = User::findOrFail($userId);
+
         if (! $user->hasPendingInvitation()) {
             session()->flash('error', 'This user does not have a pending invitation.');
 
             return;
         }
 
-        $this->resendingUserId = $user->id;
+        $this->resendingUserId = $userId;
         $this->showResendConfirmation = true;
     }
 
