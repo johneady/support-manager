@@ -24,6 +24,9 @@
     $db_database = 'database name';
     $db_username = 'database username';
     $db_password = 'database password';
+
+    // Application URL - populate this in the setup area
+    $app_url = 'https://example.com';
 @endsetup
 
 @story('update', ['on' => $server])
@@ -47,18 +50,25 @@
 
     cp {{ $env }} .env
 
-    # Replace database credentials using PHP
+    # Replace database credentials and app URL using PHP
     php -r "
     \$envFile = file_get_contents('.env');
     \$envFile = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE={{ $db_database }}', \$envFile);
     \$envFile = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME={{ $db_username }}', \$envFile);
     \$envFile = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD={{ $db_password }}', \$envFile);
+    \$envFile = preg_replace('/APP_URL=.*/', 'APP_URL={{ $app_url }}', \$envFile);
     file_put_contents('.env', \$envFile);
     "
 
     # Verify the replacements
     echo "Database configuration:"
     grep "^DB_" .env
+    echo "Application URL:"
+    grep "^APP_URL" .env
+
+    # Generate application key
+    php artisan key:generate
+    echo "Application key generated."
 
     php artisan storage:link
 
@@ -122,16 +132,21 @@
 
     cp {{ $env }} .env
 
-    # Replace database credentials using PHP
+    # Replace database credentials and app URL using PHP
     php -r "
     \$envFile = file_get_contents('.env');
     \$envFile = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE={{ $db_database }}', \$envFile);
     \$envFile = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME={{ $db_username }}', \$envFile);
     \$envFile = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD={{ $db_password }}', \$envFile);
+    \$envFile = preg_replace('/APP_URL=.*/', 'APP_URL={{ $app_url }}', \$envFile);
     file_put_contents('.env', \$envFile);
     "
 
     php artisan migrate --force
+
+    # Generate application key if not set
+    php artisan key:generate
+    echo "Application key generated."
 
     npm install
 
@@ -148,8 +163,8 @@
 
 @task('restore', ['on' => $server, 'confirm' => true])
     if [ ! -f {{ $backups }}/last_backup_info ]; then
-        echo "ERROR: No backup info found at {{ $backups }}/last_backup_info. Cannot restore."
-        exit 1
+    echo "ERROR: No backup info found at {{ $backups }}/last_backup_info. Cannot restore."
+    exit 1
     fi
 
     source {{ $backups }}/last_backup_info
@@ -163,31 +178,11 @@
     DB_PASS=$(grep "^DB_PASSWORD=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
 
     echo "Restoring database $DB_NAME from $DB..."
-    mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < $DB
+    mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < $DB cd {{ $path }} php artisan config:clear php artisan optimize
+        php artisan up echo "Maintenance mode disabled."
+    echo "Restore complete. The application has been rolled back to the pre-update state." @endtask
+    @error if ($task==='pull-and-deploy' ) { $lines=[ '' , '!!! DEPLOY FAILED — task: ' .
+        $task, '    A backup was taken before the update.' , '    To restore, run:'
+        , '    vendor/bin/envoy run restore --server={{ $server }}' , '' , ]; foreach ($lines as $line) { echo $line
+    . PHP_EOL; } } @enderror
 
-    cd {{ $path }}
-
-    php artisan config:clear
-    php artisan optimize
-
-    php artisan up
-    echo "Maintenance mode disabled."
-
-    echo "Restore complete. The application has been rolled back to the pre-update state."
-@endtask
-
-@error
-    if ($task === 'pull-and-deploy') {
-        $lines = [
-            '',
-            '!!! DEPLOY FAILED — task: ' . $task,
-            '    A backup was taken before the update.',
-            '    To restore, run:',
-            '    vendor/bin/envoy run restore --server={{ $server }}',
-            '',
-        ];
-        foreach ($lines as $line) {
-            echo $line . PHP_EOL;
-        }
-    }
-@enderror
