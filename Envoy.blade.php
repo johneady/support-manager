@@ -73,7 +73,6 @@
     php artisan storage:link
 
     php artisan migrate:fresh --force
-    php artisan db:seed --force
 
     npm install
     npm run build
@@ -82,7 +81,7 @@
 
     echo "{{ $server }} has been installed."
     echo "1. Create a cron job that triggers this command every minute to start the scheduler:"
-    echo "php {{ $path }}/artisan schedule:run 1> /dev/null 2> {{ dirname($path) }}/../cron_error.log"
+    echo "php {{ $path }}/{{ $folder }}/cron_error.log"
 @endtask
 
 @task('backup', ['on' => $server])
