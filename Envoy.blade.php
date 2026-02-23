@@ -131,21 +131,9 @@
 
     cp {{ $env }} .env
 
-    # Replace database credentials and app URL using PHP
-    php -r "
-    \$envFile = file_get_contents('.env');
-    \$envFile = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE={{ $db_database }}', \$envFile);
-    \$envFile = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME={{ $db_username }}', \$envFile);
-    \$envFile = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD={{ $db_password }}', \$envFile);
-    \$envFile = preg_replace('/APP_URL=.*/', 'APP_URL={{ $app_url }}', \$envFile);
-    file_put_contents('.env', \$envFile);
-    "
-
     php artisan migrate --force
-
-    # Generate application key if not set
-    php artisan key:generate
-    echo "Application key generated."
+    php artisan config:clear
+    php artisan optimize
 
     npm install
 
