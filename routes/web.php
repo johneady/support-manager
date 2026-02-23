@@ -1,21 +1,16 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FaqController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::view('/', 'welcome')->name('home');
 
 Route::view('faq', 'faq')->name('faq');
 Route::view('privacy-policy', 'privacy-policy')->name('privacy-policy');
 Route::view('terms-of-service', 'terms-of-service')->name('terms-of-service');
-Route::get('faq/{faq}', function (\App\Models\Faq $faq) {
-    abort_unless($faq->is_published, 404);
-
-    return view('faq-show', ['faq' => $faq]);
-})->name('faq.show');
+Route::get('faq/{faq}', FaqController::class)->name('faq.show');
 
 Route::get('invitation/{token}', \App\Livewire\Auth\AcceptInvitation::class)
     ->middleware('throttle:invitation')
