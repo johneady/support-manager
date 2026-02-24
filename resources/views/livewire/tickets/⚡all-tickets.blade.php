@@ -90,17 +90,16 @@ new class extends Component
             ->with(['user', 'ticketCategory', 'latestReply'])
             ->when($this->search, function ($query) use ($searchIdPrefix) {
                 $query->where(function ($q) use ($searchIdPrefix) {
-                    $q->where('subject', 'like', '%'.$this->search.'%')
-                        ->orWhereHas('user', function ($userQuery) {
-                            $userQuery->where('name', 'like', '%'.$this->search.'%')
-                                ->orWhere('email', 'like', '%'.$this->search.'%');
-                        });
                     if ($searchIdPrefix !== null) {
-                        $q->orWhere('id', (int) $searchIdPrefix);
-                    }
-                    // Also search by ID if the search is a plain number
-                    if ($searchIdPrefix === null && is_numeric($this->search)) {
-                        $q->orWhere('id', (int) $this->search);
+                        $q->where('id', (int) $searchIdPrefix);
+                    } elseif (is_numeric($this->search)) {
+                        $q->where('id', (int) $this->search);
+                    } else {
+                        $q->where('subject', 'like', '%'.$this->search.'%')
+                            ->orWhereHas('user', function ($userQuery) {
+                                $userQuery->where('name', 'like', '%'.$this->search.'%')
+                                    ->orWhere('email', 'like', '%'.$this->search.'%');
+                            });
                     }
                 });
             })

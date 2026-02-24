@@ -34,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::view('admin/faqs', 'admin.faqs')->name('admin.faqs');
         Route::view('admin/faqs/create', 'admin.faqs-create')->name('admin.faqs.create');
         Route::view('admin/faqs/{faq}/edit', 'admin.faqs-edit')->name('admin.faqs.edit');
+        Route::view('admin/settings', 'admin.settings')->name('admin.settings');
     });
 });
 
