@@ -1,175 +1,174 @@
 @servers(['your-server-name.com' => 'user@your-server-ip -p 22'])
 
 @setup
-    $servers = [
-    'your-server-name.com' => [
-    'path' => '/path/to/your/support-manager',
-    'env' => '.env.production',
-    'folder' => 'support-manager',
-    ],
-    ];
+    /*
+    * Load server configuration from envoy-config.php.
+    * Add or update server entries in that file before running any tasks.
+    */
+    require __DIR__ . '/envoy-config.php';
 
-    $server = $server ?? 'unknown';
+    /*
+    * Resolve the target server and extract its configuration variables.
+    * Pass --server=<hostname> when invoking Envoy to select a server.
+        */
+        $server = $server ?? 'unknown';
 
-    if (! isset($servers[$server])) {
-    throw new Exception("Unknown server: {$server}");
-    }
+        if (! isset($servers[$server])) {
+        throw new Exception("Unknown server: {$server}");
+        }
 
-    $path = $servers[$server]['path'];
-    $env = $servers[$server]['env'];
-    $folder = $servers[$server]['folder'];
-    $backups = dirname($path) . '/backups';
+        $webroot = $servers[$server]['webroot'];
+        $env = $servers[$server]['env'];
+        $folder = $servers[$server]['folder'];
+        $app_url = $servers[$server]['app_url'];
+        $db_database = $servers[$server]['db_database'];
+        $db_username = $servers[$server]['db_username'];
+        $db_password = $servers[$server]['db_password'];
+        $path = $webroot . '/' . $folder;
+        $backups = $webroot . '/backups';
+    @endsetup
 
-    // Database credentials - populate these in the setup area
-    $db_database = 'database name';
-    $db_username = 'database username';
-    $db_password = 'database password';
+    @story('update', ['on' => $server])
+        backup
+        pull-and-deploy
+    @endstory
 
-    // Application URL - populate this in the setup area
-    $app_url = 'https://example.com';
-@endsetup
+    @task('install', ['on' => $server, 'confirm' => true])
+        echo "{{ $server }} is about to be installed."
+        cd {{ $webroot }}
 
-@story('update', ['on' => $server])
-    backup
-    pull-and-deploy
-@endstory
+        rm -rf {{ $folder }}
+        echo "Removed existing {{ $folder }} directory."
 
-@task('install', ['on' => $server, 'confirm' => true])
-    echo "{{ $server }} is about to be installed."
-    cd {{ dirname($path) }}
+        git clone https://github.com/johneady/support-manager.git
 
-    rm -rf {{ $folder }}
-    echo "Removed existing {{ $folder }} directory."
+        cd {{ $folder }}
+        echo "Inside {{ $folder }} directory."
 
-    git clone https://github.com/johneady/support-manager.git
+        composer install --optimize-autoloader
 
-    cd {{ $folder }}
-    echo "Inside {{ $folder }} directory."
+        cp {{ $env }} .env
 
-    composer install --optimize-autoloader
+        # Replace database credentials and app URL using PHP
+        php -r "
+        \$envFile = file_get_contents('.env');
+        \$envFile = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE={{ $db_database }}', \$envFile);
+        \$envFile = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME={{ $db_username }}', \$envFile);
+        \$envFile = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD={{ $db_password }}', \$envFile);
+        \$envFile = preg_replace('/APP_URL=.*/', 'APP_URL={{ $app_url }}', \$envFile);
+        file_put_contents('.env', \$envFile);
+        "
 
-    cp {{ $env }} .env
+        # Verify the replacements
+        echo "Database configuration:"
+        grep "^DB_" .env
+        echo "Application URL:"
+        grep "^APP_URL" .env
 
-    # Replace database credentials and app URL using PHP
-    php -r "
-    \$envFile = file_get_contents('.env');
-    \$envFile = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE={{ $db_database }}', \$envFile);
-    \$envFile = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME={{ $db_username }}', \$envFile);
-    \$envFile = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD={{ $db_password }}', \$envFile);
-    \$envFile = preg_replace('/APP_URL=.*/', 'APP_URL={{ $app_url }}', \$envFile);
-    file_put_contents('.env', \$envFile);
-    "
+        # Generate application key
+        php artisan key:generate
+        echo "Application key generated."
 
-    # Verify the replacements
-    echo "Database configuration:"
-    grep "^DB_" .env
-    echo "Application URL:"
-    grep "^APP_URL" .env
+        php artisan storage:link
 
-    # Generate application key
-    php artisan key:generate
-    echo "Application key generated."
+        php artisan migrate:fresh --force
 
-    php artisan storage:link
+        npm install
+        npm run build
 
-    php artisan migrate:fresh --force
+        rm -rf node_modules/
 
-    npm install
-    npm run build
+        echo "{{ $server }} has been installed."
+        echo "1. Create a cron job that triggers this command every minute to start the scheduler:"
+        echo "php {{ $path }}/cron_error.log"
+    @endtask
 
-    rm -rf node_modules/
+    @task('backup', ['on' => $server])
+        BACKUP_DIR={{ $backups }}
+        mkdir -p $BACKUP_DIR
 
-    echo "{{ $server }} has been installed."
-    echo "1. Create a cron job that triggers this command every minute to start the scheduler:"
-    echo "php {{ $path }}/{{ $folder }}/cron_error.log"
-@endtask
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        FILES_BACKUP=$BACKUP_DIR/files_${TIMESTAMP}.tar.gz
+        DB_BACKUP=$BACKUP_DIR/db_${TIMESTAMP}.sql
 
-@task('backup', ['on' => $server])
-    BACKUP_DIR={{ $backups }}
-    mkdir -p $BACKUP_DIR
+        echo "Backing up files to $FILES_BACKUP..."
+        tar -czf $FILES_BACKUP -C {{ $webroot }} {{ $folder }}
+        echo "File backup complete."
 
-    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-    FILES_BACKUP=$BACKUP_DIR/files_${TIMESTAMP}.tar.gz
-    DB_BACKUP=$BACKUP_DIR/db_${TIMESTAMP}.sql
+        DB_NAME=$(grep
+        "^DB_DATABASE=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
+    DB_USER=$(grep "^DB_USERNAME="
+        {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
+        DB_PASS=$(grep "^DB_PASSWORD=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
 
-    echo "Backing up files to $FILES_BACKUP..."
-    tar -czf $FILES_BACKUP -C {{ dirname($path) }} {{ $folder }}
-    echo "File backup complete."
+    echo "Backing up database
+        $DB_NAME to $DB_BACKUP..."
+        mysqldump -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" > $DB_BACKUP
+        echo "Database backup complete."
 
-    DB_NAME=$(grep "^DB_DATABASE=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
-    DB_USER=$(grep "^DB_USERNAME=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
-    DB_PASS=$(grep "^DB_PASSWORD=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
+        echo "FILES=$FILES_BACKUP" > $BACKUP_DIR/last_backup_info
+        echo "DB=$DB_BACKUP" >> $BACKUP_DIR/last_backup_info
 
-    echo "Backing up database $DB_NAME to $DB_BACKUP..."
-    mysqldump -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" > $DB_BACKUP
-    echo "Database backup complete."
+        echo "Backup complete. Files: $FILES_BACKUP | DB: $DB_BACKUP"
 
-    echo "FILES=$FILES_BACKUP" > $BACKUP_DIR/last_backup_info
-    echo "DB=$DB_BACKUP" >> $BACKUP_DIR/last_backup_info
+        echo "Pruning old backups, keeping the last 1..."
+        ls -t $BACKUP_DIR/files_*.tar.gz 2>/dev/null | tail -n +2 | xargs -r rm --
+        ls -t $BACKUP_DIR/db_*.sql 2>/dev/null | tail -n +2 | xargs -r rm --
+        echo "Old backups pruned."
+    @endtask
 
-    echo "Backup complete. Files: $FILES_BACKUP | DB: $DB_BACKUP"
+    @task('pull-and-deploy', ['on' => $server])
+        echo "{{ $server }} is about to be updated."
+        cd {{ $path }}
 
-    echo "Pruning old backups, keeping the last 1..."
-    ls -t $BACKUP_DIR/files_*.tar.gz 2>/dev/null | tail -n +2 | xargs -r rm --
-    ls -t $BACKUP_DIR/db_*.sql 2>/dev/null | tail -n +2 | xargs -r rm --
-    echo "Old backups pruned."
-@endtask
+        php artisan down
+        echo "Maintenance mode enabled."
 
-@task('pull-and-deploy', ['on' => $server])
-    echo "{{ $server }} is about to be updated."
-    cd {{ $path }}
+        rm -rf vendor/
+        echo "Removed vendor/ directory."
 
-    php artisan down
-    echo "Maintenance mode enabled."
+        git pull origin main
 
-    rm -rf vendor/
-    echo "Removed vendor/ directory."
+        composer install --optimize-autoloader --no-dev
 
-    git pull origin main
+        php artisan migrate --force
 
-    composer install --optimize-autoloader --no-dev
+        npm install
+        npm run build
 
-    cp {{ $env }} .env
+        rm -rf node_modules/
+        echo "Removed node_modules/ directory."
 
-    php artisan migrate --force
-    php artisan config:clear
-    php artisan optimize
+        php artisan optimize:clear
+        php artisan optimize
+        php artisan up
+        echo "Maintenance mode disabled."
 
-    npm install
+        echo "{{ $server }} has been updated. Please check the application to ensure everything is working
+        correctly."
+    @endtask
 
-    npm run build
+    @task('restore', ['on' => $server, 'confirm' => true])
+        if [ ! -f {{ $backups }}/last_backup_info ]; then
+        echo "ERROR: No backup info found at {{ $backups }}/last_backup_info. Cannot restore."
+        exit 1
+        fi
 
-    rm -rf node_modules/
-    echo "Removed node_modules/ directory."
+        source {{ $backups }}/last_backup_info
 
-    php artisan up
-    echo "Maintenance mode disabled."
+        echo "Restoring files from $FILES..."
+        tar -xzf $FILES -C {{ $webroot }}
+        echo "File restore complete."
 
-    echo "{{ $server }} has been updated. Please check the application to ensure everything is working correctly."
-@endtask
+        DB_NAME=$(grep "^DB_DATABASE=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
+        DB_USER=$(grep "^DB_USERNAME=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
+        DB_PASS=$(grep "^DB_PASSWORD=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
 
-@task('restore', ['on' => $server, 'confirm' => true])
-    if [ ! -f {{ $backups }}/last_backup_info ]; then
-    echo "ERROR: No backup info found at {{ $backups }}/last_backup_info. Cannot restore."
-    exit 1
-    fi
-
-    source {{ $backups }}/last_backup_info
-
-    echo "Restoring files from $FILES..."
-    tar -xzf $FILES -C {{ dirname($path) }}
-    echo "File restore complete."
-
-    DB_NAME=$(grep "^DB_DATABASE=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
-    DB_USER=$(grep "^DB_USERNAME=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
-    DB_PASS=$(grep "^DB_PASSWORD=" {{ $path }}/.env | cut -d= -f2 | tr -d '\r')
-
-    echo "Restoring database $DB_NAME from $DB..."
-    mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < $DB cd {{ $path }} php artisan config:clear php artisan optimize
-        php artisan up echo "Maintenance mode disabled."
-    echo "Restore complete. The application has been rolled back to the pre-update state." @endtask
-    @error if ($task==='pull-and-deploy' ) { $lines=[ '' , '!!! DEPLOY FAILED — task: ' .
-        $task, '    A backup was taken before the update.' , '    To restore, run:'
-        , '    vendor/bin/envoy run restore --server={{ $server }}' , '' , ]; foreach ($lines as $line) { echo $line
-    . PHP_EOL; } } @enderror
-
+        echo "Restoring database $DB_NAME from $DB..."
+        mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < $DB cd {{ $path }} php artisan config:clear php artisan
+            optimize php artisan up echo "Maintenance mode disabled."
+            echo "Restore complete. The application has been rolled back to the pre-update state."
+            @endtask @error if ($task==='pull-and-deploy' ) { $lines=[ '' , '!!! DEPLOY FAILED — task: '
+            . $task, '    A backup was taken before the update.' , '    To restore, run:'
+            , '    vendor/bin/envoy run restore --server={{ $server }}' , '' , ]; foreach ($lines as $line) { echo
+        $line . PHP_EOL; } } @enderror
