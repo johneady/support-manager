@@ -124,9 +124,6 @@
         php artisan down
         echo "Maintenance mode enabled."
 
-        rm -rf vendor/
-        echo "Removed vendor/ directory."
-
         git pull origin main
 
         composer install --optimize-autoloader --no-dev
