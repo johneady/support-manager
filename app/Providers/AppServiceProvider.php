@@ -13,7 +13,6 @@ use Illuminate\Validation\Rules\Password;
 use Spatie\Health\Checks\Checks\CacheCheck;
 use Spatie\Health\Checks\Checks\DatabaseCheck;
 use Spatie\Health\Checks\Checks\OptimizedAppCheck;
-use Spatie\Health\Checks\Checks\QueueCheck;
 use Spatie\Health\Checks\Checks\ScheduleCheck;
 use Spatie\Health\Facades\Health;
 
@@ -62,7 +61,6 @@ class AppServiceProvider extends ServiceProvider
             DatabaseCheck::new(),
             EmailCheck::new(),
             OptimizedAppCheck::new(),
-            QueueCheck::new(),
             ScheduleCheck::new(),
         ]);
     }

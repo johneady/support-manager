@@ -25,7 +25,6 @@
  *   Restore (roll back to last backup — will prompt for confirmation):
  *     vendor/bin/envoy run restore --server=your-server-hostname
  */
-
 $servers = [
     'your-server-name.com' => [
         'webroot' => '/home/user/web/public_html',
@@ -37,4 +36,3 @@ $servers = [
         'db_password' => 'database password',
     ],
 ];
-
