@@ -124,7 +124,8 @@
         php artisan down
         echo "Maintenance mode enabled."
 
-        git pull origin main
+        git fetch origin main
+        git reset --hard origin/main
 
         composer install --optimize-autoloader --no-dev
 
