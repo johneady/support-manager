@@ -240,7 +240,9 @@ new class extends Component
 
             @if($this->mailConfiguration['Mailer'] === 'log')
                 <flux:callout variant="warning" icon="exclamation-triangle">
-                    The <span class="font-mono">log</span> mailer is active, so mail is written to the application log instead of being delivered. A test email will report success without reaching the inbox.
+                    <flux:callout.text>
+                        The <span class="font-mono">log</span> mailer is active, so mail is written to the application log instead of being delivered. A test email will report success without reaching the inbox.
+                    </flux:callout.text>
                 </flux:callout>
             @endif
 

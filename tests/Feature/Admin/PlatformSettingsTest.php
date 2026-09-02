@@ -285,6 +285,24 @@ describe('email configuration', function () {
             ->and($config)->not->toContain('super-secret-password');
     });
 
+    /**
+     * Regression: the callout body must sit in a single callout.text slot.
+     * Flux lays the callout content out as `flex flex-col`, so bare slot
+     * content is split into one column flex item per node — an inline <span>
+     * mid-sentence broke the warning onto three separate lines.
+     */
+    it('renders the log-mailer warning as a single text block', function () {
+        config(['mail.default' => 'log']);
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $html = Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->html();
+
+        expect($html)->toMatch('/data-slot="text"[^>]*>\s*The <span[^>]*>log<\/span> mailer is active,/');
+    });
+
     it('renders the email configuration section', function () {
         $admin = User::factory()->create(['is_admin' => true]);
 
