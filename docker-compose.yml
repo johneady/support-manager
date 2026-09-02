@@ -1,0 +1,123 @@
+# LOCAL verification stack. Do NOT deploy this file — deploy
+# docker-compose.dokploy.yml.
+#
+# This exists to prove the image boots, migrates and serves before it reaches
+# Dokploy. It embeds a MariaDB service, uses a throwaway APP_KEY and publishes
+# a port, none of which belongs on the internet.
+#
+# ALWAYS pass --env-file .env.docker. Compose's default variable file is the
+# project-root .env, which here is the application's OWN Laravel .env — Compose
+# would read APP_KEY, DB_* and friends out of it and quietly configure the
+# containers from your development settings.
+#
+#   docker compose --env-file .env.docker up --build -d
+#   docker compose --env-file .env.docker logs -f app
+#   open http://localhost:8080     (override with APP_PORT in .env.docker)
+#   docker compose --env-file .env.docker down -v
+
+x-app-base: &app-base
+  build:
+    context: .
+    target: runtime
+  image: support-manager:local
+  restart: unless-stopped
+  environment: &app-env
+    APP_NAME: "Support Manager"
+    APP_ENV: production
+    # Throwaway key for the local stack only, defined in .env.docker.
+    APP_KEY: ${APP_KEY:?set APP_KEY in .env.docker}
+    APP_DEBUG: "false"
+    APP_URL: http://localhost:${APP_PORT:-8080}
+    # Defined ONLY in .env.docker, so this fails fast when --env-file is
+    # forgotten rather than silently falling back to the application's .env.
+    DOCKER_LOCAL_STACK: ${DOCKER_LOCAL_STACK:?pass --env-file .env.docker (see this file's header)}
+
+    LOG_CHANNEL: stack
+    LOG_STACK: single
+    LOG_LEVEL: debug
+
+    DB_CONNECTION: mariadb
+    DB_HOST: database
+    DB_PORT: "3306"
+    DB_DATABASE: support_manager
+    DB_USERNAME: support
+    DB_PASSWORD: secret
+
+    SESSION_DRIVER: database
+    SESSION_ENCRYPT: "true"
+    CACHE_STORE: database
+    QUEUE_CONNECTION: database
+    BROADCAST_CONNECTION: log
+    FILESYSTEM_DISK: local
+    MAIL_MAILER: log
+  networks:
+    - app
+  volumes:
+    - storage-app:/var/www/html/storage/app
+    - storage-logs:/var/www/html/storage/logs
+
+services:
+  database:
+    image: mariadb:11.8
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootsecret
+      MARIADB_DATABASE: support_manager
+      MARIADB_USER: support
+      MARIADB_PASSWORD: secret
+    networks:
+      - app
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  app:
+    <<: *app-base
+    environment:
+      <<: *app-env
+      CONTAINER_ROLE: app
+      RUN_MIGRATIONS: "true"
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      database:
+        condition: service_healthy
+
+  scheduler:
+    <<: *app-base
+    environment:
+      <<: *app-env
+      CONTAINER_ROLE: scheduler
+      # The app role owns migrations; this role must not race it.
+      RUN_MIGRATIONS: "false"
+    # The image HEALTHCHECK curls nginx, which this role does not run — without
+    # this override the container reports "unhealthy" while working perfectly.
+    #
+    # Test PID 1 specifically, NOT a glob over /proc/*/cmdline: the healthcheck
+    # runs as `sh -c "... schedule:work ..."`, so its OWN cmdline contains the
+    # string and a glob always matches itself — such a check can never fail.
+    # The entrypoint execs into the role process, so PID 1 IS the answer.
+    healthcheck:
+      test: ["CMD-SHELL", "tr '\\0' ' ' < /proc/1/cmdline | grep -q schedule:work || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      database:
+        condition: service_healthy
+      app:
+        condition: service_started
+
+volumes:
+  db-data:
+  storage-app:
+  storage-logs:
+
+networks:
+  app:

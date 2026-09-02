@@ -56,6 +56,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | Set this only where a TLS-terminating reverse proxy really does sit in
+    | front of the application, such as Traefik under Dokploy. There the
+    | connection into php-fpm is plain HTTP from another container, so without
+    | trusting X-Forwarded-* the framework treats the request as insecure:
+    | URLs generate as http://, and the HSTS header in
+    | App\Http\Middleware\SecurityHeaders is never sent, because it is gated
+    | on $request->isSecure().
+    |
+    | Use "*" when the proxy is the only route to the container (its IP is not
+    | stable), or a comma-separated list of proxy IPs. Leave this empty on the
+    | HestiaCP deployment, where nginx proxies to php-fpm on the same host and
+    | the request already arrives secure — trusting forwarded headers from an
+    | arbitrary client would let it spoof its own scheme and address.
+    |
+    */
+
+    'trust_proxies' => env('TRUST_PROXIES'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

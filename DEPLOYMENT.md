@@ -6,7 +6,14 @@
 
 </div>
 
-This project uses [Laravel Envoy](https://laravel.com/docs/envoy) for streamlined deployment to production servers. Envoy provides a simple, fluent syntax for defining common tasks on remote servers.
+This guide covers deployment to a traditional server (HestiaCP) using
+[Laravel Envoy](https://laravel.com/docs/envoy), which provides a simple, fluent
+syntax for defining common tasks on remote servers.
+
+> 🐳 **Deploying with Docker instead?** The containerised deployment to Dokploy
+> is covered in the [README](README.md#-deployment). It does not use Envoy: the
+> image builds its own dependencies and assets, and the container entrypoint
+> runs migrations and rebuilds caches on boot.
 
 ## 📦 Setup
 

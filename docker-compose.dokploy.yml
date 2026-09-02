@@ -1,0 +1,182 @@
+# Dokploy deployment stack for Support Manager.
+#
+# Deploy THIS file, not docker-compose.yml. That one is a local verification
+# stack: it embeds a MariaDB service with a `rootsecret` password, hardcodes a
+# throwaway APP_KEY and publishes port 8080. Shipping it would put a known
+# database password and a wrong APP_KEY into production.
+#
+# Differences from the local stack, all deliberate:
+#   - no database service    — Dokploy manages MariaDB
+#   - no published ports     — Traefik reaches the app on the internal network,
+#                              so nothing here is exposed to the internet
+#   - no literal values      — every setting comes from Dokploy's environment
+#                              settings, and a missing one fails the deploy
+#                              with a named error instead of booting on a
+#                              silent default
+#   - TRUST_PROXIES          — required behind Traefik; see the note below
+#
+# Set in Dokploy's environment settings before the first deploy:
+#   APP_KEY, APP_URL, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD,
+#   MAIL_* and ALERTS_TO_ADDRESS.
+#
+# No Traefik labels here: Dokploy injects them from the application's Domains
+# tab, which is also where the Let's Encrypt certificate is requested. Point
+# that at port 80 on the `app` service.
+
+x-app-base: &app-base
+  build:
+    context: .
+    target: runtime
+  image: support-manager:dokploy
+  restart: unless-stopped
+  environment: &app-env
+    APP_NAME: ${APP_NAME:-Support Manager}
+    APP_ENV: production
+
+    # AT CUTOVER from HestiaCP, carry the EXISTING key across from the live
+    # server's .env — do NOT generate a new one. SESSION_ENCRYPT=true, so a
+    # different key makes every existing session undecryptable and signs
+    # everyone out. The entrypoint refuses to boot without a key but cannot
+    # tell a wrong key from a right one: that failure stays silent until
+    # someone tries to log in.
+    APP_KEY: ${APP_KEY:?set APP_KEY in Dokploy (at cutover reuse the live server's key)}
+
+    APP_DEBUG: "false"
+
+    # Must be the https:// domain Traefik serves. Laravel builds every
+    # absolute URL — password resets, email verification and invitation links
+    # among them — from this value.
+    APP_URL: ${APP_URL:?set APP_URL in Dokploy (https://<domain>)}
+
+    # config/app.php sets the application timezone to UTC; keep both in step
+    # if that ever changes (docker/php/php.ini carries the PHP-level setting).
+    APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+
+    # Traefik terminates TLS and forwards plain HTTP, so without this Laravel
+    # reads the request as insecure: http:// URLs in mail, and
+    # App\Http\Middleware\SecurityHeaders never emits its HSTS header because
+    # that is gated on $request->isSecure().
+    #
+    # Safe here because only Traefik can reach the container — nothing is
+    # published, so no arbitrary client can spoof its own scheme or IP.
+    #
+    # NOTE: this requires AppServiceProvider::configureTunnelledRequests(),
+    # which reads it via config('app.trust_proxies').
+    TRUST_PROXIES: ${TRUST_PROXIES:-*}
+
+    LOG_CHANNEL: stack
+    LOG_STACK: single
+    LOG_LEVEL: ${LOG_LEVEL:-warning}
+
+    # Laravel has a dedicated mariadb driver; it is not interchangeable with
+    # 'mysql' for DDL generation, so keep this in step with the image pinned
+    # in Dokploy. Use 'mysql' here if the managed database is MySQL.
+    DB_CONNECTION: ${DB_CONNECTION:-mariadb}
+    DB_HOST: ${DB_HOST:?set DB_HOST in Dokploy (the managed database host, never localhost)}
+    DB_PORT: ${DB_PORT:-3306}
+    DB_DATABASE: ${DB_DATABASE:?set DB_DATABASE in Dokploy}
+    DB_USERNAME: ${DB_USERNAME:?set DB_USERNAME in Dokploy}
+    DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in Dokploy}
+
+    SESSION_DRIVER: database
+    SESSION_ENCRYPT: "true"
+    SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
+    CACHE_STORE: database
+    QUEUE_CONNECTION: database
+    BROADCAST_CONNECTION: log
+    FILESYSTEM_DISK: local
+
+    # Real mail matters here: this application sends ticket notifications,
+    # invitations and password resets, all of them queued (app/Notifications).
+    # Left at the default the app looks healthy while every one of those is
+    # written to the log and never delivered.
+    MAIL_MAILER: ${MAIL_MAILER:?set MAIL_MAILER in Dokploy (smtp; use log only for a staging deploy)}
+    MAIL_HOST: ${MAIL_HOST:-}
+    MAIL_PORT: ${MAIL_PORT:-587}
+    MAIL_SCHEME: ${MAIL_SCHEME:-}
+    MAIL_USERNAME: ${MAIL_USERNAME:-}
+    MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:?set MAIL_FROM_ADDRESS in Dokploy}
+    MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Support Manager}
+
+    # Where spatie/laravel-health sends failing-check notifications
+    # (config/health.php).
+    ALERTS_TO_ADDRESS: ${ALERTS_TO_ADDRESS:?set ALERTS_TO_ADDRESS in Dokploy}
+
+  # Both roles must join dokploy-network, the shared network the Dokploy-managed
+  # database lives on. Without this, Compose puts the services on a project
+  # default network and ONLY the role with a domain gets attached to
+  # dokploy-network by Dokploy — so `app` reaches the database while
+  # `scheduler` crash-loops on "database unreachable after 60 attempts",
+  # restarting forever. Docker still reports it "Up", which makes the failure
+  # easy to miss.
+  networks:
+    - dokploy-network
+
+  volumes:
+    # storage/app holds nothing today — this application has no uploads — but
+    # the volume is what stops them evaporating on redeploy the moment someone
+    # adds one.
+    - storage-app:/var/www/html/storage/app
+    - storage-logs:/var/www/html/storage/logs
+
+services:
+  app:
+    <<: *app-base
+    environment:
+      <<: *app-env
+      CONTAINER_ROLE: app
+      RUN_MIGRATIONS: "true"
+    # No ports. Traefik routes to port 80 over Dokploy's network; publishing
+    # here would expose the app directly, bypassing TLS — and Docker's iptables
+    # rules sit ahead of UFW, so the host firewall would not stop it.
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  # This role carries the QUEUE as well as the timed work. routes/console.php
+  # schedules `queue:work --stop-when-empty` every minute, which is why there is
+  # deliberately no separate queue service here — unlike the sibling Laravel
+  # deployments on this host.
+  #
+  # It also runs tickets:close-inactive every six hours and the
+  # spatie/laravel-health checks and heartbeat. Without this role, notifications
+  # are queued and never sent, tickets are never auto-closed, and the health
+  # dashboard silently goes stale while the site itself looks fine.
+  scheduler:
+    <<: *app-base
+    environment:
+      <<: *app-env
+      CONTAINER_ROLE: scheduler
+      # The app role owns migrations; this role must not race it.
+      RUN_MIGRATIONS: "false"
+    # The image HEALTHCHECK curls nginx, which this role does not run — without
+    # this override the container reports "unhealthy" while working perfectly.
+    #
+    # Test PID 1 specifically, NOT a glob over /proc/*/cmdline: the healthcheck
+    # runs as `sh -c "... schedule:work ..."`, so its OWN cmdline contains the
+    # string and a glob always matches itself — such a check can never fail.
+    # The entrypoint execs into the role process, so PID 1 IS the answer.
+    healthcheck:
+      test: ["CMD-SHELL", "tr '\\0' ' ' < /proc/1/cmdline | grep -q schedule:work || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      app:
+        condition: service_started
+
+volumes:
+  storage-app:
+  storage-logs:
+
+# Created by the Dokploy installer; the managed database is attached to it.
+networks:
+  dokploy-network:
+    external: true

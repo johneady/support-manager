@@ -1,0 +1,74 @@
+# Build context exclusions for the Docker image.
+#
+# public/hot is the marker `npm run dev` leaves behind. If it ever reaches the
+# image, @vite points every asset URL at http://localhost:5173 — the visitor's
+# own machine — and all frontend JS silently dies while server-rendered Blade
+# keeps working, making the breakage look partial. It is gitignored, so it is
+# invisible to git but NOT to the Docker build context, which copies the
+# working tree as-is.
+public/hot
+
+.git
+.github
+.claude
+.vscode
+.idea
+.zed
+plans
+
+node_modules
+vendor
+public/build
+public/storage
+
+# Never bake secrets into an image layer. Runtime env comes from Dokploy /
+# compose environment, not from a copied file.
+.env
+.env.*
+!.env.example
+
+# direnv shim for the local PHP toolchain; meaningless inside the container.
+.envrc
+
+# The local development database. Copying it would ship development data into
+# a production image and, worse, give a misconfigured container something to
+# open when DB_CONNECTION is wrong instead of failing loudly.
+database/database.sqlite
+*.sqlite
+
+# Locally-built package/service caches must never enter the image. They are
+# generated with DEV dependencies present, so they reference providers such as
+# Laravel\Boost\BoostServiceProvider and the debugbar's that a --no-dev vendor
+# install does not contain — every artisan call then dies with
+# "Class ... not found". The entrypoint regenerates them at runtime.
+bootstrap/cache/packages.php
+bootstrap/cache/services.php
+bootstrap/cache/*.php
+
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/pail
+
+tests
+.phpunit.cache
+.phpunit.result.cache
+phpunit.xml
+pint.json
+
+# Database dumps pulled from a server during migration work.
+db_*.sql
+*.sql.gz
+
+# NOTE: docker/ is intentionally NOT excluded — the Dockerfile COPYs the
+# nginx, php-fpm, supervisor and entrypoint configs out of it.
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+Envoy.blade.php
+envoy-config.php
+*.md
+!README.md
+todo.md

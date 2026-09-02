@@ -64,6 +64,10 @@ I created this project simply because I needed a very simple ticket system that 
 - **NPM**
 - **SQLite**, **MySQL**, or **PostgreSQL**
 
+Optional, for the containerised deployment only:
+
+- **Docker** with the Compose plugin — see [Deployment](#-deployment)
+
 ---
 
 ## 🚀 Installation
@@ -225,13 +229,61 @@ resources/views/
 ├── layouts/              # App and auth layouts
 ├── livewire/             # Livewire component views
 └── tickets/              # Ticket management views
+
+docker/                   # Container configuration (see Deployment)
+├── entrypoint/           # Boot script and supervisor config
+├── nginx/                # Webserver vhost
+└── php/                  # php.ini and php-fpm pool
 ```
 
 ---
 
 ## 🚢 Deployment
 
-For detailed deployment instructions, including setup, configuration, and troubleshooting, see the [DEPLOYMENT.md](DEPLOYMENT.md) guide.
+Two deployment paths are supported.
+
+### 🐳 Docker (Dokploy)
+
+The container image runs nginx and php-fpm under supervisor, with a second
+container for the scheduler. Deploy `docker-compose.dokploy.yml` — never
+`docker-compose.yml`, which is the local stack and embeds a throwaway database
+password and app key.
+
+Set these in Dokploy's environment settings before the first deploy; a missing
+one fails the deploy with a named error rather than booting on a silent default:
+
+| Variable | Notes |
+| --- | --- |
+| `APP_KEY` | At cutover, reuse the existing key — see the warning below |
+| `APP_URL` | The `https://` domain Traefik serves |
+| `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | The Dokploy-managed database |
+| `MAIL_MAILER`, `MAIL_FROM_ADDRESS` | `smtp` in production; `log` silently delivers nothing |
+| `ALERTS_TO_ADDRESS` | Where failing health checks are sent |
+| `TRUST_PROXIES` | `*` behind Traefik, so HTTPS is detected and HSTS is sent |
+
+> ⚠️ **Migrating an existing site:** carry the **current** `APP_KEY` across
+> rather than generating a new one. Sessions are encrypted
+> (`SESSION_ENCRYPT=true`), so a different key signs every user out.
+
+Point the Domains tab at port **80** on the `app` service; Dokploy injects the
+Traefik labels and requests the certificate.
+
+To verify the image locally before deploying:
+
+```bash
+docker compose --env-file .env.docker up --build -d
+open http://localhost:8080
+docker compose --env-file .env.docker down -v
+```
+
+Always pass `--env-file .env.docker`. Compose's default variable file is the
+project-root `.env` — this application's own Laravel config — and reading it
+would configure the containers from your development settings.
+
+### 🖥️ Envoy (HestiaCP)
+
+For the traditional deployment to a HestiaCP server, see the
+[DEPLOYMENT.md](DEPLOYMENT.md) guide.
 
 ---
 
