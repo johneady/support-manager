@@ -1,8 +1,10 @@
 <?php
 
 use App\Health\HealthAlertNotifiable;
+use App\Mail\TestEmail;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -232,5 +234,265 @@ describe('Setting model', function () {
         Setting::set('health_alert_email', 'new@example.com');
 
         expect(Setting::get('health_alert_email'))->toBe('new@example.com');
+    });
+});
+
+describe('email configuration', function () {
+    it('exposes the active mailer settings', function () {
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => 'smtp.example.com',
+            'mail.mailers.smtp.port' => 587,
+            'mail.mailers.smtp.username' => 'mailer@example.com',
+            'mail.from.address' => 'no-reply@example.com',
+            'mail.from.name' => 'Support',
+        ]);
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $config = Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->instance()
+            ->mailConfiguration();
+
+        expect($config['Mailer'])->toBe('smtp')
+            ->and($config['Host'])->toBe('smtp.example.com')
+            ->and($config['Port'])->toBe('587')
+            ->and($config['Username'])->toBe('mailer@example.com')
+            ->and($config['From Address'])->toBe('no-reply@example.com')
+            ->and($config['From Name'])->toBe('Support');
+    });
+
+    /**
+     * The section renders in a browser, so the SMTP credential must never be
+     * among the values displayed — an admin does not need to read it back to
+     * know whether delivery is configured.
+     */
+    it('never exposes the mail password', function () {
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.password' => 'super-secret-password',
+        ]);
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $config = Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->instance()
+            ->mailConfiguration();
+
+        expect($config)->not->toHaveKey('Password')
+            ->and($config)->not->toContain('super-secret-password');
+    });
+
+    it('renders the email configuration section', function () {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->assertSee('Email Configuration')
+            ->assertSee('Send Test Email');
+    });
+
+    it('does not leak the mail password into the rendered page', function () {
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.password' => 'super-secret-password',
+        ]);
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->assertDontSee('super-secret-password');
+    });
+});
+
+describe('send test email', function () {
+    it('opens the modal prefilled with the health alert address', function () {
+        Setting::set('health_alert_email', 'ops@example.com');
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->call('openTestEmailModal')
+            ->assertSet('showTestEmailModal', true)
+            ->assertSet('testEmailAddress', 'ops@example.com');
+    });
+
+    /**
+     * With no alert address configured there is still a sensible recipient:
+     * the admin who is looking at the page.
+     */
+    it('falls back to the acting admin address when no alert email is set', function () {
+        $admin = User::factory()->create(['is_admin' => true, 'email' => 'admin@example.com']);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->call('openTestEmailModal')
+            ->assertSet('testEmailAddress', 'admin@example.com');
+    });
+
+    it('sends a test email to the chosen address', function () {
+        Mail::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->call('openTestEmailModal')
+            ->set('testEmailAddress', 'someone@example.com')
+            ->call('sendTestEmail')
+            ->assertHasNoErrors()
+            ->assertSet('showTestEmailModal', false);
+
+        Mail::assertSent(TestEmail::class, function (TestEmail $mail) {
+            return $mail->hasTo('someone@example.com');
+        });
+    });
+
+    it('sends to an address other than the configured alert email', function () {
+        Mail::fake();
+
+        Setting::set('health_alert_email', 'ops@example.com');
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->call('openTestEmailModal')
+            ->set('testEmailAddress', 'elsewhere@example.com')
+            ->call('sendTestEmail')
+            ->assertHasNoErrors();
+
+        Mail::assertSent(TestEmail::class, fn (TestEmail $mail) => $mail->hasTo('elsewhere@example.com'));
+        Mail::assertNotSent(TestEmail::class, fn (TestEmail $mail) => $mail->hasTo('ops@example.com'));
+    });
+
+    it('requires a recipient address', function () {
+        Mail::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->set('testEmailAddress', '')
+            ->call('sendTestEmail')
+            ->assertHasErrors(['testEmailAddress' => 'required']);
+
+        Mail::assertNothingSent();
+    });
+
+    it('rejects a malformed recipient address', function () {
+        Mail::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->set('testEmailAddress', 'not-an-email')
+            ->call('sendTestEmail')
+            ->assertHasErrors(['testEmailAddress' => 'email']);
+
+        Mail::assertNothingSent();
+    });
+
+    /**
+     * Sending is what the button exists to verify, so a validation failure here
+     * must not close the modal — the admin needs to see the error and correct
+     * the address in place.
+     */
+    it('keeps the modal open when validation fails', function () {
+        Mail::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->call('openTestEmailModal')
+            ->set('testEmailAddress', 'not-an-email')
+            ->call('sendTestEmail')
+            ->assertSet('showTestEmailModal', true);
+    });
+
+    /**
+     * The mailable is deliberately not ShouldQueue: a queued send would report
+     * success on a deployment whose worker is stopped, hiding the very fault
+     * the test email is meant to detect.
+     */
+    it('sends synchronously rather than queueing', function () {
+        Mail::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->set('testEmailAddress', 'someone@example.com')
+            ->call('sendTestEmail');
+
+        Mail::assertSent(TestEmail::class);
+        Mail::assertNotQueued(TestEmail::class);
+
+        expect(new TestEmail('Admin'))
+            ->not->toBeInstanceOf(Illuminate\Contracts\Queue\ShouldQueue::class);
+    });
+
+    /**
+     * A misconfigured mailer throws at send time. That is the common case this
+     * feature exists to surface, so the failure must be reported to the admin
+     * rather than escalating into an error page.
+     */
+    it('reports a transport failure instead of throwing', function () {
+        Mail::shouldReceive('to')->andThrow(new RuntimeException('Connection refused'));
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->call('openTestEmailModal')
+            ->set('testEmailAddress', 'someone@example.com')
+            ->call('sendTestEmail')
+            ->assertHasErrors('testEmailAddress')
+            ->assertSet('showTestEmailModal', true);
+    });
+
+    /**
+     * mount() already aborts for a non-admin, so a non-admin never reaches a
+     * mounted component to call the action on. The send action re-checks
+     * anyway, but the reachable guarantee to assert is the mount abort.
+     */
+    it('forbids non-admin users from reaching the component', function () {
+        Mail::fake();
+
+        Livewire::actingAs(User::factory()->create())
+            ->test('admin.platform-settings')
+            ->assertForbidden();
+
+        Mail::assertNothingSent();
+    });
+
+    /**
+     * Regression: save() must not validate the test-email field. That field is
+     * `required`, and it is empty whenever the admin has not opened the modal,
+     * so a blanket $this->validate() blocked saving unrelated settings.
+     */
+    it('does not block saving settings while the test recipient is empty', function () {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->assertSet('testEmailAddress', '')
+            ->set('healthCheckInterval', 30)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        expect(Setting::get('health_check_interval'))->toBe('30');
+    });
+
+    it('renders the test email markdown view', function () {
+        $rendered = (new TestEmail('Ada Lovelace'))->render();
+
+        expect($rendered)->toContain('Ada Lovelace');
     });
 });
