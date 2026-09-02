@@ -134,6 +134,12 @@
         npm install
         npm run build
 
+        # public/hot is what `npm run dev` leaves behind, and while it exists @vite
+        # points every asset URL at http://localhost:5173 — the visitor's own machine
+        # — so the built bundle in public/build/ is never loaded. It is gitignored,
+        # so the `git reset --hard` above will NOT clear it.
+        rm -f public/hot
+
         rm -rf node_modules/
         echo "Removed node_modules/ directory."
 
