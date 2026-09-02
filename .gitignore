@@ -7,6 +7,8 @@
 /storage/pail
 /vendor
 .env
+.env.backup
+.env.production
 .phpactor.json
 .phpunit.result.cache
 .claude
@@ -22,3 +24,18 @@ yarn-error.log
 /.zed
 todo.md
 /plans
+
+# Local Docker development stack variables (APP_KEY, DOCKER_LOCAL_STACK).
+# Compose reads the project-root .env by default, which here is the
+# application's OWN Laravel .env - so the local stack is always run with
+# --env-file .env.docker instead.
+.env.docker
+
+# Per-server env for the legacy HestiaCP deploy, referenced by
+# envoy-config.php. Carries the real production credentials.
+.env.power
+
+# Database dumps pulled from a server during migration/backup work. Real
+# production data - never commit them.
+db_*.sql
+*.sql.gz

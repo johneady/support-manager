@@ -14,7 +14,9 @@ Before deploying, you need to configure both the production environment file and
 
 ### 1️⃣ Configure Production Environment
 
-Create a `.env.production` file in your project root with production-specific settings. This file will be copied to `.env` on the server during deployment.
+Create your production environment file in the project root with production-specific settings. This file is copied to `.env` on the server during deployment.
+
+Name it after the server it targets — `.env.power` for the powerphpscripts host — and set the matching `env` key in `envoy-config.php`. These files are gitignored because they carry real credentials; never commit one.
 
 **Required Environment Variables:**
 
@@ -72,7 +74,7 @@ Replace with your actual server details:
 $servers = [
     'your-server-name.com' => [
         'path' => '/path/to/your/support-manager',
-        'env' => '.env.production',
+        'env' => '.env.power',
         'folder' => 'support-manager',
     ],
 ];
@@ -80,7 +82,7 @@ $servers = [
 
 Update these values:
 - `path`: The full path to your application directory on the server
-- `env`: The name of your production environment file (default: `.env.production`)
+- `env`: The name of your production environment file, gitignored (e.g. `.env.power`)
 - `folder`: The name of the application folder (default: `support-manager`)
 
 > 📁 **Deployment Path Examples by Hosting Type:**
@@ -158,12 +160,12 @@ vendor/bin/envoy run install --server=your-server-name.com
 This task will:
 - ✅ Clone the repository
 - ✅ Install Composer dependencies
-- ✅ Copy `.env.production` to `.env`
+- ✅ Copy the server's env file to `.env`
 - ✅ Run migrations and seed the database
 - ✅ Build frontend assets
 - ✅ Clean up temporary files
 
-> ⚠️ **Warning:** The install task runs `db:seed --force`, which creates test data. Ensure your `.env.production` file does not contain the development seeder credentials in production.
+> ⚠️ **Warning:** The install task runs `db:seed --force`, which creates test data. Ensure your production env file does not contain the development seeder credentials in production.
 
 ### 🔄 Update Deployment
 
@@ -247,10 +249,10 @@ Replace `/path/to/your/support-manager` with your actual application path and `/
 
 Before deploying to production:
 
-- [ ] Create `.env.production` with production settings
+- [ ] Create the server's env file (e.g. `.env.power`) with production settings
 - [ ] Generate and set a secure `APP_KEY`
-- [ ] Configure database credentials in `.env.production`
-- [ ] Set up mail configuration in `.env.production`
+- [ ] Configure database credentials in the server's env file
+- [ ] Set up mail configuration in the server's env file
 - [ ] Update server details in `Envoy.blade.php`
 - [ ] Ensure SSH access to the server is configured
 - [ ] Verify database exists and user has proper permissions
@@ -262,7 +264,7 @@ Before deploying to production:
 ## 🔧 Troubleshooting
 
 **Deployment fails during migration:**
-- Check database credentials in `.env.production`
+- Check database credentials in the server's env file
 - Ensure database exists and user has proper permissions
 - Review migration files for any issues
 
@@ -272,7 +274,7 @@ Before deploying to production:
 - Verify `public/build` directory exists and contains compiled assets
 
 **Queue jobs not processing:**
-- Ensure `QUEUE_CONNECTION=database` in `.env.production`
+- Ensure `QUEUE_CONNECTION=database` in the server's env file
 - Set up a queue worker process or supervisor configuration
 - Verify the jobs table exists
 
