@@ -6,6 +6,7 @@ use Livewire\Livewire;
 
 beforeEach(function () {
     Setting::set('health_check_refresh_interval', 5);
+    Setting::set('health_check_interval', 5);
     Setting::set('health_alert_email', null);
 });
 
@@ -32,6 +33,7 @@ describe('admin.settings route', function () {
 describe('PlatformSettings component', function () {
     it('loads current settings on mount', function () {
         Setting::set('health_check_refresh_interval', 30);
+        Setting::set('health_check_interval', 15);
         Setting::set('health_alert_email', 'ops@example.com');
 
         $admin = User::factory()->create(['is_admin' => true]);
@@ -39,6 +41,7 @@ describe('PlatformSettings component', function () {
         Livewire::actingAs($admin)
             ->test('admin.platform-settings')
             ->assertSet('healthCheckRefreshInterval', 30)
+            ->assertSet('healthCheckInterval', 15)
             ->assertSet('healthAlertEmail', 'ops@example.com');
     });
 
@@ -54,11 +57,13 @@ describe('PlatformSettings component', function () {
         Livewire::actingAs($admin)
             ->test('admin.platform-settings')
             ->set('healthCheckRefreshInterval', 15)
+            ->set('healthCheckInterval', 30)
             ->set('healthAlertEmail', 'alerts@example.com')
             ->call('save')
             ->assertHasNoErrors();
 
         expect(Setting::get('health_check_refresh_interval'))->toBe('15')
+            ->and(Setting::get('health_check_interval'))->toBe('30')
             ->and(Setting::get('health_alert_email'))->toBe('alerts@example.com');
     });
 
@@ -83,6 +88,51 @@ describe('PlatformSettings component', function () {
             ->set('healthCheckRefreshInterval', 7)
             ->call('save')
             ->assertHasErrors(['healthCheckRefreshInterval' => 'in']);
+    });
+
+    /**
+     * The scheduler frequency is the direct lever on health-history growth,
+     * and routes/console.php only maps a fixed set of values to a native
+     * frequency. A step that does not divide 60 misfires, so 45 is offered for
+     * the page-refresh timer but must not be offered here.
+     */
+    it('rejects a scheduler interval that does not divide an hour', function () {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->set('healthCheckInterval', 45)
+            ->call('save')
+            ->assertHasErrors(['healthCheckInterval' => 'in']);
+    });
+
+    /**
+     * A new install has no settings row, so this fallback is what every fresh
+     * project runs on. Hourly keeps health-history growth to ~120 rows a day.
+     */
+    it('defaults a fresh install to hourly health checks', function () {
+        Setting::query()->where('key', 'health_check_interval')->delete();
+        Setting::clearCache();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->assertSet('healthCheckInterval', 60);
+    });
+
+    it('accepts every scheduler interval the console route maps natively', function () {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        foreach ([1, 5, 10, 15, 30, 60] as $interval) {
+            Livewire::actingAs($admin)
+                ->test('admin.platform-settings')
+                ->set('healthCheckInterval', $interval)
+                ->call('save')
+                ->assertHasNoErrors();
+
+            expect(Setting::get('health_check_interval'))->toBe((string) $interval);
+        }
     });
 
     it('validates health alert email format', function () {

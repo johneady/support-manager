@@ -9,6 +9,24 @@ new class extends Component
     #[Validate('required|integer|in:1,5,10,15,30,45,60')]
     public int $healthCheckRefreshInterval = 5;
 
+    /**
+     * How often the scheduler RUNS the health checks.
+     *
+     * Restricted to the values routes/console.php maps to a native Laravel
+     * frequency. Anything else falls through to a cron step expression, and a
+     * step that does not divide 60 (45, for one) misfires: it restarts at the
+     * top of each hour, so the gap between the last run and the next is
+     * shorter than the interval asked for. 45 is offered for the page-refresh
+     * setting above, which is a browser timer, but deliberately not here.
+     *
+     * This is the direct lever on health-history growth: one row per check per
+     * run, five checks. Hourly is the default because it writes 120 rows a day
+     * where every-five-minutes writes 1,440 and every-minute writes 7,200 —
+     * an unpruned table had reached 292,820 rows before this was addressed.
+     */
+    #[Validate('required|integer|in:1,5,10,15,30,60')]
+    public int $healthCheckInterval = 60;
+
     #[Validate('nullable|email|max:255')]
     public string $healthAlertEmail = '';
 
@@ -17,6 +35,7 @@ new class extends Component
         abort_unless(auth()->user()?->isAdmin(), 403);
 
         $this->healthCheckRefreshInterval = (int) Setting::get('health_check_refresh_interval', 5);
+        $this->healthCheckInterval = (int) Setting::get('health_check_interval', 60);
         $this->healthAlertEmail = Setting::get('health_alert_email', '') ?? '';
     }
 
@@ -25,6 +44,7 @@ new class extends Component
         $this->validate();
 
         Setting::set('health_check_refresh_interval', $this->healthCheckRefreshInterval);
+        Setting::set('health_check_interval', $this->healthCheckInterval);
         Setting::set('health_alert_email', $this->healthAlertEmail ?: null);
 
         session()->flash('success', 'Platform settings saved successfully.');
@@ -64,6 +84,20 @@ new class extends Component
             </div>
 
             <div class="p-6 space-y-5">
+                <flux:field>
+                    <flux:label>Health Check Frequency</flux:label>
+                    <flux:description>How often the scheduler runs the health checks. Shorter intervals detect problems sooner but write more history — five checks run every minute records 7,200 rows a day.</flux:description>
+                    <flux:select wire:model="healthCheckInterval" class="w-48">
+                        <flux:select.option value="1">Every minute</flux:select.option>
+                        <flux:select.option value="5">Every 5 minutes</flux:select.option>
+                        <flux:select.option value="10">Every 10 minutes</flux:select.option>
+                        <flux:select.option value="15">Every 15 minutes</flux:select.option>
+                        <flux:select.option value="30">Every 30 minutes</flux:select.option>
+                        <flux:select.option value="60">Hourly</flux:select.option>
+                    </flux:select>
+                    <flux:error name="healthCheckInterval" />
+                </flux:field>
+
                 <flux:field>
                     <flux:label>Health Check Refresh Interval</flux:label>
                     <flux:description>How often the health status page auto-refreshes.</flux:description>
