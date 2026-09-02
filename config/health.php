@@ -45,7 +45,7 @@ return [
          * Here you can specify the notifiable to which the notifications should be sent. The default
          * notifiable will use the variables specified in this config file.
          */
-        'notifiable' => Spatie\Health\Notifications\Notifiable::class,
+        'notifiable' => App\Health\HealthAlertNotifiable::class,
 
         /*
          * When checks start failing, you could potentially end up getting

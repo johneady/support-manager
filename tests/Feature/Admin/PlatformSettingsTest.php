@@ -1,5 +1,6 @@
 <?php
 
+use App\Health\HealthAlertNotifiable;
 use App\Models\Setting;
 use App\Models\User;
 use Livewire\Livewire;
@@ -143,6 +144,74 @@ describe('PlatformSettings component', function () {
             ->set('healthAlertEmail', 'not-an-email')
             ->call('save')
             ->assertHasErrors(['healthAlertEmail' => 'email']);
+    });
+});
+
+describe('health alert recipient', function () {
+    /**
+     * spatie/laravel-health resolves config('health.notifications.notifiable')
+     * at send time and calls routeNotificationForMail() on it. config/health.php
+     * can only supply the ALERTS_TO_ADDRESS env value — a config file cannot
+     * query the database, because `config:cache` would freeze whatever it
+     * returned at build time — so the admin-managed address is resolved in
+     * App\Health\HealthAlertNotifiable instead.
+     */
+    it('sends alerts to the address configured in the admin UI', function () {
+        Setting::set('health_alert_email', 'ops@example.com');
+
+        expect((new HealthAlertNotifiable)->routeNotificationForMail())
+            ->toBe('ops@example.com');
+    });
+
+    it('falls back to the env address when no row exists', function () {
+        config(['health.notifications.mail.to' => 'env@example.com']);
+
+        Setting::query()->where('key', 'health_alert_email')->delete();
+        Setting::clearCache();
+
+        expect((new HealthAlertNotifiable)->routeNotificationForMail())
+            ->toBe('env@example.com');
+    });
+
+    /**
+     * Clearing the field is the admin UI's only off switch: config/health.php
+     * hardcodes notifications.enabled to true, so a blank field must not fall
+     * through to ALERTS_TO_ADDRESS — or, on a deployment that never set it,
+     * mail the literal hello@example.com placeholder.
+     *
+     * An empty route is what suppresses delivery: MailChannel::send() returns
+     * early when routeNotificationFor('mail') is falsy.
+     */
+    it('disables alerts when the admin clears the field', function () {
+        config(['health.notifications.mail.to' => 'env@example.com']);
+
+        Setting::set('health_alert_email', null);
+
+        expect((new HealthAlertNotifiable)->routeNotificationForMail())->toBe([]);
+    });
+
+    it('disables alerts when the stored address is an empty string', function () {
+        Setting::set('health_alert_email', '');
+
+        expect((new HealthAlertNotifiable)->routeNotificationForMail())->toBe([]);
+    });
+
+    it('saving an address in the UI changes where alerts are sent', function () {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        Livewire::actingAs($admin)
+            ->test('admin.platform-settings')
+            ->set('healthAlertEmail', 'newops@example.com')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        expect((new HealthAlertNotifiable)->routeNotificationForMail())
+            ->toBe('newops@example.com');
+    });
+
+    it('is the notifiable the health package will actually use', function () {
+        expect(config('health.notifications.notifiable'))
+            ->toBe(HealthAlertNotifiable::class);
     });
 });
 
