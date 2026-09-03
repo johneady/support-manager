@@ -134,7 +134,10 @@ services:
       - "80"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/up || exit 1"]
-      interval: 30s
+      # 120s, not 30s: /up boots the full Laravel framework (~700ms), so a 30s
+      # interval burned ~2 CPU-hours/day per container on a 2-core box. Docker
+      # still marks the container unhealthy within retries*interval (~6 min).
+      interval: 120s
       timeout: 5s
       retries: 3
       start_period: 60s
