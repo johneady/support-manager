@@ -63,7 +63,8 @@ class AppServiceProvider extends ServiceProvider
             DatabaseCheck::new(),
             EmailCheck::new(),
             OptimizedAppCheck::new(),
-            ScheduleCheck::new(),
+            // 10 = two heartbeat intervals; see the heartbeat note in routes/console.php.
+            ScheduleCheck::new()->heartbeatMaxAgeInMinutes(10),
         ]);
     }
 

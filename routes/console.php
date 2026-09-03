@@ -9,7 +9,21 @@ Schedule::command('queue:work --stop-when-empty')->everyMinute()->withoutOverlap
 
 Schedule::command('tickets:close-inactive')->everySixHours()->withoutOverlapping();
 
-Schedule::command(ScheduleCheckHeartbeatCommand::class)->everyMinute();
+/*
+ * Heartbeat every five minutes, not every minute.
+ *
+ * This command exists only to write a cache timestamp that ScheduleCheck reads
+ * back to prove the scheduler process is alive. It does no work of its own, but
+ * it still pays a full framework boot (~390ms) per fire, and it was the last
+ * remaining everyMinute() command on a host running several of these apps.
+ *
+ * The heartbeat interval and ScheduleCheck's heartbeatMaxAgeInMinutes are a
+ * PAIR: the tolerance must exceed the interval or the check reports a failure
+ * between every write. Spatie's default tolerance is 1 minute, so raising this
+ * without also raising heartbeatMaxAgeInMinutes in AppServiceProvider would
+ * mark a perfectly healthy scheduler as down.
+ */
+Schedule::command(ScheduleCheckHeartbeatCommand::class)->everyFiveMinutes();
 
 /**
  * Prune health-check history.
