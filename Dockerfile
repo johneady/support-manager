@@ -120,6 +120,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get purge -y --auto-remove libzip-dev libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# The CLI opcache file_cache directory, created BEFORE the ini that references
+# it is in place. PHP treats a missing or unwritable opcache.file_cache as a
+# startup FATAL ("must be a full path of an accessible directory") rather than
+# a warning it can degrade past, so every `php` invocation in the entrypoint —
+# migrations included — would die before the application ever booted.
+# www-data owns it because artisan runs as root in the entrypoint but the
+# scheduler's forked processes do not.
+RUN mkdir -p /tmp/opcache && chown www-data:www-data /tmp/opcache
+
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-app.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/zz-www.conf
 COPY docker/nginx/default.conf /etc/nginx/sites-available/default

@@ -14,6 +14,21 @@ ROLE="${CONTAINER_ROLE:-app}"
 
 log() { printf '[entrypoint] %s\n' "$*"; }
 
+# Re-assert the CLI opcache file_cache directory.
+#
+# The Dockerfile already creates it, so this is belt and braces for the case
+# where something mounts a volume or tmpfs over /tmp and wipes it. It matters
+# because php.ini sets opcache.file_cache and PHP treats a missing directory as
+# a startup FATAL, not a recoverable warning — so a blank /tmp would take out
+# every artisan call below, including migrations, before the app booted.
+# Done first, ahead of the APP_KEY check, because that check's own failure path
+# is the log line beneath it and any PHP here would already be dead.
+if [ ! -d /tmp/opcache ]; then
+    log "Recreating /tmp/opcache (CLI opcache file cache)."
+    mkdir -p /tmp/opcache && chown www-data:www-data /tmp/opcache || \
+        log "WARNING: could not create /tmp/opcache; PHP may fail to start."
+fi
+
 if [ -z "${APP_KEY:-}" ]; then
     log "FATAL: APP_KEY is not set."
     log "Sessions are encrypted (SESSION_ENCRYPT=true), so a missing or changed"
