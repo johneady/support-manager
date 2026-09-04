@@ -122,6 +122,26 @@ x-app-base: &app-base
 
 services:
   app:
+    # Hard memory ceiling for this container.
+    #
+    # WHY: this stack shares a 2-core / 3.9GB VPS with eight other app stacks
+    # and NO container had a memory cap, so a single runaway request could
+    # exhaust the host and let the kernel OOM reaper pick its victim by score —
+    # typically a MariaDB container, taking unrelated sites down with it.
+    # A per-container limit converts "one app kills the host" into "one app
+    # kills itself", which Docker then restarts via `restart: unless-stopped`.
+    #
+    # SIZING: pm.max_children = 4, and measured worker RSS across these
+    # stacks is 21-59MB. 4 * 75MB of worker headroom + ~120MB for nginx,
+    # the php-fpm master and opcache = 448m. That is above the realistic
+    # worst case (352m) and far below 4 * memory_limit, which is the
+    # number this cap exists to make unreachable.
+    #
+    # This is a CEILING, not a reservation: the container still uses only what
+    # it touches (steady state here is well under 150MB). Raising max_children
+    # or memory_limit means raising this too, or php-fpm will hand out workers
+    # the cgroup cannot honour.
+    mem_limit: 448m
     <<: *app-base
     environment:
       <<: *app-env
@@ -152,6 +172,13 @@ services:
   # are queued and never sent, tickets are never auto-closed, and the health
   # dashboard silently goes stale while the site itself looks fine.
   scheduler:
+    # Hard memory ceiling — see the note on the `app` service.
+    #
+    # 384m rather than the app's larger cap: this role runs ONE php process,
+    # measured at 5-45MB. The headroom is not for the supervisor, it is for the
+    # job it forks, which inherits php.ini's memory_limit and is the only thing
+    # here that can allocate seriously (PDF and image work).
+    mem_limit: 384m
     <<: *app-base
     environment:
       <<: *app-env
