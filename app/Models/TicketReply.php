@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +24,18 @@ class TicketReply extends Model
         return [
             'is_from_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * Order replies chronologically so a conversation reads as a back-and-forth
+     * thread instead of being grouped by author.
+     *
+     * @param  Builder<TicketReply>  $query
+     * @return Builder<TicketReply>
+     */
+    public function scopeChronological(Builder $query): Builder
+    {
+        return $query->orderBy('created_at')->orderBy('id');
     }
 
     /**

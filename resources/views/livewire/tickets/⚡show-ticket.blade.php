@@ -33,7 +33,7 @@ new class extends Component
     #[Computed]
     public function replies(): Collection
     {
-        return $this->ticket->replies()->with('user')->orderBy('created_at')->get();
+        return $this->ticket->replies()->with('user')->chronological()->get();
     }
 
     public function submitReply(): void

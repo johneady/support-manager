@@ -333,6 +333,25 @@ describe('all tickets page', function () {
             ->assertSee('This is a test reply');
     });
 
+    it('view modal shows replies in chronological back-and-forth order', function () {
+        $ticket = Ticket::factory()->closed()->create(['user_id' => $this->user->id]);
+
+        TicketReply::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $this->user->id, 'body' => 'customer first message', 'is_from_admin' => false, 'created_at' => now()->subMinutes(40)]);
+        TicketReply::factory()->fromAdmin()->create(['ticket_id' => $ticket->id, 'user_id' => $this->admin->id, 'body' => 'admin second message', 'created_at' => now()->subMinutes(30)]);
+        TicketReply::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $this->user->id, 'body' => 'customer third message', 'is_from_admin' => false, 'created_at' => now()->subMinutes(20)]);
+        TicketReply::factory()->fromAdmin()->create(['ticket_id' => $ticket->id, 'user_id' => $this->admin->id, 'body' => 'admin fourth message', 'created_at' => now()->subMinutes(10)]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.all-tickets')
+            ->call('openViewModal', $ticket->id)
+            ->assertSeeInOrder([
+                'customer first message',
+                'admin second message',
+                'customer third message',
+                'admin fourth message',
+            ]);
+    });
+
     it('reopen functionality works for closed tickets', function () {
         $ticket = Ticket::factory()->closed()->create(['user_id' => $this->user->id]);
 

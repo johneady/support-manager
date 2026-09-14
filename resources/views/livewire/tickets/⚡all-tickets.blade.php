@@ -130,7 +130,7 @@ new class extends Component
             return null;
         }
 
-        return Ticket::with('replies.user', 'user', 'ticketCategory')->find($this->viewingTicketId);
+        return Ticket::with(['replies.user', 'replies' => fn ($query) => $query->chronological(), 'user', 'ticketCategory'])->find($this->viewingTicketId);
     }
 
     public function openViewModal(Ticket $ticket): void

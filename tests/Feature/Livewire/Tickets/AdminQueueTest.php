@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Ticket;
+use App\Models\TicketReply;
 use App\Models\User;
 use Database\Seeders\TicketCategorySeeder;
 use Livewire\Livewire;
@@ -148,5 +149,26 @@ describe('admin queue access', function () {
         Livewire::actingAs($this->admin)
             ->test('tickets.admin-queue')
             ->assertStatus(200);
+    });
+});
+
+describe('admin queue edit modal', function () {
+    it('shows replies in chronological back-and-forth order', function () {
+        $ticket = Ticket::factory()->open()->create(['user_id' => $this->user->id]);
+
+        TicketReply::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $this->user->id, 'body' => 'customer first message', 'is_from_admin' => false, 'created_at' => now()->subMinutes(40)]);
+        TicketReply::factory()->fromAdmin()->create(['ticket_id' => $ticket->id, 'user_id' => $this->admin->id, 'body' => 'admin second message', 'created_at' => now()->subMinutes(30)]);
+        TicketReply::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $this->user->id, 'body' => 'customer third message', 'is_from_admin' => false, 'created_at' => now()->subMinutes(20)]);
+        TicketReply::factory()->fromAdmin()->create(['ticket_id' => $ticket->id, 'user_id' => $this->admin->id, 'body' => 'admin fourth message', 'created_at' => now()->subMinutes(10)]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tickets.admin-queue')
+            ->call('openEditModal', $ticket)
+            ->assertSeeInOrder([
+                'customer first message',
+                'admin second message',
+                'customer third message',
+                'admin fourth message',
+            ]);
     });
 });

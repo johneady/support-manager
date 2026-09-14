@@ -95,7 +95,7 @@ new class extends Component
             return null;
         }
 
-        return Ticket::with('replies.user')->find($this->editingTicketId);
+        return Ticket::with(['replies.user', 'replies' => fn ($query) => $query->chronological()])->find($this->editingTicketId);
     }
 
     public function openEditModal(Ticket $ticket): void
