@@ -15,13 +15,16 @@
                         <flux:text class="mt-4">
                             {{ __('Your email address is unverified.') }}
 
-                            <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
+                            <flux:link
+                                class="cursor-pointer text-sm"
+                                wire:click.prevent="resendVerificationNotification"
+                            >
                                 {{ __('Click here to re-send the verification email.') }}
                             </flux:link>
                         </flux:text>
 
                         @if (session('status') === 'verification-link-sent')
-                            <flux:text class="mt-2 font-medium !dark:text-green-400 !text-green-600">
+                            <flux:text class="!dark:text-green-400 mt-2 font-medium !text-green-600">
                                 {{ __('A new verification link has been sent to your email address.') }}
                             </flux:text>
                         @endif
@@ -34,9 +37,7 @@
                     <flux:button variant="primary" type="submit" class="w-full">{{ __('Save') }}</flux:button>
                 </div>
 
-                <x-action-message class="me-3" on="profile-updated">
-                    {{ __('Saved.') }}
-                </x-action-message>
+                <x-action-message class="me-3" on="profile-updated"> {{ __('Saved.') }} </x-action-message>
             </div>
         </form>
 

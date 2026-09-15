@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Faq;
+use App\Models\User;
 
 test('support page loads successfully', function () {
     $response = $this->get('/');
@@ -68,7 +69,7 @@ test('support page shows login and register links for guests', function () {
 });
 
 test('support page shows dashboard link for authenticated users', function () {
-    $user = \App\Models\User::factory()->create();
+    $user = User::factory()->create();
 
     $response = $this->actingAs($user)->get('/');
 

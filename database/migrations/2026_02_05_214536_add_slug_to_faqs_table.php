@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Faq;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -16,8 +18,8 @@ return new class extends Migration
         });
 
         // Generate slugs for existing FAQs
-        foreach (\App\Models\Faq::all() as $faq) {
-            $faq->slug = \Illuminate\Support\Str::slug($faq->question);
+        foreach (Faq::all() as $faq) {
+            $faq->slug = Str::slug($faq->question);
             $faq->saveQuietly();
         }
 

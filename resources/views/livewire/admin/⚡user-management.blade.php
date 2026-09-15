@@ -241,16 +241,12 @@ new class extends Component
 ?>
 
 <div class="space-y-6">
-    @if(session('success'))
-        <flux:callout variant="success" icon="check-circle" dismissible>
-            {{ session('success') }}
-        </flux:callout>
+    @if (session('success'))
+        <flux:callout variant="success" icon="check-circle" dismissible> {{ session('success') }} </flux:callout>
     @endif
 
-    @if(session('error'))
-        <flux:callout variant="danger" icon="exclamation-circle" dismissible>
-            {{ session('error') }}
-        </flux:callout>
+    @if (session('error'))
+        <flux:callout variant="danger" icon="exclamation-circle" dismissible> {{ session('error') }} </flux:callout>
     @endif
 
     {{-- Header Banner --}}
@@ -265,7 +261,10 @@ new class extends Component
                     <flux:text class="text-blue-100">Manage user accounts and permissions</flux:text>
                 </div>
             </div>
-            <button wire:click="openCreateModal" class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">
+            <button
+                wire:click="openCreateModal"
+                class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50"
+            >
                 <flux:icon.plus class="size-4" />
                 Create User
             </button>
@@ -273,7 +272,7 @@ new class extends Component
     </div>
 
     {{-- Search and Stats --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
             <flux:badge color="blue" size="lg">{{ $this->users->total() }}</flux:badge>
             <span class="text-sm text-zinc-600 dark:text-zinc-400">total users</span>
@@ -287,9 +286,9 @@ new class extends Component
         </div>
     </div>
 
-    @if($this->users->isEmpty())
-        <div class="text-center py-12 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-            @if($search)
+    @if ($this->users->isEmpty())
+        <div class="rounded-lg border border-zinc-200 bg-white py-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
+            @if ($search)
                 <flux:icon.magnifying-glass class="mx-auto h-12 w-12 text-zinc-400" />
                 <h3 class="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">No users found</h3>
                 <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">No users match your search "{{ $search }}".</p>
@@ -304,43 +303,74 @@ new class extends Component
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
                 <thead class="bg-zinc-50 dark:bg-zinc-800">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Name</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Email</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Role</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Tickets</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Created</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Name
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Email
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Role
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Tickets
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Created
+                        </th>
+                        <th class="px-4 py-3 text-right text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Actions
+                        </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
-                    @foreach($this->users as $user)
-                        <tr wire:key="user-{{ $user->id }}" wire:click="openEditModal({{ $user->id }})" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                <tbody class="divide-y divide-zinc-200 bg-white dark:divide-zinc-700 dark:bg-zinc-900">
+                    @foreach ($this->users as $user)
+                        <tr
+                            wire:key="user-{{ $user->id }}"
+                            wire:click="openEditModal({{ $user->id }})"
+                            class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                        >
                             <td class="px-4 py-4 text-sm font-medium text-zinc-900 dark:text-white">
                                 {{ $user->name }}
                             </td>
-                            <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $user->email }}
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-4">
-                                @if($user->is_admin)
+                            <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">{{ $user->email }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                @if ($user->is_admin)
                                     <flux:badge color="sky" size="sm">Admin</flux:badge>
                                 @else
                                     <flux:badge color="zinc" size="sm">User</flux:badge>
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4">
+                            <td class="px-4 py-4 whitespace-nowrap">
                                 <flux:badge color="blue" size="sm">{{ $user->tickets_count }}</flux:badge>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+                            <td class="px-4 py-4 text-sm whitespace-nowrap text-zinc-500 dark:text-zinc-400">
                                 {{ $user->created_at->format('M j, Y') }}
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm" wire:click.stop>
+                            <td class="px-4 py-4 text-right text-sm whitespace-nowrap" wire:click.stop>
                                 <div class="flex items-center justify-end gap-2">
-                                    @if($user->hasPendingInvitation())
-                                        <flux:button variant="ghost" size="sm" icon="paper-airplane" wire:click="confirmResendInvitation({{ $user->id }})" class="text-blue-600 hover:text-blue-700" />
+                                    @if ($user->hasPendingInvitation())
+                                        <flux:button
+                                            variant="ghost"
+                                            size="sm"
+                                            icon="paper-airplane"
+                                            wire:click="confirmResendInvitation({{ $user->id }})"
+                                            class="text-blue-600 hover:text-blue-700"
+                                        />
                                     @endif
-                                    <flux:button variant="ghost" size="sm" icon="pencil" wire:click="openEditModal({{ $user->id }})" />
-                                    <flux:button variant="ghost" size="sm" icon="trash" wire:click="confirmDelete({{ $user->id }})" class="text-red-600 hover:text-red-700" />
+                                    <flux:button
+                                        variant="ghost"
+                                        size="sm"
+                                        icon="pencil"
+                                        wire:click="openEditModal({{ $user->id }})"
+                                    />
+                                    <flux:button
+                                        variant="ghost"
+                                        size="sm"
+                                        icon="trash"
+                                        wire:click="confirmDelete({{ $user->id }})"
+                                        class="text-red-600 hover:text-red-700"
+                                    />
                                 </div>
                             </td>
                         </tr>
@@ -349,15 +379,13 @@ new class extends Component
             </table>
         </div>
 
-        <div class="mt-6">
-            {{ $this->users->links() }}
-        </div>
+        <div class="mt-6">{{ $this->users->links() }}</div>
     @endif
 
     {{-- Create User Modal --}}
-    <flux:modal wire:model.self="showCreateModal" class="w-[40vw]! max-w-[40vw]! max-h-[90vh] overflow-y-auto">
+    <flux:modal wire:model.self="showCreateModal" class="max-h-[90vh] w-[40vw]! max-w-[40vw]! overflow-y-auto">
         <div class="space-y-6">
-            <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
+            <div class="border-b border-blue-200 pb-4 dark:border-blue-800">
                 <div class="flex items-center gap-3">
                     <flux:icon.user-plus class="size-6 text-blue-600 dark:text-blue-400" />
                     <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Create User</flux:heading>
@@ -365,7 +393,7 @@ new class extends Component
             </div>
 
             <form wire:submit="createUser" class="space-y-4">
-                <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800 space-y-4">
+                <div class="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
                     <flux:field>
                         <flux:label>Name</flux:label>
                         <flux:input wire:model="name" placeholder="Full name" />
@@ -380,40 +408,43 @@ new class extends Component
 
                     <flux:field>
                         <flux:checkbox wire:model="isAdmin" label="Administrator" />
-                        <flux:text size="sm" class="text-zinc-500">Administrators can manage users, FAQs, and view all tickets.</flux:text>
+                        <flux:text size="sm" class="text-zinc-500"
+                            >Administrators can manage users, FAQs, and view all tickets.</flux:text>
                     </flux:field>
                 </div>
 
-                <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                <div class="flex items-center gap-4 border-t border-blue-200 pt-4 dark:border-blue-800">
                     <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
                         Create User
                     </flux:button>
-                    <flux:button type="button" wire:click="closeCreateModal" variant="ghost">
-                        Cancel
-                    </flux:button>
+                    <flux:button type="button" wire:click="closeCreateModal" variant="ghost"> Cancel </flux:button>
                 </div>
             </form>
         </div>
     </flux:modal>
 
     {{-- Edit User Modal --}}
-    <flux:modal wire:model.self="showEditModal" class="w-[40vw]! max-w-[40vw]! max-h-[90vh] overflow-y-auto">
+    <flux:modal wire:model.self="showEditModal" class="max-h-[90vh] w-[40vw]! max-w-[40vw]! overflow-y-auto">
         <div class="space-y-6">
-            <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
+            <div class="border-b border-blue-200 pb-4 dark:border-blue-800">
                 <div class="flex items-center gap-3">
                     <flux:icon.user class="size-6 text-blue-600 dark:text-blue-400" />
                     <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Edit User</flux:heading>
                 </div>
             </div>
 
-            @if($modalMessage)
-                <flux:callout variant="{{ $modalMessageType }}" icon="{{ $modalMessageType === 'success' ? 'check-circle' : 'exclamation-circle' }}" dismissible>
+            @if ($modalMessage)
+                <flux:callout
+                    variant="{{ $modalMessageType }}"
+                    icon="{{ $modalMessageType === 'success' ? 'check-circle' : 'exclamation-circle' }}"
+                    dismissible
+                >
                     {{ $modalMessage }}
                 </flux:callout>
             @endif
 
             <form wire:submit="updateUser" class="space-y-4">
-                <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800 space-y-4">
+                <div class="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
                     <flux:field>
                         <flux:label>Name</flux:label>
                         <flux:input wire:model="name" placeholder="Full name" />
@@ -428,21 +459,21 @@ new class extends Component
 
                     <flux:field>
                         <flux:checkbox wire:model="isAdmin" label="Administrator" :disabled="$this->isEditingSelf()" />
-                        @if($this->isEditingSelf())
-                            <flux:text size="sm" class="text-amber-600 dark:text-amber-400">You cannot change your own administrator status.</flux:text>
+                        @if ($this->isEditingSelf())
+                            <flux:text size="sm" class="text-amber-600 dark:text-amber-400"
+                                >You cannot change your own administrator status.</flux:text>
                         @else
-                            <flux:text size="sm" class="text-zinc-500">Administrators can manage users, FAQs, and view all tickets.</flux:text>
+                            <flux:text size="sm" class="text-zinc-500"
+                                >Administrators can manage users, FAQs, and view all tickets.</flux:text>
                         @endif
                     </flux:field>
                 </div>
 
-                <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                <div class="flex items-center gap-4 border-t border-blue-200 pt-4 dark:border-blue-800">
                     <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
                         Update User
                     </flux:button>
-                    <flux:button type="button" wire:click="closeEditModal" variant="ghost">
-                        Cancel
-                    </flux:button>
+                    <flux:button type="button" wire:click="closeEditModal" variant="ghost"> Cancel </flux:button>
                 </div>
             </form>
         </div>
@@ -451,26 +482,23 @@ new class extends Component
     {{-- Delete Confirmation Modal --}}
     <flux:modal wire:model.self="showDeleteConfirmation" class="w-[30vw]! max-w-[30vw]!">
         <div class="space-y-6">
-            <div class="border-b border-red-200 dark:border-red-800 pb-4">
+            <div class="border-b border-red-200 pb-4 dark:border-red-800">
                 <div class="flex items-center gap-3">
                     <flux:icon.exclamation-triangle class="size-6 text-red-600 dark:text-red-400" />
                     <flux:heading size="lg" class="text-red-900 dark:text-red-100">Delete User</flux:heading>
                 </div>
             </div>
 
-            <div class="rounded-lg bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+            <div class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/30">
                 <flux:text class="text-red-700 dark:text-red-300">
-                    Are you sure you want to delete this user? This action cannot be undone and will remove all associated data.
+                    Are you sure you want to delete this user? This action cannot be undone and will remove all
+                    associated data.
                 </flux:text>
             </div>
 
-            <div class="flex items-center gap-4 pt-4 border-t border-red-200 dark:border-red-800">
-                <flux:button wire:click="deleteUser" variant="danger">
-                    Delete User
-                </flux:button>
-                <flux:button wire:click="cancelDelete" variant="ghost">
-                    Cancel
-                </flux:button>
+            <div class="flex items-center gap-4 border-t border-red-200 pt-4 dark:border-red-800">
+                <flux:button wire:click="deleteUser" variant="danger"> Delete User </flux:button>
+                <flux:button wire:click="cancelDelete" variant="ghost"> Cancel </flux:button>
             </div>
         </div>
     </flux:modal>
@@ -478,26 +506,24 @@ new class extends Component
     {{-- Resend Invitation Confirmation Modal --}}
     <flux:modal wire:model.self="showResendConfirmation" class="w-[30vw]! max-w-[30vw]!">
         <div class="space-y-6">
-            <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
+            <div class="border-b border-blue-200 pb-4 dark:border-blue-800">
                 <div class="flex items-center gap-3">
                     <flux:icon.paper-airplane class="size-6 text-blue-600 dark:text-blue-400" />
                     <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">Resend Invitation</flux:heading>
                 </div>
             </div>
 
-            <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800">
+            <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
                 <flux:text class="text-blue-700 dark:text-blue-300">
                     Are you sure you want to resend the invitation email to this user?
                 </flux:text>
             </div>
 
-            <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+            <div class="flex items-center gap-4 border-t border-blue-200 pt-4 dark:border-blue-800">
                 <flux:button wire:click="resendInvitation" variant="primary" class="bg-blue-600 hover:bg-blue-700">
                     Resend Invitation
                 </flux:button>
-                <flux:button wire:click="cancelResendInvitation" variant="ghost">
-                    Cancel
-                </flux:button>
+                <flux:button wire:click="cancelResendInvitation" variant="ghost"> Cancel </flux:button>
             </div>
         </div>
     </flux:modal>

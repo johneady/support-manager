@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
 use App\Notifications\UserInvitation;
+use Carbon\CarbonInterface;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,12 +18,12 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
- * @property \Carbon\CarbonInterface|null $invitation_created_at
- * @property \Carbon\CarbonInterface|null $invitation_accepted_at
+ * @property CarbonInterface|null $invitation_created_at
+ * @property CarbonInterface|null $invitation_accepted_at
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**

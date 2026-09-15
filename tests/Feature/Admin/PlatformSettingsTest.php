@@ -4,6 +4,7 @@ use App\Health\HealthAlertNotifiable;
 use App\Mail\TestEmail;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
@@ -453,7 +454,7 @@ describe('send test email', function () {
         Mail::assertNotQueued(TestEmail::class);
 
         expect(new TestEmail('Admin'))
-            ->not->toBeInstanceOf(Illuminate\Contracts\Queue\ShouldQueue::class);
+            ->not->toBeInstanceOf(ShouldQueue::class);
     });
 
     /**

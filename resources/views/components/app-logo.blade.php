@@ -2,7 +2,7 @@
     'sidebar' => false,
 ])
 
-@if($sidebar)
+@if ($sidebar)
     <flux:sidebar.brand name="Support Manager" {{ $attributes }}>
         <x-slot name="logo" class="flex items-center justify-center">
             <x-app-logo-icon class="size-8 fill-current text-white dark:text-black" />

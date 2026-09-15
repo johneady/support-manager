@@ -41,13 +41,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Tia diffs the branch against its baseline, so it needs history
+          # rather than the default depth-1 checkout to resolve origin/main.
+          fetch-depth: 0
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
           extensions: intl, zip, sqlite3, pdo_sqlite
-          coverage: none
+          # Tia records which tests touch which files through a coverage
+          # driver, and it requires PCOV specifically.
+          coverage: pcov
           tools: composer:v2
 
       # Vite+ requires a modern Node (its core tracks Vite 7, which needs
@@ -72,11 +78,16 @@ jobs:
         run: npm run build
 
       - name: Run tests
+        # Pest's environment defaults to LOCAL and only becomes CI when --ci is
+        # passed, which makes it run the full suite instead of trusting Tia's
+        # cached dependency graph. `artisan test` does not forward the flag, so
+        # Pest is invoked directly.
+        #
         # Browser tests are excluded here and run in their own job: they need a
         # Playwright browser download this job has no reason to pay for, and
         # keeping them apart stops browser flakiness from masking a real unit
         # or feature failure.
-        run: vendor/bin/pest --parallel --testsuite=Unit,Feature
+        run: vendor/bin/pest --ci --parallel --testsuite=Unit,Feature
 
   browser:
     name: Pest (browser)
@@ -122,7 +133,7 @@ jobs:
         run: npm run build
 
       - name: Run browser tests
-        run: vendor/bin/pest --testsuite=Browser
+        run: vendor/bin/pest --ci --testsuite=Browser
 
       # The plugin writes a screenshot beside each failing assertion, which is
       # usually the fastest way to see why a browser test failed in CI.
@@ -171,13 +182,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
           extensions: intl, zip, mysqli, pdo_mysql
-          coverage: none
+          coverage: pcov
           tools: composer:v2
 
       - name: Set up Node
@@ -225,4 +238,4 @@ jobs:
         # container, and the default (a process per core) is a heavier load on
         # it than the sqlite job's per-worker :memory: files, which cost the
         # server nothing.
-        run: vendor/bin/pest --parallel --processes=4 --testsuite=Unit,Feature
+        run: vendor/bin/pest --ci --parallel --processes=4 --testsuite=Unit,Feature

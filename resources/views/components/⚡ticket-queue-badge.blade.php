@@ -26,7 +26,14 @@ new class extends Component
 ?>
 
 <div>
-    <flux:sidebar.item icon="inbox-stack" :href="route('tickets.queue')" :current="request()->routeIs('tickets.queue')" :badge="$this->count > 0 ? $this->count : null" wire:navigate class="text-zinc-900 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800 font-medium">
+    <flux:sidebar.item
+        icon="inbox-stack"
+        :href="route('tickets.queue')"
+        :current="request()->routeIs('tickets.queue')"
+        :badge="$this->count > 0 ? $this->count : null"
+        wire:navigate
+        class="font-medium text-zinc-900 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+    >
         {{ __('Ticket Queue') }}
     </flux:sidebar.item>
 </div>

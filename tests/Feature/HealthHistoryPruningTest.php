@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Spatie\Health\Models\HealthCheckResultHistoryItem;
+use Spatie\Health\ResultStores\EloquentHealthResultStore;
 
 /**
  * spatie/laravel-health writes one row per check per run and never prunes on
@@ -14,7 +16,7 @@ use Spatie\Health\Models\HealthCheckResultHistoryItem;
  */
 test('health history older than the retention window is pruned', function () {
     $days = config('health.result_stores.'.
-        Spatie\Health\ResultStores\EloquentHealthResultStore::class.
+        EloquentHealthResultStore::class.
         '.keep_history_for_days');
 
     $stale = HealthCheckResultHistoryItem::create([
@@ -44,7 +46,7 @@ test('health history older than the retention window is pruned', function () {
 });
 
 test('the prune command is scheduled', function () {
-    $events = collect(app(Illuminate\Console\Scheduling\Schedule::class)->events())
+    $events = collect(app(Schedule::class)->events())
         ->map(fn ($event) => $event->command);
 
     expect($events->filter(fn ($c) => str_contains((string) $c, 'model:prune')))

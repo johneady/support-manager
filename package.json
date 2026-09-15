@@ -29,7 +29,10 @@
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
     "devDependencies": {
-        "playwright": "1.62.0"
+        "playwright": "1.62.0",
+        "prettier": "^3.9.6",
+        "prettier-plugin-blade": "^3.3.3",
+        "prettier-plugin-tailwindcss": "^0.8.1"
     },
     "overrides": {
         "vite": "npm:@voidzero-dev/vite-plus-core@0.3.1",

@@ -94,21 +94,34 @@ new class extends Component
                 <flux:icon.question-mark-circle class="size-8 text-white" />
             </div>
             <div>
-                <flux:heading size="2xl" class="text-white">{{ $this->isEditing() ? 'Edit FAQ' : 'Create FAQ' }}</flux:heading>
+                <flux:heading
+                    size="2xl"
+                    class="text-white"
+                >{{ $this->isEditing() ? 'Edit FAQ' : 'Create FAQ' }}</flux:heading>
                 <flux:text class="text-blue-100">{{ $this->isEditing() ? 'Update this frequently asked question' : 'Add a new frequently asked question' }}</flux:text>
             </div>
         </div>
     </div>
 
     <form wire:submit="save" class="space-y-4">
-        <div class="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800 space-y-4">
+        <div class="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
             <flux:field>
                 <flux:label>Question</flux:label>
                 <flux:input
                     wire:model="question"
                     placeholder="What is the frequently asked question?"
-                    @if(!$this->isEditing())
-                        x-on:input="$wire.set('slug', $el.value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-'))"
+                    @if(! $this->isEditing())
+                        x-on:input="
+                            $wire.set(
+                                'slug',
+                                $el.value
+                                    .toLowerCase()
+                                    .replace(/[^a-z0-9\s-]/g, '')
+                                    .trim()
+                                    .replace(/\s+/g, '-')
+                                    .replace(/-+/g, '-'),
+                            )
+                        "
                     @endif
                 />
                 <flux:error name="question" />
@@ -117,7 +130,8 @@ new class extends Component
             <flux:field>
                 <flux:label>Slug</flux:label>
                 <flux:input wire:model="slug" placeholder="URL-friendly identifier" />
-                <flux:text size="sm" class="text-zinc-500">Used in URLs and database queries. Must be unique.</flux:text>
+                <flux:text size="sm" class="text-zinc-500"
+                    >Used in URLs and database queries. Must be unique.</flux:text>
                 <flux:error name="slug" />
             </flux:field>
 
@@ -127,7 +141,7 @@ new class extends Component
                 <flux:error name="answer" />
             </flux:field>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <flux:field>
                     <flux:label>Sort Order</flux:label>
                     <flux:input type="number" wire:model="sortOrder" min="0" />
@@ -137,7 +151,7 @@ new class extends Component
 
                 <flux:field class="flex items-center pt-6">
                     <flux:checkbox wire:model="isPublished" label="Published" />
-                    <flux:text size="sm" class="text-zinc-500 ml-2">Make visible on the public FAQ page.</flux:text>
+                    <flux:text size="sm" class="ml-2 text-zinc-500">Make visible on the public FAQ page.</flux:text>
                 </flux:field>
             </div>
         </div>
@@ -146,9 +160,7 @@ new class extends Component
             <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
                 {{ $this->isEditing() ? 'Update FAQ' : 'Create FAQ' }}
             </flux:button>
-            <flux:button href="{{ route('admin.faqs') }}" wire:navigate variant="ghost">
-                Cancel
-            </flux:button>
+            <flux:button href="{{ route('admin.faqs') }}" wire:navigate variant="ghost"> Cancel </flux:button>
         </div>
     </form>
 </div>

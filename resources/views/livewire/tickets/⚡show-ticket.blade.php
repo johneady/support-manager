@@ -78,10 +78,8 @@ new class extends Component
 ?>
 
 <div class="space-y-6">
-    @if(session('success'))
-        <flux:callout variant="success" icon="check-circle" dismissible>
-            {{ session('success') }}
-        </flux:callout>
+    @if (session('success'))
+        <flux:callout variant="success" icon="check-circle" dismissible> {{ session('success') }} </flux:callout>
     @endif
 
     <div class="flex items-center justify-between">
@@ -91,12 +89,10 @@ new class extends Component
     </div>
 
     {{-- Ticket Details --}}
-    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+    <div class="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
             <div>
-                <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">
-                    {{ $ticket->subject }}
-                </h2>
+                <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ $ticket->subject }}</h2>
                 <p class="text-sm text-zinc-500 dark:text-zinc-400">
                     <span class="font-mono text-zinc-600 dark:text-zinc-400">{{ $ticket->reference_number }}</span>
                     &middot; Created {{ $ticket->created_at->diffForHumans() }}
@@ -104,12 +100,10 @@ new class extends Component
             </div>
         </div>
         <div class="px-6 py-4">
-            <div class="prose dark:prose-invert prose-sm max-w-none">
-                {!! nl2br(e($ticket->description)) !!}
-            </div>
+            <div class="prose dark:prose-invert prose-sm max-w-none">{!! nl2br(e($ticket->description)) !!}</div>
         </div>
-        <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="border-t border-zinc-200 px-6 py-4 dark:border-zinc-700">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <flux:label>Status</flux:label>
                     <div class="mt-1">
@@ -134,18 +128,21 @@ new class extends Component
     <div class="space-y-4">
         <h3 class="text-base font-semibold text-zinc-900 dark:text-white">Conversation</h3>
 
-        @if($this->replies->isEmpty())
+        @if ($this->replies->isEmpty())
             <p class="text-sm text-zinc-500 dark:text-zinc-400">No replies yet. We'll respond as soon as possible.</p>
         @else
             <div class="space-y-4">
-                @foreach($this->replies as $reply)
-                    <div wire:key="reply-{{ $reply->id }}" class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 {{ $reply->is_from_admin ? 'bg-blue-50 dark:bg-blue-900/20 ml-8' : 'bg-zinc-50 dark:bg-zinc-800 mr-8' }}">
-                        <div class="flex items-center justify-between mb-2">
+                @foreach ($this->replies as $reply)
+                    <div
+                        wire:key="reply-{{ $reply->id }}"
+                        class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 {{ $reply->is_from_admin ? 'bg-blue-50 dark:bg-blue-900/20 ml-8' : 'bg-zinc-50 dark:bg-zinc-800 mr-8' }}"
+                    >
+                        <div class="mb-2 flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="font-medium text-sm {{ $reply->is_from_admin ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-white' }}">
                                     {{ $reply->user?->name ?? ($reply->is_from_admin ? 'System' : 'Unknown') }}
                                 </span>
-                                @if($reply->is_from_admin)
+                                @if ($reply->is_from_admin)
                                     <flux:badge color="sky" size="sm">Support</flux:badge>
                                 @endif
                             </div>
@@ -153,9 +150,7 @@ new class extends Component
                                 {{ $reply->created_at->diffForHumans() }}
                             </span>
                         </div>
-                        <div class="prose dark:prose-invert prose-sm max-w-none">
-                            {!! nl2br(e($reply->body)) !!}
-                        </div>
+                        <div class="prose dark:prose-invert prose-sm max-w-none">{!! nl2br(e($reply->body)) !!}</div>
                     </div>
                 @endforeach
             </div>
@@ -163,23 +158,16 @@ new class extends Component
     </div>
 
     {{-- Reply Form --}}
-    @if($ticket->status->value === 'open')
-        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6">
-            <h3 class="text-base font-semibold text-zinc-900 dark:text-white mb-4">Add a Reply</h3>
+    @if ($ticket->status->value === 'open')
+        <div class="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+            <h3 class="mb-4 text-base font-semibold text-zinc-900 dark:text-white">Add a Reply</h3>
             <form wire:submit="submitReply" class="space-y-4">
-                <flux:textarea
-                    wire:model="replyBody"
-                    placeholder="Type your reply..."
-                    rows="4"
-                    required
-                />
-                <flux:button type="submit" variant="primary">
-                    Send Reply
-                </flux:button>
+                <flux:textarea wire:model="replyBody" placeholder="Type your reply..." rows="4" required />
+                <flux:button type="submit" variant="primary"> Send Reply </flux:button>
             </form>
         </div>
     @else
-        <div class="rounded-lg bg-zinc-100 dark:bg-zinc-800 p-4 text-center">
+        <div class="rounded-lg bg-zinc-100 p-4 text-center dark:bg-zinc-800">
             <p class="text-sm text-zinc-500 dark:text-zinc-400">
                 This ticket is closed. If you need further assistance, please create a new ticket.
             </p>

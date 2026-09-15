@@ -8,7 +8,7 @@
         <form method="POST" action="{{ route('password.update') }}" class="flex flex-col gap-6">
             @csrf
             <!-- Token -->
-            <input type="hidden" name="token" value="{{ request()->route('token') }}">
+            <input type="hidden" name="token" value="{{ request()->route('token') }}" />
 
             <!-- Email Address -->
             <flux:input
@@ -43,7 +43,12 @@
             />
 
             <div class="flex items-center justify-end">
-                <flux:button type="submit" variant="primary" class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600" data-test="reset-password-button">
+                <flux:button
+                    type="submit"
+                    variant="primary"
+                    class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    data-test="reset-password-button"
+                >
                     {{ __('Reset password') }}
                 </flux:button>
             </div>

@@ -2,6 +2,7 @@
 
 use App\Models\Setting;
 use Illuminate\Support\Facades\Schedule;
+use Spatie\Health\Commands\RunHealthChecksCommand;
 use Spatie\Health\Commands\ScheduleCheckHeartbeatCommand;
 use Spatie\Health\Models\HealthCheckResultHistoryItem;
 
@@ -40,11 +41,11 @@ Schedule::command('model:prune', [
 
 try {
     $healthCheckInterval = (int) Setting::get('health_check_interval', '60');
-} catch (\Exception) {
+} catch (Exception) {
     $healthCheckInterval = 60;
 }
 
-$healthCheckSchedule = Schedule::command(\Spatie\Health\Commands\RunHealthChecksCommand::class);
+$healthCheckSchedule = Schedule::command(RunHealthChecksCommand::class);
 
 match ($healthCheckInterval) {
     1 => $healthCheckSchedule->everyMinute(),

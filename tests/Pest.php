@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Pest\Plugins\Parallel;
+use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,9 +15,33 @@ use Pest\Plugins\Parallel;
 |
 */
 
-pest()->extend(Tests\TestCase::class)
+pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature', 'Browser');
+
+/*
+|--------------------------------------------------------------------------
+| TIA Engine (Test Impact Analysis)
+|--------------------------------------------------------------------------
+|
+| The Tia Engine records which tests touch which files, then re-runs only the
+| tests affected by your latest changes, replaying cached results for the rest.
+| `locally()` activates it on every local `pest`/`artisan test` run without the
+| `--tia` flag. It requires the PCOV coverage driver.
+|
+| Note that "locally" is not automatic: Pest's environment defaults to LOCAL
+| and only becomes CI when `--ci` is passed explicitly. Pass that flag in CI so
+| the pipeline runs the full suite rather than trusting a cached dependency
+| graph. Because `artisan test` does not forward `--ci`, CI should invoke
+| `vendor/bin/pest` directly.
+|
+| `defaultBranch('main')` names the baseline branch explicitly so a fresh
+| checkout (which may lack an origin/HEAD) doesn't have to run
+| `git remote set-head origin --auto` before Tia will activate.
+|
+*/
+
+pest()->tia()->defaultBranch('main')->locally();
 
 /*
 |--------------------------------------------------------------------------

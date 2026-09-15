@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
+use Spatie\Health\Commands\RunHealthChecksCommand;
 
 test('health page loads', function () {
     $user = User::factory()->admin()->create();
@@ -26,5 +27,5 @@ test('health page triggers check with fresh parameter', function () {
 
     Artisan::shouldHaveReceived('call')
         ->once()
-        ->with(\Spatie\Health\Commands\RunHealthChecksCommand::class);
+        ->with(RunHealthChecksCommand::class);
 });

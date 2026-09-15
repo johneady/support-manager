@@ -2,12 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -62,9 +63,9 @@ class UserFactory extends Factory
      */
     public function admin(): static
     {
-        return $this->afterMaking(function (\App\Models\User $user) {
+        return $this->afterMaking(function (User $user) {
             $user->is_admin = true;
-        })->afterCreating(function (\App\Models\User $user) {
+        })->afterCreating(function (User $user) {
             $user->is_admin = true;
             $user->save();
         });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\TicketReply;
 use App\Models\User;
 use Database\Seeders\TicketCategorySeeder;
@@ -116,8 +117,8 @@ describe('admin queue search', function () {
 
 describe('admin queue category filter', function () {
     it('category filter works correctly', function () {
-        $category1 = \App\Models\TicketCategory::where('slug', 'technical-support')->first();
-        $category2 = \App\Models\TicketCategory::where('slug', 'general-inquiry')->first();
+        $category1 = TicketCategory::where('slug', 'technical-support')->first();
+        $category2 = TicketCategory::where('slug', 'general-inquiry')->first();
 
         $ticket1 = Ticket::factory()->open()->create([
             'user_id' => $this->user->id,
