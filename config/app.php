@@ -17,6 +17,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | The current release version of the application, following Semantic
+    | Versioning. This is deliberately a literal rather than an env() call:
+    | the config is cached during deployment, so the value must travel with
+    | the code. Keep it in step with the latest heading in CHANGELOG.md.
+    |
+    */
+
+    'version' => '1.1.0',
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
