@@ -1,0 +1,241 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  static-analysis:
+    name: Pint & PHPStan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, zip, sqlite3, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Check code style
+        run: vendor/bin/pint --test --parallel
+
+      - name: Analyse types
+        run: vendor/bin/phpstan analyse --no-progress
+
+  tests:
+    name: Pest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Tia diffs the branch against its baseline, so it needs history
+          # rather than the default depth-1 checkout to resolve origin/main.
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, zip, sqlite3, pdo_sqlite
+          # Tia records which tests touch which files through a coverage
+          # driver, and it requires PCOV specifically.
+          coverage: pcov
+          tools: composer:v2
+
+      # Vite+ requires a modern Node (its core tracks Vite 7, which needs
+      # 20.19+/22.12+); pinning avoids depending on the runner image's default.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Set up environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Run tests
+        # Pest's environment defaults to LOCAL and only becomes CI when --ci is
+        # passed, which makes it run the full suite instead of trusting Tia's
+        # cached dependency graph. `artisan test` does not forward the flag, so
+        # Pest is invoked directly.
+        #
+        # Browser tests are excluded here and run in their own job: they need a
+        # Playwright browser download this job has no reason to pay for, and
+        # keeping them apart stops browser flakiness from masking a real unit
+        # or feature failure.
+        run: vendor/bin/pest --ci --parallel --testsuite=Unit,Feature
+
+  browser:
+    name: Pest (browser)
+    runs-on: ubuntu-latest
+
+    # Separate from the Pest job above so the fast feedback loop stays fast:
+    # this one downloads a browser and drives a real page, which is both slower
+    # and likelier to fail for reasons unrelated to the change under test.
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, zip, sqlite3, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Set up environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      # The plugin drives Playwright from node_modules and refuses to run
+      # against a browser build that does not match the installed version, so
+      # this must come from the same lockfile npm ci just installed.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Run browser tests
+        run: vendor/bin/pest --ci --testsuite=Browser
+
+      # The plugin writes a screenshot beside each failing assertion, which is
+      # usually the fastest way to see why a browser test failed in CI.
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-screenshots
+          path: tests/Browser/Screenshots
+          if-no-files-found: ignore
+
+  database:
+    name: Pest (${{ matrix.database }})
+    runs-on: ubuntu-latest
+
+    # The sqlite job above is the fast feedback loop; this one is the honest
+    # one. Production runs MySQL or MariaDB (the Dockerfile installs
+    # pdo_mysql), and sqlite silently tolerates things a real server rejects:
+    # looser typing, no strict-mode errors on overlong or invalid values, and
+    # different behaviour around transactional DDL and index name limits. A
+    # green sqlite suite is not evidence the deployed database agrees.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: mysql
+            image: mysql:8.4
+          - database: mariadb
+            image: mariadb:11
+
+    services:
+      database:
+        image: ${{ matrix.image }}
+        env:
+          # Both images read the MYSQL_* names; MariaDB accepts them as
+          # aliases for its own MARIADB_* variables.
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized || mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, zip, mysqli, pdo_mysql
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Set up environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Run tests
+        # phpunit.xml pins DB_CONNECTION=sqlite and DB_DATABASE=:memory: in its
+        # <php> block, but PHPUnit's <env> elements do not overwrite a variable
+        # that is already set in the process environment (only force="true"
+        # does), so setting them here wins. DB_URL is blanked for the same
+        # reason: phpunit.xml sets it empty, and a non-empty DB_URL would take
+        # precedence over the host and port below.
+        env:
+          DB_CONNECTION: ${{ matrix.database }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: testing
+          DB_USERNAME: root
+          DB_PASSWORD: root
+          DB_URL: ''
+        # Browser tests are excluded: this job installs no Playwright browser,
+        # and what it exists to prove is that the schema and queries behave on
+        # a real database server -- which the Unit and Feature suites cover.
+        #
+        # --parallel works here because Laravel's TestDatabases concern gives
+        # each worker its own schema (testing_test_1, testing_test_2, ...) and
+        # migrates it, rather than the workers sharing `testing`. Capped at 4
+        # processes deliberately: every worker holds connections to ONE service
+        # container, and the default (a process per core) is a heavier load on
+        # it than the sqlite job's per-worker :memory: files, which cost the
+        # server nothing.
+        run: vendor/bin/pest --ci --parallel --processes=4 --testsuite=Unit,Feature

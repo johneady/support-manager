@@ -37,13 +37,16 @@ enum TicketPriority: string
 
     /**
      * Generate a SQL CASE expression for ordering by priority.
+     *
+     * Written as a literal so orderByRaw()'s literal-string requirement is
+     * satisfied while the value() and sortOrder() mappings stay the single
+     * source of truth; the unit test asserts this literal matches what those
+     * mappings would generate.
+     *
+     * @return literal-string
      */
     public static function orderBySql(): string
     {
-        $cases = collect(self::cases())
-            ->map(fn (self $p) => "WHEN '{$p->value}' THEN {$p->sortOrder()}")
-            ->implode(' ');
-
-        return "CASE priority {$cases} END";
+        return "CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 END";
     }
 }

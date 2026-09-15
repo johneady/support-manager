@@ -96,10 +96,8 @@ new class extends Component
 ?>
 
 <div class="space-y-6">
-    @if(session('success'))
-        <flux:callout variant="success" icon="check-circle" dismissible>
-            {{ session('success') }}
-        </flux:callout>
+    @if (session('success'))
+        <flux:callout variant="success" icon="check-circle" dismissible> {{ session('success') }} </flux:callout>
     @endif
 
     {{-- Header Banner --}}
@@ -114,7 +112,11 @@ new class extends Component
                     <flux:text class="text-blue-100">Manage frequently asked questions</flux:text>
                 </div>
             </div>
-            <a href="{{ route('admin.faqs.create') }}" wire:navigate class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">
+            <a
+                href="{{ route('admin.faqs.create') }}"
+                wire:navigate
+                class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50"
+            >
                 <flux:icon.plus class="size-4" />
                 Create FAQ
             </a>
@@ -122,7 +124,7 @@ new class extends Component
     </div>
 
     {{-- Search and Stats --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
             <flux:badge color="blue" size="lg">{{ $this->faqs->total() }}</flux:badge>
             <span class="text-sm text-zinc-600 dark:text-zinc-400">total FAQs</span>
@@ -136,9 +138,9 @@ new class extends Component
         </div>
     </div>
 
-    @if($this->faqs->isEmpty())
-        <div class="text-center py-12 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-            @if($search)
+    @if ($this->faqs->isEmpty())
+        <div class="rounded-lg border border-zinc-200 bg-white py-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
+            @if ($search)
                 <flux:icon.magnifying-glass class="mx-auto h-12 w-12 text-zinc-400" />
                 <h3 class="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">No FAQs found</h3>
                 <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">No FAQs match your search "{{ $search }}".</p>
@@ -154,17 +156,36 @@ new class extends Component
                 <thead class="bg-zinc-50 dark:bg-zinc-800">
                     <tr>
                         <th class="w-10 px-2 py-3"></th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Question</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Slug</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Actions</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Question
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Slug
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Status
+                        </th>
+                        <th class="px-4 py-3 text-right text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Actions
+                        </th>
                     </tr>
                 </thead>
-                <tbody wire:sort="reorderFaqs" class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
-                    @foreach($this->faqs as $faq)
-                        <tr wire:key="faq-{{ $faq->id }}" wire:sort:item="{{ $faq->id }}" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50" onclick="window.location='{{ route('admin.faqs.edit', $faq->id) }}'">
+                <tbody
+                    wire:sort="reorderFaqs"
+                    class="divide-y divide-zinc-200 bg-white dark:divide-zinc-700 dark:bg-zinc-900"
+                >
+                    @foreach ($this->faqs as $faq)
+                        <tr
+                            wire:key="faq-{{ $faq->id }}"
+                            wire:sort:item="{{ $faq->id }}"
+                            class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                            onclick="window.location='{{ route('admin.faqs.edit', $faq->id) }}'"
+                        >
                             <td class="w-10 px-2 py-4 text-center" onclick="event.stopPropagation()">
-                                <div wire:sort:handle class="cursor-grab text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                                <div
+                                    wire:sort:handle
+                                    class="cursor-grab text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                                >
                                     <flux:icon.bars-3 class="mx-auto size-4" />
                                 </div>
                             </td>
@@ -172,26 +193,39 @@ new class extends Component
                                 <div class="text-sm font-medium text-zinc-900 dark:text-white">
                                     {{ Str::limit($faq->question, 80) }}
                                 </div>
-                                <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                                <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                                     {{ Str::limit($faq->answer, 100) }}
                                 </div>
                             </td>
-                            <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $faq->slug }}
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-4" onclick="event.stopPropagation()">
+                            <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">{{ $faq->slug }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap" onclick="event.stopPropagation()">
                                 <button wire:click="togglePublished({{ $faq->id }})" class="cursor-pointer">
-                                    @if($faq->is_published)
+                                    @if ($faq->is_published)
                                         <flux:badge color="green" size="sm">Published</flux:badge>
                                     @else
                                         <flux:badge color="zinc" size="sm">Draft</flux:badge>
                                     @endif
                                 </button>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm" onclick="event.stopPropagation()">
+                            <td
+                                class="px-4 py-4 text-right text-sm whitespace-nowrap"
+                                onclick="event.stopPropagation()"
+                            >
                                 <div class="flex items-center justify-end gap-2">
-                                    <flux:button href="{{ route('admin.faqs.edit', $faq->id) }}" wire:navigate variant="ghost" size="sm" icon="pencil" />
-                                    <flux:button variant="ghost" size="sm" icon="trash" wire:click="confirmDelete({{ $faq->id }})" class="text-red-600 hover:text-red-700" />
+                                    <flux:button
+                                        href="{{ route('admin.faqs.edit', $faq->id) }}"
+                                        wire:navigate
+                                        variant="ghost"
+                                        size="sm"
+                                        icon="pencil"
+                                    />
+                                    <flux:button
+                                        variant="ghost"
+                                        size="sm"
+                                        icon="trash"
+                                        wire:click="confirmDelete({{ $faq->id }})"
+                                        class="text-red-600 hover:text-red-700"
+                                    />
                                 </div>
                             </td>
                         </tr>
@@ -200,34 +234,28 @@ new class extends Component
             </table>
         </div>
 
-        <div class="mt-6">
-            {{ $this->faqs->links() }}
-        </div>
+        <div class="mt-6">{{ $this->faqs->links() }}</div>
     @endif
 
     {{-- Delete Confirmation Modal --}}
     <flux:modal wire:model.self="showDeleteConfirmation" class="w-[30vw]! max-w-[30vw]!">
         <div class="space-y-6">
-            <div class="border-b border-red-200 dark:border-red-800 pb-4">
+            <div class="border-b border-red-200 pb-4 dark:border-red-800">
                 <div class="flex items-center gap-3">
                     <flux:icon.exclamation-triangle class="size-6 text-red-600 dark:text-red-400" />
                     <flux:heading size="lg" class="text-red-900 dark:text-red-100">Delete FAQ</flux:heading>
                 </div>
             </div>
 
-            <div class="rounded-lg bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+            <div class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/30">
                 <flux:text class="text-red-700 dark:text-red-300">
                     Are you sure you want to delete this FAQ? This action cannot be undone.
                 </flux:text>
             </div>
 
-            <div class="flex items-center gap-4 pt-4 border-t border-red-200 dark:border-red-800">
-                <flux:button wire:click="deleteFaq" variant="danger">
-                    Delete FAQ
-                </flux:button>
-                <flux:button wire:click="cancelDelete" variant="ghost">
-                    Cancel
-                </flux:button>
+            <div class="flex items-center gap-4 border-t border-red-200 pt-4 dark:border-red-800">
+                <flux:button wire:click="deleteFaq" variant="danger"> Delete FAQ </flux:button>
+                <flux:button wire:click="cancelDelete" variant="ghost"> Cancel </flux:button>
             </div>
         </div>
     </flux:modal>

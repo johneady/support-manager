@@ -1,6 +1,9 @@
 <x-layouts::auth>
     <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Create an account')" :description="__('Enter your details below to create your account')" />
+        <x-auth-header
+            :title="__('Create an account')"
+            :description="__('Enter your details below to create your account')"
+        />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
@@ -54,15 +57,24 @@
             />
 
             <div class="flex items-center justify-end">
-                <flux:button type="submit" variant="primary" class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600" data-test="register-user-button">
+                <flux:button
+                    type="submit"
+                    variant="primary"
+                    class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    data-test="register-user-button"
+                >
                     {{ __('Create account') }}
                 </flux:button>
             </div>
         </form>
 
-        <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
+        <div class="space-x-1 text-center text-sm text-zinc-600 rtl:space-x-reverse dark:text-zinc-400">
             <span>{{ __('Already have an account?') }}</span>
-            <flux:link :href="route('login')" wire:navigate class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">{{ __('Log in') }}</flux:link>
+            <flux:link
+                :href="route('login')"
+                wire:navigate
+                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >{{ __('Log in') }}</flux:link>
         </div>
     </div>
 </x-layouts::auth>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +12,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * @property TicketPriority $priority
+ * @property TicketStatus $status
+ */
 class Ticket extends Model
 {
-    /** @use HasFactory<\Database\Factories\TicketFactory> */
+    /** @use HasFactory<TicketFactory> */
     use HasFactory;
 
     protected $fillable = [

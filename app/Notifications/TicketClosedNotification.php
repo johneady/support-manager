@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -25,7 +26,7 @@ class TicketClosedNotification extends Notification implements ShouldQueue
         return ['mail'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(User $notifiable): MailMessage
     {
         $url = url('/tickets/'.$this->ticket->id);
 

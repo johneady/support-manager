@@ -135,10 +135,8 @@ new class extends Component
 ?>
 
 <div class="space-y-6">
-    @if(session('success'))
-        <flux:callout variant="success" icon="check-circle" dismissible>
-            {{ session('success') }}
-        </flux:callout>
+    @if (session('success'))
+        <flux:callout variant="success" icon="check-circle" dismissible> {{ session('success') }} </flux:callout>
     @endif
 
     {{-- Header Banner --}}
@@ -156,8 +154,8 @@ new class extends Component
 
     <form wire:submit="save" class="space-y-6">
         {{-- Health Check Settings --}}
-        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-            <div class="border-b border-zinc-200 dark:border-zinc-700 px-6 py-4 bg-zinc-50 dark:bg-zinc-800">
+        <div class="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="border-b border-zinc-200 bg-zinc-50 px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800">
                 <div class="flex items-center gap-3">
                     <flux:icon.shield-check class="size-5 text-blue-600 dark:text-blue-400" />
                     <flux:heading size="lg">Health Monitoring</flux:heading>
@@ -165,10 +163,12 @@ new class extends Component
                 <flux:text class="mt-1 text-zinc-500 dark:text-zinc-400">Configure health check behaviour and alert notifications</flux:text>
             </div>
 
-            <div class="p-6 space-y-5">
+            <div class="space-y-5 p-6">
                 <flux:field>
                     <flux:label>Health Check Frequency</flux:label>
-                    <flux:description>How often the scheduler runs the health checks. Shorter intervals detect problems sooner but write more history — five checks run every minute records 7,200 rows a day.</flux:description>
+                    <flux:description
+                        >How often the scheduler runs the health checks. Shorter intervals detect problems sooner but
+                        write more history — five checks run every minute records 7,200 rows a day.</flux:description>
                     <flux:select wire:model="healthCheckInterval" class="w-48">
                         <flux:select.option value="1">Every minute</flux:select.option>
                         <flux:select.option value="5">Every 5 minutes</flux:select.option>
@@ -197,7 +197,9 @@ new class extends Component
 
                 <flux:field>
                     <flux:label>Health Alert Email</flux:label>
-                    <flux:description>Email address to receive health check failure alerts. Leave blank to disable email alerts.</flux:description>
+                    <flux:description
+                        >Email address to receive health check failure alerts. Leave blank to disable email
+                        alerts.</flux:description>
                     <flux:input
                         type="email"
                         wire:model="healthAlertEmail"
@@ -217,37 +219,45 @@ new class extends Component
     </form>
 
     {{-- Email Configuration --}}
-    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-        <div class="border-b border-zinc-200 dark:border-zinc-700 px-6 py-4 bg-zinc-50 dark:bg-zinc-800">
+    <div class="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="border-b border-zinc-200 bg-zinc-50 px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800">
             <div class="flex items-center gap-3">
                 <flux:icon.envelope class="size-5 text-blue-600 dark:text-blue-400" />
                 <flux:heading size="lg">Email Configuration</flux:heading>
             </div>
-            <flux:text class="mt-1 text-zinc-500 dark:text-zinc-400">The outgoing mail settings this application is running with. These are read from the environment and cannot be edited here.</flux:text>
+            <flux:text class="mt-1 text-zinc-500 dark:text-zinc-400"
+                >The outgoing mail settings this application is running with. These are read from the environment and
+                cannot be edited here.</flux:text>
         </div>
 
-        <div class="p-6 space-y-6">
+        <div class="space-y-6 p-6">
             <dl class="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
-                @foreach($this->mailConfiguration as $label => $value)
+                @foreach ($this->mailConfiguration as $label => $value)
                     <div class="flex flex-col gap-1">
                         <dt class="text-sm text-zinc-500 dark:text-zinc-400">{{ $label }}</dt>
-                        <dd class="font-mono text-sm text-zinc-900 dark:text-zinc-100 break-all">
+                        <dd class="font-mono text-sm break-all text-zinc-900 dark:text-zinc-100">
                             {{ $value ?? '—' }}
                         </dd>
                     </div>
                 @endforeach
             </dl>
 
-            @if($this->mailConfiguration['Mailer'] === 'log')
+            @if ($this->mailConfiguration['Mailer'] === 'log')
                 <flux:callout variant="warning" icon="exclamation-triangle">
                     <flux:callout.text>
-                        The <span class="font-mono">log</span> mailer is active, so mail is written to the application log instead of being delivered. A test email will report success without reaching the inbox.
+                        The <span class="font-mono">log</span> mailer is active, so mail is written to the application
+                        log instead of being delivered. A test email will report success without reaching the inbox.
                     </flux:callout.text>
                 </flux:callout>
             @endif
 
-            <div class="flex items-center gap-4 pt-2 border-t border-zinc-200 dark:border-zinc-700">
-                <flux:button wire:click="openTestEmailModal" variant="primary" icon="paper-airplane" class="bg-blue-600 hover:bg-blue-700">
+            <div class="flex items-center gap-4 border-t border-zinc-200 pt-2 dark:border-zinc-700">
+                <flux:button
+                    wire:click="openTestEmailModal"
+                    variant="primary"
+                    icon="paper-airplane"
+                    class="bg-blue-600 hover:bg-blue-700"
+                >
                     Send Test Email
                 </flux:button>
                 <flux:text class="text-zinc-500 dark:text-zinc-400">Send a test message to confirm delivery works.</flux:text>
@@ -258,7 +268,7 @@ new class extends Component
     {{-- Send Test Email Modal --}}
     <flux:modal wire:model.self="showTestEmailModal" class="w-[30vw]! max-w-[30vw]!">
         <div class="space-y-6">
-            <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
+            <div class="border-b border-zinc-200 pb-4 dark:border-zinc-700">
                 <div class="flex items-center gap-3">
                     <flux:icon.envelope class="size-6 text-blue-600 dark:text-blue-400" />
                     <flux:heading size="lg">Send Test Email</flux:heading>
@@ -270,15 +280,11 @@ new class extends Component
                 <flux:field>
                     <flux:label>Recipient</flux:label>
                     <flux:description>Where the test message should be delivered.</flux:description>
-                    <flux:input
-                        type="email"
-                        wire:model="testEmailAddress"
-                        placeholder="you@example.com"
-                    />
+                    <flux:input type="email" wire:model="testEmailAddress" placeholder="you@example.com" />
                     <flux:error name="testEmailAddress" />
                 </flux:field>
 
-                <div class="flex items-center gap-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <div class="flex items-center gap-4 border-t border-zinc-200 pt-4 dark:border-zinc-700">
                     <flux:button type="submit" variant="primary" class="bg-blue-600 hover:bg-blue-700">
                         <span wire:loading.remove wire:target="sendTestEmail">Send Test Email</span>
                         <span wire:loading wire:target="sendTestEmail">Sending...</span>

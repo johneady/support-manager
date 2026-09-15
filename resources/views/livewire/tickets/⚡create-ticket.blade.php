@@ -78,12 +78,7 @@ new class extends Component
 
 <div class="max-w-2xl">
     <form wire:submit="submit" class="space-y-6">
-        <flux:input
-            wire:model="subject"
-            label="Subject"
-            placeholder="Brief description of your issue"
-            required
-        />
+        <flux:input wire:model="subject" label="Subject" placeholder="Brief description of your issue" required />
 
         <flux:textarea
             wire:model="description"
@@ -94,24 +89,20 @@ new class extends Component
         />
 
         <flux:select wire:model="ticketCategoryId" label="Category">
-            @foreach($this->categories as $category)
+            @foreach ($this->categories as $category)
                 <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
             @endforeach
         </flux:select>
 
         <flux:select wire:model="priority" label="Priority">
-            @foreach(\App\Enums\TicketPriority::cases() as $priority)
+            @foreach (\App\Enums\TicketPriority::cases() as $priority)
                 <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
             @endforeach
         </flux:select>
 
         <div class="flex items-center gap-4">
-            <flux:button type="submit" variant="primary">
-                Submit Ticket
-            </flux:button>
-            <flux:button href="{{ route('tickets.index') }}" variant="ghost">
-                Cancel
-            </flux:button>
+            <flux:button type="submit" variant="primary"> Submit Ticket </flux:button>
+            <flux:button href="{{ route('tickets.index') }}" variant="ghost"> Cancel </flux:button>
         </div>
     </form>
 </div>

@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\HealthController;
+use App\Livewire\Auth\AcceptInvitation;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -12,7 +13,7 @@ Route::view('privacy-policy', 'privacy-policy')->name('privacy-policy');
 Route::view('terms-of-service', 'terms-of-service')->name('terms-of-service');
 Route::get('faq/{faq}', FaqController::class)->name('faq.show');
 
-Route::get('invitation/{token}', \App\Livewire\Auth\AcceptInvitation::class)
+Route::get('invitation/{token}', AcceptInvitation::class)
     ->middleware('throttle:invitation')
     ->name('invitation.accept');
 

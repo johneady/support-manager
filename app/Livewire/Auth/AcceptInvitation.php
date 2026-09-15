@@ -11,7 +11,7 @@ use Livewire\Component;
 
 class AcceptInvitation extends Component
 {
-    protected $layout = 'layouts.auth';
+    protected string $layout = 'layouts.auth';
 
     #[Locked]
     public string $token = '';

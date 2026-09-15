@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
 use App\Notifications\UserInvitation;
+use Carbon\CarbonInterface;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,9 +17,13 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
+/**
+ * @property CarbonInterface|null $invitation_created_at
+ * @property CarbonInterface|null $invitation_accepted_at
+ */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**
@@ -112,12 +118,14 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function generateInvitationToken(): string
     {
-        $this->invitation_token = Str::random(60);
+        $token = Str::random(60);
+
+        $this->invitation_token = $token;
         $this->invitation_created_at = now();
         $this->invitation_accepted_at = null;
         $this->save();
 
-        return $this->invitation_token;
+        return $token;
     }
 
     /**

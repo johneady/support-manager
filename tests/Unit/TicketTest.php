@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TicketPriority;
 use App\Models\Ticket;
 
 it('generates correct reference number format', function () {
@@ -28,4 +29,11 @@ it('generates reference numbers for six-digit IDs', function () {
     $ticket->id = 999999;
 
     expect($ticket->reference_number)->toBe('TX-1138-999999');
+});
+
+it('keeps the priority ordering SQL in sync with the enum mappings', function () {
+    foreach (TicketPriority::cases() as $priority) {
+        expect(TicketPriority::orderBySql())
+            ->toContain("WHEN '{$priority->value}' THEN {$priority->sortOrder()}");
+    }
 });

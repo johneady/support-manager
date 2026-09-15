@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Database\Factories\TicketCategoryFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TicketCategory extends Model
 {
-    /** @use HasFactory<\Database\Factories\TicketCategoryFactory> */
+    /** @use HasFactory<TicketCategoryFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -39,8 +41,8 @@ class TicketCategory extends Model
     /**
      * Scope to only active categories.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder<TicketCategory>  $query
-     * @return \Illuminate\Database\Eloquent\Builder<TicketCategory>
+     * @param  Builder<TicketCategory>  $query
+     * @return Builder<TicketCategory>
      */
     public function scopeActive($query)
     {
@@ -50,8 +52,8 @@ class TicketCategory extends Model
     /**
      * Scope to order by sort_order.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder<TicketCategory>  $query
-     * @return \Illuminate\Database\Eloquent\Builder<TicketCategory>
+     * @param  Builder<TicketCategory>  $query
+     * @return Builder<TicketCategory>
      */
     public function scopeOrdered($query)
     {

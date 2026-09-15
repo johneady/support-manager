@@ -4,14 +4,13 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Health\Models\HealthCheckResultHistoryItem;
-use Spatie\Health\ResultStores\EloquentHealthResultStore;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $connection = (new HealthCheckResultHistoryItem)->getConnectionName();
-        $tableName = EloquentHealthResultStore::getHistoryItemInstance()->getTable();
+        $tableName = (new HealthCheckResultHistoryItem)->getTable();
 
         Schema::connection($connection)->create($tableName, function (Blueprint $table) {
             $table->id();

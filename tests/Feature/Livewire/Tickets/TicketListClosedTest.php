@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Ticket;
+use App\Models\TicketReply;
 use App\Models\User;
 use App\Notifications\TicketClosedNotification;
 use Database\Seeders\TicketCategorySeeder;
@@ -170,5 +171,27 @@ describe('ticket closing', function () {
 
         // Check that the close button is not in the table for closed tickets
         expect($html)->not->toContain('wire:click.stop="openCloseModal('.$closedTicket->id.')"');
+    });
+});
+
+describe('ticket edit modal', function () {
+    it('shows replies in chronological back-and-forth order', function () {
+        $admin = User::factory()->admin()->create();
+        $ticket = Ticket::factory()->open()->create(['user_id' => $this->user->id]);
+
+        TicketReply::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $this->user->id, 'body' => 'customer first message', 'is_from_admin' => false, 'created_at' => now()->subMinutes(40)]);
+        TicketReply::factory()->fromAdmin()->create(['ticket_id' => $ticket->id, 'user_id' => $admin->id, 'body' => 'admin second message', 'created_at' => now()->subMinutes(30)]);
+        TicketReply::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $this->user->id, 'body' => 'customer third message', 'is_from_admin' => false, 'created_at' => now()->subMinutes(20)]);
+        TicketReply::factory()->fromAdmin()->create(['ticket_id' => $ticket->id, 'user_id' => $admin->id, 'body' => 'admin fourth message', 'created_at' => now()->subMinutes(10)]);
+
+        Livewire::actingAs($this->user)
+            ->test('tickets.ticket-list')
+            ->call('openEditModal', $ticket)
+            ->assertSeeInOrder([
+                'customer first message',
+                'admin second message',
+                'customer third message',
+                'admin fourth message',
+            ]);
     });
 });

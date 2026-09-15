@@ -4,11 +4,13 @@ namespace Database\Factories;
 
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Ticket>
+ * @extends Factory<Ticket>
  */
 class TicketFactory extends Factory
 {
@@ -24,14 +26,14 @@ class TicketFactory extends Factory
             'subject' => fake()->sentence(),
             'description' => fake()->paragraphs(3, true),
             'status' => TicketStatus::Open,
-            'ticket_category_id' => \App\Models\TicketCategory::inRandomOrder()->first()?->id ?? 1,
+            'ticket_category_id' => TicketCategory::query()->value('id') ?? 1,
             'priority' => fake()->randomElement(TicketPriority::cases()),
         ];
     }
 
     public function configure(): static
     {
-        return $this->afterCreating(function (\App\Models\Ticket $ticket) {
+        return $this->afterCreating(function (Ticket $ticket) {
             if (empty($ticket->ticket_reference_number)) {
                 $ticket->update(['ticket_reference_number' => sprintf('TX-1138-%06d', $ticket->id)]);
             }

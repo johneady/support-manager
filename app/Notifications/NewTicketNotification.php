@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -22,16 +23,18 @@ class NewTicketNotification extends Notification implements ShouldQueue
         return ['mail'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(User $notifiable): MailMessage
     {
         $priorityLabel = $this->ticket->priority->label();
         $adminUrl = route('tickets.queue');
+        $submitter = $this->ticket->user()->first();
+        $submitterName = $submitter !== null ? $submitter->name : 'a customer';
 
         return (new MailMessage)
             ->subject("New Support Ticket: {$this->ticket->reference_number} - {$this->ticket->subject}")
             ->greeting('New Support Ticket')
             ->line("**Reference Number:** {$this->ticket->reference_number}")
-            ->line("A new support ticket has been submitted by {$this->ticket->user->name}.")
+            ->line("A new support ticket has been submitted by {$submitterName}.")
             ->line("**Subject:** {$this->ticket->subject}")
             ->line("**Priority:** {$priorityLabel}")
             ->action('View Tickets', $adminUrl)

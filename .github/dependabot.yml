@@ -1,0 +1,90 @@
+version: 2
+
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    versioning-strategy: increase-if-necessary
+    groups:
+      # Laravel's first-party packages release together and are tested
+      # together; separate PRs for each just multiply CI runs on changes that
+      # have to land as a set anyway.
+      laravel:
+        patterns:
+          - laravel/*
+          - livewire/*
+      dev-tooling:
+        dependency-type: development
+        patterns:
+          - '*'
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      build-tooling:
+        patterns:
+          - vite
+          - laravel-vite-plugin
+          - '@tailwindcss/*'
+          - tailwindcss
+      dev-tooling:
+        dependency-type: development
+        patterns:
+          - '*'
+    # playwright is held back deliberately. Its npm version must match a
+    # chromium build already in ~/.cache/ms-playwright, because the browser CDN
+    # can be blocked here and the plugin refuses to run against a mismatched
+    # build (1.62.0 -> chromium-1234, 1.63.0 -> a newer build not cached).
+    #
+    # CI is unaffected -- it runs `npx playwright install` after `npm ci` and
+    # downloads whatever the installed version wants -- so an automatic bump
+    # breaks LOCAL browser testing only, which is the quiet failure this avoids:
+    # green CI, red laptop. Bump it by hand together with the cached browser.
+    #
+    # Note this must be an `ignore`, not a group `exclude-patterns`: excluding it
+    # from the dev-tooling group would only stop it being BUNDLED, and Dependabot
+    # would still raise a PR for it on its own.
+    ignore:
+      - dependency-name: playwright
+      # vite-plus is held back deliberately, and must be bumped by hand
+      # together with the `vite` alias. Vite+ does not run on upstream Vite:
+      # package.json aliases `vite` to npm:@voidzero-dev/vite-plus-core@X, and
+      # vite-plus pins that alias to its OWN exact version, with a third copy
+      # in `overrides` so transitive dependents resolve the same package.
+      #
+      # Dependabot bumps vite-plus but cannot see that the aliased `vite` key
+      # and the override are the same package under another name, so it moves
+      # one of the three and leaves the rest, and `vp build` aborts with
+      # "Expected @voidzero-dev/vite-plus-core@<new>, but found <old>".
+      #
+      # This is an `ignore` rather than a group `exclude-patterns` for the same
+      # reason as playwright above: excluding it would only stop it being
+      # BUNDLED, and Dependabot would still raise the PR on its own.
+      #
+      # To bump: set vite-plus, dependencies.vite and overrides.vite to the same
+      # new version, confirm `npm view vite-plus@<v> dependencies` still bundles
+      # the pinned vitest, then `npm install && npm run build`.
+      - dependency-name: vite-plus
+      # The aliased vite key -- npm:@voidzero-dev/vite-plus-core, not upstream
+      # Vite. Ignored for the same reason: it only moves with vite-plus.
+      - dependency-name: vite
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+
+  # Pinned base images in the Dockerfile (php:8.5-*, node:22-*) go stale
+  # silently otherwise -- nothing else in the repo reports a new patch release
+  # of the runtime the deployed image is built on.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly

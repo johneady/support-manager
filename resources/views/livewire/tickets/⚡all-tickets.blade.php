@@ -130,7 +130,7 @@ new class extends Component
             return null;
         }
 
-        return Ticket::with('replies.user', 'user', 'ticketCategory')->find($this->viewingTicketId);
+        return Ticket::with(['replies.user', 'replies' => fn ($query) => $query->chronological(), 'user', 'ticketCategory'])->find($this->viewingTicketId);
     }
 
     public function openViewModal(Ticket $ticket): void
@@ -228,16 +228,12 @@ new class extends Component
 ?>
 
 <div class="space-y-6">
-    @if(session('success'))
-        <flux:callout variant="success" icon="check-circle" dismissible>
-            {{ session('success') }}
-        </flux:callout>
+    @if (session('success'))
+        <flux:callout variant="success" icon="check-circle" dismissible> {{ session('success') }} </flux:callout>
     @endif
 
-    @if(session('error'))
-        <flux:callout variant="danger" icon="exclamation-circle" dismissible>
-            {{ session('error') }}
-        </flux:callout>
+    @if (session('error'))
+        <flux:callout variant="danger" icon="exclamation-circle" dismissible> {{ session('error') }} </flux:callout>
     @endif
 
     {{-- Header Banner --}}
@@ -256,7 +252,7 @@ new class extends Component
     </div>
 
     {{-- Search and Filters --}}
-    <div class="flex flex-col sm:flex-row gap-4">
+    <div class="flex flex-col gap-4 sm:flex-row">
         <div class="w-full sm:w-80">
             <flux:input
                 wire:model.live.debounce.300ms="search"
@@ -267,7 +263,7 @@ new class extends Component
         <div class="w-full sm:w-64">
             <flux:select wire:model.live="categoryFilter">
                 <flux:select.option value="">All Categories</flux:select.option>
-                @foreach($this->categories as $category)
+                @foreach ($this->categories as $category)
                     <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
                 @endforeach
             </flux:select>
@@ -275,7 +271,7 @@ new class extends Component
         <div class="w-full sm:w-48">
             <flux:select wire:model.live="statusFilter">
                 <flux:select.option value="">All Statuses</flux:select.option>
-                @foreach(\App\Enums\TicketStatus::cases() as $status)
+                @foreach (\App\Enums\TicketStatus::cases() as $status)
                     <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
                 @endforeach
             </flux:select>
@@ -283,16 +279,16 @@ new class extends Component
         <div class="w-full sm:w-48">
             <flux:select wire:model.live="priorityFilter">
                 <flux:select.option value="">All Priorities</flux:select.option>
-                @foreach(\App\Enums\TicketPriority::cases() as $priority)
+                @foreach (\App\Enums\TicketPriority::cases() as $priority)
                     <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
                 @endforeach
             </flux:select>
         </div>
     </div>
 
-    @if($this->tickets->isEmpty())
-        <div class="text-center py-12 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-            @if($search || $categoryFilter || $statusFilter || $priorityFilter)
+    @if ($this->tickets->isEmpty())
+        <div class="rounded-lg border border-zinc-200 bg-white py-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
+            @if ($search || $categoryFilter || $statusFilter || $priorityFilter)
                 <flux:icon.magnifying-glass class="mx-auto h-12 w-12 text-zinc-400" />
                 <h3 class="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">No tickets found</h3>
                 <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">No tickets match your search criteria.</p>
@@ -307,44 +303,67 @@ new class extends Component
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
                 <thead class="bg-zinc-50 dark:bg-zinc-800">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('id')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            <button
+                                wire:click="sortBy('id')"
+                                class="flex cursor-pointer items-center gap-1 uppercase hover:text-zinc-700 dark:hover:text-zinc-300"
+                            >
                                 Reference
                                 <flux:icon.{{ $this->getSortIcon('id') }} class="size-3" />
                             </button>
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">User</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('subject')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            User
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            <button
+                                wire:click="sortBy('subject')"
+                                class="flex cursor-pointer items-center gap-1 uppercase hover:text-zinc-700 dark:hover:text-zinc-300"
+                            >
                                 Subject
                                 <flux:icon.{{ $this->getSortIcon('subject') }} class="size-3" />
                             </button>
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Category</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('status')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            Category
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            <button
+                                wire:click="sortBy('status')"
+                                class="flex cursor-pointer items-center gap-1 uppercase hover:text-zinc-700 dark:hover:text-zinc-300"
+                            >
                                 Status
                                 <flux:icon.{{ $this->getSortIcon('status') }} class="size-3" />
                             </button>
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('priority')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            <button
+                                wire:click="sortBy('priority')"
+                                class="flex cursor-pointer items-center gap-1 uppercase hover:text-zinc-700 dark:hover:text-zinc-300"
+                            >
                                 Priority
                                 <flux:icon.{{ $this->getSortIcon('priority') }} class="size-3" />
                             </button>
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            <button wire:click="sortBy('created_at')" class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer uppercase">
+                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                            <button
+                                wire:click="sortBy('created_at')"
+                                class="flex cursor-pointer items-center gap-1 uppercase hover:text-zinc-700 dark:hover:text-zinc-300"
+                            >
                                 Created
                                 <flux:icon.{{ $this->getSortIcon('created_at') }} class="size-3" />
                             </button>
                         </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
-                    @foreach($this->tickets as $ticket)
-                        <tr wire:key="ticket-{{ $ticket->id }}" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50" wire:click="openViewModal({{ $ticket->id }})">
-                            <td class="whitespace-nowrap px-4 py-4 text-sm font-mono text-zinc-600 dark:text-zinc-400">
+                <tbody class="divide-y divide-zinc-200 bg-white dark:divide-zinc-700 dark:bg-zinc-900">
+                    @foreach ($this->tickets as $ticket)
+                        <tr
+                            wire:key="ticket-{{ $ticket->id }}"
+                            class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                            wire:click="openViewModal({{ $ticket->id }})"
+                        >
+                            <td class="px-4 py-4 font-mono text-sm whitespace-nowrap text-zinc-600 dark:text-zinc-400">
                                 {{ $ticket->reference_number }}
                             </td>
                             <td class="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
@@ -356,8 +375,8 @@ new class extends Component
                                     {{ Str::limit($ticket->subject, 50) }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4">
-                                @if($ticket->ticketCategory)
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                @if ($ticket->ticketCategory)
                                     <flux:badge color="{{ $ticket->ticketCategory->color }}" size="sm">
                                         {{ $ticket->ticketCategory->name }}
                                     </flux:badge>
@@ -365,17 +384,17 @@ new class extends Component
                                     <flux:badge color="zinc" size="sm">No Category</flux:badge>
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4">
+                            <td class="px-4 py-4 whitespace-nowrap">
                                 <flux:badge color="{{ $ticket->status->color() }}" size="sm">
                                     {{ $ticket->status->label() }}
                                 </flux:badge>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4">
+                            <td class="px-4 py-4 whitespace-nowrap">
                                 <flux:badge color="{{ $ticket->priority->color() }}" size="sm">
                                     {{ $ticket->priority->label() }}
                                 </flux:badge>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+                            <td class="px-4 py-4 text-sm whitespace-nowrap text-zinc-500 dark:text-zinc-400">
                                 {{ $ticket->created_at->diffForHumans() }}
                             </td>
                         </tr>
@@ -384,16 +403,14 @@ new class extends Component
             </table>
         </div>
 
-        <div class="mt-6">
-            {{ $this->tickets->links() }}
-        </div>
+        <div class="mt-6">{{ $this->tickets->links() }}</div>
     @endif
 
     {{-- View Ticket Modal --}}
-    <flux:modal wire:model.self="showViewModal" class="w-[50vw]! max-w-[50vw]! max-h-[90vh] overflow-y-auto">
-        @if($this->viewingTicket)
+    <flux:modal wire:model.self="showViewModal" class="max-h-[90vh] w-[50vw]! max-w-[50vw]! overflow-y-auto">
+        @if ($this->viewingTicket)
             <div class="space-y-6">
-                <div class="border-b border-blue-200 dark:border-blue-800 pb-4">
+                <div class="border-b border-blue-200 pb-4 dark:border-blue-800">
                     <div class="flex items-center gap-3">
                         <flux:icon.ticket class="size-6 text-blue-600 dark:text-blue-400" />
                         <flux:heading size="lg" class="text-blue-900 dark:text-blue-100">
@@ -406,27 +423,33 @@ new class extends Component
                 </div>
 
                 {{-- Modal Message --}}
-                @if($modalMessage)
-                    <flux:callout variant="{{ $modalMessageType }}" icon="{{ $modalMessageType === 'success' ? 'check-circle' : 'exclamation-circle' }}" dismissible>
+                @if ($modalMessage)
+                    <flux:callout
+                        variant="{{ $modalMessageType }}"
+                        icon="{{ $modalMessageType === 'success' ? 'check-circle' : 'exclamation-circle' }}"
+                        dismissible
+                    >
                         {{ $modalMessage }}
                     </flux:callout>
                 @endif
 
                 {{-- Ticket Details --}}
-                <div class="space-y-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 p-4 border border-blue-200 dark:border-blue-800">
+                <div class="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
                     <div>
                         <flux:label>Subject</flux:label>
-                        <div class="mt-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                        <div class="mt-1 rounded-md border border-zinc-200 bg-zinc-100 px-3 py-2 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                             {{ $this->viewingTicket->subject }}
                         </div>
                     </div>
 
                     <div>
                         <flux:label>Description</flux:label>
-                        <div class="mt-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 whitespace-pre-wrap">{{ $this->viewingTicket->description }}</div>
+                        <div class="mt-1 rounded-md border border-zinc-200 bg-zinc-100 px-3 py-2 whitespace-pre-wrap text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                            {{ $this->viewingTicket->description }}
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div>
                             <flux:label>Status</flux:label>
                             <div class="mt-1">
@@ -446,7 +469,7 @@ new class extends Component
                         <div>
                             <flux:label>Category</flux:label>
                             <div class="mt-1">
-                                @if($this->viewingTicket->ticketCategory)
+                                @if ($this->viewingTicket->ticketCategory)
                                     <flux:badge color="{{ $this->viewingTicket->ticketCategory->color }}" size="sm">
                                         {{ $this->viewingTicket->ticketCategory->name }}
                                     </flux:badge>
@@ -466,18 +489,21 @@ new class extends Component
                         $replies = $this->viewingTicket->replies ?? collect();
                     @endphp
 
-                    @if($replies->isEmpty())
+                    @if ($replies->isEmpty())
                         <p class="text-sm text-zinc-500 dark:text-zinc-400">No replies yet.</p>
                     @else
                         <div class="space-y-4">
-                            @foreach($replies as $reply)
-                                <div wire:key="reply-{{ $reply->id }}" class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 {{ $reply->is_from_admin ? 'bg-blue-50 dark:bg-blue-900/20 ml-8' : 'bg-zinc-50 dark:bg-zinc-800 mr-8' }}">
-                                    <div class="flex items-center justify-between mb-2">
+                            @foreach ($replies as $reply)
+                                <div
+                                    wire:key="reply-{{ $reply->id }}"
+                                    class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 {{ $reply->is_from_admin ? 'bg-blue-50 dark:bg-blue-900/20 ml-8' : 'bg-zinc-50 dark:bg-zinc-800 mr-8' }}"
+                                >
+                                    <div class="mb-2 flex items-center justify-between">
                                         <div class="flex items-center gap-2">
                                             <span class="font-medium text-sm {{ $reply->is_from_admin ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-white' }}">
                                                 {{ $reply->user?->name ?? 'Unknown' }}
                                             </span>
-                                            @if($reply->is_from_admin)
+                                            @if ($reply->is_from_admin)
                                                 <flux:badge color="sky" size="sm">Admin</flux:badge>
                                             @endif
                                         </div>
@@ -495,9 +521,9 @@ new class extends Component
                 </div>
 
                 {{-- Reply Form / Reopen --}}
-                @if($this->viewingTicket->status->value === 'open')
-                    <div class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-6">
-                        <h3 class="text-base font-semibold text-blue-900 dark:text-blue-100 mb-4">Send Reply</h3>
+                @if ($this->viewingTicket->status->value === 'open')
+                    <div class="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950/30">
+                        <h3 class="mb-4 text-base font-semibold text-blue-900 dark:text-blue-100">Send Reply</h3>
                         <form wire:submit="submitReply" class="space-y-4">
                             <flux:field>
                                 <flux:label>Your Reply</flux:label>
@@ -505,20 +531,22 @@ new class extends Component
                                 <flux:error name="replyBody" />
                             </flux:field>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <flux:field>
                                     <flux:label>Status</flux:label>
                                     <flux:select wire:model="newStatus">
-                                        @foreach(\App\Enums\TicketStatus::cases() as $status)
-                                            <flux:select.option value="{{ $status->value }}">{{ $status->label() }}</flux:select.option>
+                                        @foreach (\App\Enums\TicketStatus::cases() as $status)
+                                            <flux:select.option value="{{ $status->value }}">
+                                                {{ $status->label() }}</flux:select.option>
                                         @endforeach
                                     </flux:select>
                                 </flux:field>
                                 <flux:field>
                                     <flux:label>Priority</flux:label>
                                     <flux:select wire:model="newPriority">
-                                        @foreach(\App\Enums\TicketPriority::cases() as $priority)
-                                            <flux:select.option value="{{ $priority->value }}">{{ $priority->label() }}</flux:select.option>
+                                        @foreach (\App\Enums\TicketPriority::cases() as $priority)
+                                            <flux:select.option value="{{ $priority->value }}">
+                                                {{ $priority->label() }}</flux:select.option>
                                         @endforeach
                                     </flux:select>
                                 </flux:field>
@@ -530,22 +558,22 @@ new class extends Component
                         </form>
                     </div>
                 @else
-                    <div class="rounded-lg bg-zinc-100 dark:bg-zinc-800 p-4 text-center">
-                        <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                            This ticket is closed.
-                        </p>
+                    <div class="rounded-lg bg-zinc-100 p-4 text-center dark:bg-zinc-800">
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400">This ticket is closed.</p>
                     </div>
                 @endif
 
-                <div class="flex items-center gap-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-                    @if($this->viewingTicket->status->value === 'closed')
-                        <flux:button wire:click="reopenTicket({{ $this->viewingTicket->id }})" variant="primary" class="bg-green-600 hover:bg-green-700">
+                <div class="flex items-center gap-4 border-t border-blue-200 pt-4 dark:border-blue-800">
+                    @if ($this->viewingTicket->status->value === 'closed')
+                        <flux:button
+                            wire:click="reopenTicket({{ $this->viewingTicket->id }})"
+                            variant="primary"
+                            class="bg-green-600 hover:bg-green-700"
+                        >
                             Reopen Ticket
                         </flux:button>
                     @endif
-                    <flux:button type="button" wire:click="closeViewModal" variant="ghost">
-                        Close
-                    </flux:button>
+                    <flux:button type="button" wire:click="closeViewModal" variant="ghost"> Close </flux:button>
                 </div>
             </div>
         @endif

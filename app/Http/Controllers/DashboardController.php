@@ -11,14 +11,15 @@ class DashboardController extends Controller
 {
     public function __invoke(): View
     {
-        $user = auth()->user();
+        $user = auth()->user() ?? abort(401);
         $isAdmin = $user->isAdmin();
 
         if ($isAdmin) {
-            $stats = Ticket::query()
-                ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) as open_count', [TicketStatus::Open->value])
-                ->selectRaw('COUNT(CASE WHEN status = ? AND closed_at >= ? THEN 1 END) as resolved_count', [TicketStatus::Closed->value, now()->subDays(7)])
-                ->first();
+            $openTicketsCount = Ticket::query()->where('status', TicketStatus::Open)->count();
+            $recentlyResolvedCount = Ticket::query()
+                ->where('status', TicketStatus::Closed)
+                ->where('closed_at', '>=', now()->subDays(7))
+                ->count();
 
             $needsResponseCount = Ticket::query()
                 ->open()
@@ -35,18 +36,22 @@ class DashboardController extends Controller
 
             return view('dashboard', [
                 'isAdmin' => $isAdmin,
-                'openTicketsCount' => $stats->open_count,
+                'openTicketsCount' => $openTicketsCount,
                 'needsResponseCount' => $needsResponseCount,
-                'recentlyResolvedCount' => $stats->resolved_count,
+                'recentlyResolvedCount' => $recentlyResolvedCount,
                 'recentTickets' => $recentTickets,
             ]);
         }
 
-        $stats = Ticket::query()
+        $openTickets = Ticket::query()
             ->forUser($user->id)
-            ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) as open_count', [TicketStatus::Open->value])
-            ->selectRaw('COUNT(CASE WHEN status = ? AND closed_at >= ? THEN 1 END) as resolved_count', [TicketStatus::Closed->value, now()->startOfMonth()])
-            ->first();
+            ->where('status', TicketStatus::Open)
+            ->count();
+        $resolvedTickets = Ticket::query()
+            ->forUser($user->id)
+            ->where('status', TicketStatus::Closed)
+            ->where('closed_at', '>=', now()->startOfMonth())
+            ->count();
 
         $awaitingResponseCount = Ticket::query()
             ->forUser($user->id)
@@ -56,9 +61,9 @@ class DashboardController extends Controller
 
         return view('dashboard', [
             'isAdmin' => $isAdmin,
-            'openTickets' => $stats->open_count,
+            'openTickets' => $openTickets,
             'awaitingResponseCount' => $awaitingResponseCount,
-            'resolvedTickets' => $stats->resolved_count,
+            'resolvedTickets' => $resolvedTickets,
         ]);
     }
 }

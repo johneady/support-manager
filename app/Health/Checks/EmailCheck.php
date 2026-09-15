@@ -53,7 +53,7 @@ final class EmailCheck extends Check
             if (method_exists($transport, 'getStream')) {
                 // For SMTP and similar transports
                 $stream = $transport->getStream();
-                if (method_exists($stream, 'getHost')) {
+                if (is_object($stream) && method_exists($stream, 'getHost')) {
                     return ! empty($stream->getHost());
                 }
             }
