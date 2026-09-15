@@ -8,7 +8,7 @@
     },
     "dependencies": {
         "@tailwindcss/vite": "^4.1.11",
-        "@tiptap/core": "^3.19.0",
+        "@tiptap/core": "^3.31.3",
         "@tiptap/extension-highlight": "^3.19.0",
         "@tiptap/extension-placeholder": "^3.19.0",
         "@tiptap/pm": "^3.19.0",
