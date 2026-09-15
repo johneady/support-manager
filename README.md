@@ -53,7 +53,7 @@ I created this project simply because I needed a very simple ticket system that 
 | **Styling** | Tailwind CSS | 4 |
 | **Rich Text** | Tiptap Editor | 3 |
 | **Authentication** | Laravel Fortify | 1 |
-| **Database** | SQLite / MySQL / PostgreSQL | - |
+| **Database** | SQLite (dev) / MariaDB or MySQL (production) | - |
 | **Testing** | Pest (with the browser plugin) | 5 |
 | **Code Style** | Laravel Pint | 1 |
 | **Static Analysis** | Larastan | 3 |
@@ -67,7 +67,7 @@ I created this project simply because I needed a very simple ticket system that 
 - **Composer**
 - **Node.js** >= 22
 - **NPM**
-- **SQLite**, **MySQL**, or **PostgreSQL**
+- **SQLite** (local development), or **MariaDB** / **MySQL** (other environments)
 
 Optional, for the containerised deployment only:
 
