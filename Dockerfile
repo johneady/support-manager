@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
         --optimize-autoloader
 
 # --- Stage 2: frontend assets ----------------------------------------------
-FROM node:22-bookworm-slim AS assets
+FROM node:26-bookworm-slim AS assets
 
 WORKDIR /app
 
