@@ -59,7 +59,7 @@ jobs:
       # Vite+ requires a modern Node (its core tracks Vite 7, which needs
       # 20.19+/22.12+); pinning avoids depending on the runner image's default.
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -108,7 +108,7 @@ jobs:
           tools: composer:v2
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -194,7 +194,7 @@ jobs:
           tools: composer:v2
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
