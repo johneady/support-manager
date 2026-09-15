@@ -5,7 +5,7 @@
 ### ✨ A modern, open-source support ticket management system
 
 [![Latest Stable Version](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com)
-[![PHP Version](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
+[![PHP Version](https://img.shields.io/badge/PHP-8.5+-blue.svg)](https://php.net)
 [![Livewire](https://img.shields.io/badge/Livewire-4-pink.svg)](https://livewire.laravel.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -53,7 +53,7 @@ I created this project simply because I needed a very simple ticket system that 
 | **Styling** | Tailwind CSS | 4 |
 | **Rich Text** | Tiptap Editor | 3 |
 | **Authentication** | Laravel Fortify | 1 |
-| **Database** | SQLite / MySQL / PostgreSQL | - |
+| **Database** | SQLite (dev) / MariaDB or MySQL (production) | - |
 | **Testing** | Pest (with the browser plugin) | 5 |
 | **Code Style** | Laravel Pint | 1 |
 | **Static Analysis** | Larastan | 3 |
@@ -63,11 +63,11 @@ I created this project simply because I needed a very simple ticket system that 
 
 ## 📋 Requirements
 
-- **PHP** >= 8.2
+- **PHP** >= 8.5
 - **Composer**
 - **Node.js** >= 22
 - **NPM**
-- **SQLite**, **MySQL**, or **PostgreSQL**
+- **SQLite** (local development), or **MariaDB** / **MySQL** (other environments)
 
 Optional, for the containerised deployment only:
 

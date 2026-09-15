@@ -66,8 +66,8 @@ body:
       label: Database
       options:
         - SQLite
+        - MariaDB
         - MySQL
-        - PostgreSQL
         - Other
     validations:
       required: true
