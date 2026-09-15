@@ -4,7 +4,7 @@
 
 ### ✨ A modern, open-source support ticket management system
 
-[![Latest Stable Version](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
+[![Latest Stable Version](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com)
 [![PHP Version](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
 [![Livewire](https://img.shields.io/badge/Livewire-4-pink.svg)](https://livewire.laravel.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -25,16 +25,20 @@ I created this project simply because I needed a very simple ticket system that 
 
 | Feature | Description |
 |---------|-------------|
-| 🎯 **Ticket Management** | Create, track, and resolve support tickets with priority levels (Low, Medium, High) and categorization |
-| 📊 **Admin Dashboard** | Overview of open tickets, tickets needing response, and recently resolved issues |
+| 🎯 **Ticket Management** | Create, track, and resolve support tickets with priority levels (Low, Medium, High), statuses (Open, Closed), and reference numbers (TX-1138-{id}) |
+| 🗂️ **Ticket Categories** | Database-driven categories with color coding and sort ordering, managed from the admin panel |
+| 📊 **Admin Dashboard** | Overview of open tickets, tickets needing response, and recently resolved issues, with a live sidebar badge for the response queue |
 | 👤 **User Dashboard** | Customers can view and manage their own tickets |
-| ❓ **FAQ System** | Markdown-powered FAQ pages with auto-slug generation and reading time estimates |
+| 🛠️ **Admin Panel** | Manage users, ticket categories, FAQs, and platform settings from dedicated admin pages |
+| ⚙️ **Platform Settings** | Configure health check intervals and health alert email, inspect the active mail configuration, and send test emails |
+| ❓ **FAQ System** | Markdown-powered FAQ pages with auto-slug generation, reading time estimates, and admin CRUD |
 | ✉️ **User Invitations** | Invite team members via token-based email invitations |
 | 🔐 **Two-Factor Authentication** | Built-in 2FA with recovery codes via Laravel Fortify |
 | 📧 **Email Notifications** | Queued notifications for new tickets, replies, and auto-closures |
 | ⏰ **Auto-Close Inactive Tickets** | Scheduled job to automatically close stale tickets |
 | 🛡️ **Spam Protection** | Honeypot fields via Spatie Laravel Honeypot |
-| ❤️ **Health Monitoring** | Application health checks via Spatie Laravel Health |
+| ❤️ **Health Monitoring** | Health checks (including a mail transport check) via Spatie Laravel Health, an admin health page, alert email routing, and automatic health history pruning |
+| 📄 **Legal Pages** | Built-in privacy policy and terms of service pages |
 | 🌙 **Dark Mode** | Theme appearance settings with light/dark mode support |
 
 ---
@@ -43,16 +47,17 @@ I created this project simply because I needed a very simple ticket system that 
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| **Framework** | Laravel | 12 |
-| **Frontend** | Livewire | 4 |
+| **Framework** | Laravel | 13 |
+| **Frontend** | Livewire (Volt single-file components built in) | 4 |
 | **UI Library** | Flux UI Free | - |
 | **Styling** | Tailwind CSS | 4 |
-| **Rich Text** | Tiptap Editor | - |
+| **Rich Text** | Tiptap Editor | 3 |
 | **Authentication** | Laravel Fortify | 1 |
 | **Database** | SQLite / MySQL / PostgreSQL | - |
-| **Testing** | Pest | 4 |
+| **Testing** | Pest (with the browser plugin) | 5 |
 | **Code Style** | Laravel Pint | 1 |
-| **Asset Bundling** | Vite | 7 |
+| **Static Analysis** | Larastan | 3 |
+| **Asset Bundling** | Vite Plus | - |
 
 ---
 
@@ -97,7 +102,7 @@ php artisan db:seed
 
 ### 3️⃣ Start the application
 
-For development with all services (server, queue worker, log viewer, and Vite):
+For development with all services (server, scheduler, queue worker, log viewer, and Vite):
 
 ```bash
 composer run dev
@@ -175,7 +180,7 @@ The command uses Laravel Prompts for an interactive selection menu when run with
 
 ## 🧪 Testing
 
-This project uses [Pest](https://pestphp.com) for testing.
+This project uses [Pest](https://pestphp.com) for testing, with feature, unit, and browser test suites (browser tests live in `tests/Browser`).
 
 ```bash
 # Run all tests
@@ -190,7 +195,7 @@ php artisan test --filter=TicketTest
 # Run tests in parallel
 vendor/bin/pest --parallel
 
-# Run linting + tests
+# Run linting + static analysis + tests (CI pipeline)
 composer test
 ```
 
@@ -208,32 +213,49 @@ vendor/bin/pint
 vendor/bin/pint --test
 ```
 
+### 🔍 Static Analysis
+
+Static analysis is handled by [Larastan](https://github.com/larastan/larastan):
+
+```bash
+# Run static analysis
+composer types:check
+```
+
 ---
 
 ## 📁 Project Structure
 
 ```
 app/
-├── Console/Commands/     # Artisan commands
-├── Enums/                # TicketStatus, TicketPriority
-├── Http/Controllers/     # Web controllers
-├── Jobs/                 # Background jobs (CloseInactiveTickets)
-├── Livewire/             # Livewire components
-├── Models/               # Eloquent models
-├── Notifications/        # Email notifications
-└── Policies/             # Authorization policies
+├── Actions/Fortify/       # Fortify actions (CreateNewUser, ResetUserPassword)
+├── Concerns/              # Shared traits (validation rules, auth user resolution)
+├── Console/Commands/      # Artisan commands (CloseInactiveTickets, PreviewMail)
+├── Enums/                 # TicketStatus, TicketPriority
+├── Health/                # Health checks and health alert routing
+├── Http/Controllers/      # Web controllers (Dashboard, Faq, Health)
+├── Http/Middleware/       # EnsureUserIsAdmin, SecurityHeaders
+├── Jobs/                  # Background jobs (CloseInactiveTickets)
+├── Livewire/              # Livewire class components (auth, settings)
+├── Mail/                  # TestEmail mailable
+├── Models/                # Eloquent models (Faq, Setting, Ticket, TicketCategory, TicketReply, User)
+├── Notifications/         # Email notifications
+├── Policies/              # Authorization policies
+└── Providers/             # App and Fortify service providers
 
 resources/views/
-├── admin/                # Admin panel views
-├── components/           # Blade components
-├── layouts/              # App and auth layouts
-├── livewire/             # Livewire component views
-└── tickets/              # Ticket management views
+├── admin/                 # Admin panel pages (users, categories, FAQs, settings)
+├── components/            # Blade components (incl. Volt ⚡ components with co-located tests)
+├── emails/                # Email templates
+├── layouts/               # App and auth layouts
+├── livewire/              # Volt single-file components (⚡ prefixed)
+├── partials/              # Shared view partials
+└── tickets/               # Ticket management views
 
-docker/                   # Container configuration (see Deployment)
-├── entrypoint/           # Boot script and supervisor config
-├── nginx/                # Webserver vhost
-└── php/                  # php.ini and php-fpm pool
+docker/                    # Container configuration (see Deployment)
+├── entrypoint/            # Boot script and supervisor config
+├── nginx/                 # Webserver vhost
+└── php/                   # php.ini and php-fpm pool
 ```
 
 ---
