@@ -189,7 +189,7 @@ class PreviewMailCommand extends Command
     protected function sendPasswordResetNotification(string $toEmail): void
     {
         $user = $this->createTestUser($toEmail);
-        $token = Password::broker()->createToken($user);
+        $token = Password::createToken($user);
 
         $user->notifyNow(new ResetPassword($token));
     }
