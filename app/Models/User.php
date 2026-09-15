@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
+/**
+ * @property \Carbon\CarbonInterface|null $invitation_created_at
+ * @property \Carbon\CarbonInterface|null $invitation_accepted_at
+ */
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -112,12 +116,14 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function generateInvitationToken(): string
     {
-        $this->invitation_token = Str::random(60);
+        $token = Str::random(60);
+
+        $this->invitation_token = $token;
         $this->invitation_created_at = now();
         $this->invitation_accepted_at = null;
         $this->save();
 
-        return $this->invitation_token;
+        return $token;
     }
 
     /**

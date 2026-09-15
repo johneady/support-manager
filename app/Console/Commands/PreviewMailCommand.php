@@ -130,6 +130,7 @@ class PreviewMailCommand extends Command
             'ticket-reply-to-admin' => $this->sendTicketReplyToAdminNotification($toEmail),
             'ticket-auto-closed' => $this->sendTicketAutoClosedNotification($toEmail),
             'user-invitation' => $this->sendUserInvitationNotification($toEmail),
+            default => throw new \InvalidArgumentException("Unknown email type [{$type}]."),
         };
 
         $this->info("  Sent: {$this->emailTypes[$type]}");

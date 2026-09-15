@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\TicketReply;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -23,11 +24,13 @@ class TicketReplyNotification extends Notification implements ShouldQueue
         return ['mail'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(User $notifiable): MailMessage
     {
-        $ticket = $this->reply->ticket;
+        $ticket = $this->reply->ticket()->firstOrFail();
         $isFromAdmin = $this->reply->is_from_admin;
         $replyPreview = Str::limit($this->reply->body, 200);
+        $replier = $this->reply->user()->first();
+        $replierName = $replier !== null ? $replier->name : 'A customer';
 
         if ($isFromAdmin) {
             $url = url('/tickets/'.$ticket->id);
@@ -50,7 +53,7 @@ class TicketReplyNotification extends Notification implements ShouldQueue
             ->subject("Customer Reply to Ticket {$ticket->reference_number}: {$ticket->subject}")
             ->greeting('New Customer Reply')
             ->line("**Reference Number:** {$ticket->reference_number}")
-            ->line("{$this->reply->user->name} has replied to a support ticket.")
+            ->line("{$replierName} has replied to a support ticket.")
             ->line("**Ticket:** {$ticket->subject}")
             ->line('**Reply:**')
             ->line($replyPreview)

@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * @property TicketPriority $priority
+ * @property TicketStatus $status
+ */
 class Ticket extends Model
 {
     /** @use HasFactory<\Database\Factories\TicketFactory> */

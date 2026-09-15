@@ -24,7 +24,7 @@ class TicketFactory extends Factory
             'subject' => fake()->sentence(),
             'description' => fake()->paragraphs(3, true),
             'status' => TicketStatus::Open,
-            'ticket_category_id' => \App\Models\TicketCategory::inRandomOrder()->first()?->id ?? 1,
+            'ticket_category_id' => \App\Models\TicketCategory::query()->value('id') ?? 1,
             'priority' => fake()->randomElement(TicketPriority::cases()),
         ];
     }
