@@ -48,7 +48,11 @@ bootstrap/cache/*.php
 storage/logs/*
 storage/framework/cache/data/*
 storage/framework/sessions/*
-storage/framework/views/*
+# Pest's parallel runner compiles Blade into storage/framework/views/test_N/
+# SUBDIRECTORIES, which a views/* glob matches but views/*.php would not.
+# Ignore the whole directory; the Dockerfile recreates it.
+storage/framework/views
+storage/framework/testing
 storage/pail
 
 tests
@@ -60,6 +64,13 @@ pint.json
 # Database dumps pulled from a server during migration work.
 db_*.sql
 *.sql.gz
+
+# Local BuildKit layer cache written by docker/publish-image.sh (--cache-to
+# type=local,dest=.docker-cache). It is gitignored, but .gitignore does NOT
+# affect the Docker build context, so without this line `COPY . .` copies the
+# build cache INTO the image it is caching: it was 1.1GB of the 1.87GB image
+# and grew with every build.
+.docker-cache
 
 # NOTE: docker/ is intentionally NOT excluded — the Dockerfile COPYs the
 # nginx, php-fpm, supervisor and entrypoint configs out of it.
