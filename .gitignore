@@ -36,3 +36,4 @@ db_*.sql
 
 # direnv shim for the local PHP toolchain.
 /.envrc
+/.docker-cache

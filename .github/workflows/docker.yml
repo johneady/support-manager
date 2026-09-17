@@ -1,0 +1,177 @@
+# Builds the runtime image and pushes it to GHCR.
+#
+# WHY THIS EXISTS: the deploy host must not build this image. Compiling the PHP
+# extensions is ~6 minutes of cc, and on a small VPS already running the app
+# that compile competes with production for RAM -- the failure mode is an OOM
+# during deploy, which BuildKit reports as the build process dying rather than
+# as a step failing (no "did not complete successfully: exit code N" line), so
+# it reads like a broken Dockerfile instead of an exhausted box.
+#
+# Building here instead means the image is immutable: the exact bytes CI built
+# and tagged are what production pulls, and a redeploy re-pulls a tag rather
+# than rebuilding from source against whatever upstream looks like that day.
+name: Docker
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  # Build (but never push) on PRs that touch the image, so a broken Dockerfile
+  # is caught on the branch rather than at deploy time. The extension assertion
+  # in the runtime stage is the point: it turns a dropped gd configure flag or
+  # a missing pdo_mysql into a red PR instead of a runtime failure on a worker.
+  #
+  # These are the paths that change the IMAGE rather than the application: the
+  # base images, the extension set, the runtime configs, and the asset build.
+  # Application code (app/, config/, routes/) is deliberately NOT here even
+  # though `COPY . .` puts it in the image -- ci.yml already tests it on every
+  # PR, and rebuilding the image to re-run `artisan --version` would add ~10
+  # minutes to every PR for no signal the test suite does not already give.
+  pull_request:
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - docker/**
+      - composer.json
+      - composer.lock
+      - package.json
+      - package-lock.json
+      # Changes the built assets, so it changes the image.
+      - vite.config.js
+      - .github/workflows/docker.yml
+  # Lets you rebuild a tag without an empty commit -- e.g. after a base image
+  # digest bump lands, or to reproduce a deploy.
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & push
+    runs-on: ubuntu-latest
+    # The extension compile dominates; a cold cache is ~10-15 min.
+    timeout-minutes: 45
+
+    permissions:
+      contents: read
+      # Required for the job's GITHUB_TOKEN to push to GHCR. Without it the
+      # push fails with a 403 that looks like a credentials problem.
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Skipped on pull_request: a fork PR's GITHUB_TOKEN is read-only, and
+      # logging in is pointless when the push step below is also skipped.
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Derive tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # Lowercased by the action: GHCR rejects an uppercase path, and
+          # github.repository preserves the owner's case.
+          images: ghcr.io/${{ github.repository }}
+          # `latest` deliberately tracks main only. Deploy by the sha or
+          # version tag, not by latest: a tag that moves under the deploy
+          # target is how you end up unable to say what is running.
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # GitHub's own layer cache. The base images are digest-pinned, so a
+          # cache hit here is genuine -- with a floating tag the extension
+          # layer would silently miss whenever upstream republished.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Without this the PR build produces no image at all, so the runtime
+          # stage's extension assertion never runs and the PR gate is hollow.
+          load: ${{ github.event_name == 'pull_request' }}
+
+      # The image is only useful if it can actually boot Laravel. The build's
+      # own assertion proves the extensions are present; this proves the
+      # application inside them is wired up -- artisan resolving the container
+      # catches a missing vendor copy or a stale bootstrap cache, which an
+      # extension check cannot see.
+      #
+      # --entrypoint php is required: the image ENTRYPOINT intercepts commands
+      # and exits on a missing APP_KEY, which is not set here.
+      #
+      # The tag to test is read from the `tags` output rather than rebuilt from
+      # `github.repository`: that context preserves the owner's case, and Docker
+      # rejects an uppercase reference outright ("repository name must be
+      # lowercase"), which would break this step on a fork like `JohnEady/app`.
+      # metadata-action already lowercases what it emits.
+      #
+      # The count is asserted because metadata-action sorts tags by PRIORITY
+      # (semver 900, ref 600, raw 200, sha 100), not declaration order. Exactly
+      # one type matches on a PR today, so taking the first line is unambiguous
+      # -- but adding a tag type later would silently retarget this at a
+      # different image. Failing loudly beats testing the wrong thing.
+      - name: Smoke-test the image
+        if: github.event_name == 'pull_request'
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+
+          count="$(printf '%s\n' "$IMAGE_TAGS" | grep -c . || true)"
+          if [ "$count" -ne 1 ]; then
+            echo "::error::Expected exactly 1 tag on a pull_request, got $count:"
+            printf '%s\n' "$IMAGE_TAGS"
+            exit 1
+          fi
+
+          image="$(printf '%s\n' "$IMAGE_TAGS" | head -n1)"
+          echo "Smoke-testing $image"
+          docker run --rm --entrypoint php "$image" artisan --version
+
+      # Nothing here deploys. This prints the IMAGE_TAG to paste into Dokploy,
+      # so the value you deploy is the immutable one rather than whatever
+      # `latest` happens to point at when a container next restarts.
+      #
+      # `latest` IS published (see the tag list above) but is deliberately not
+      # what you deploy: with pull_policy: always, an unrelated restart -- OOM,
+      # host reboot -- re-pulls a moving tag and can roll a container forward
+      # onto a build you never chose, with nothing recording that it happened.
+      # A sha tag restarts as the same bytes every time, and rolling back is
+      # setting IMAGE_TAG to an earlier sha and redeploying.
+      - name: Deploy instructions
+        if: github.event_name != 'pull_request'
+        env:
+          IMAGE_TAG: sha-${{ github.sha }}
+        run: |
+          # shellcheck disable=SC2016 # the backticks below are literal markdown
+          # for the job summary, not command substitution, so these printf
+          # format strings are single-quoted on purpose.
+          {
+            printf '## Image published\n\n'
+            printf 'Deploy by setting `IMAGE_TAG` in the Dokploy environment, then redeploy:\n\n'
+            printf '```\nIMAGE_TAG=%s\n```\n\n' "$IMAGE_TAG"
+            printf 'Also tagged `latest` — published for convenience, but prefer the sha above.\n'
+          } >> "$GITHUB_STEP_SUMMARY"

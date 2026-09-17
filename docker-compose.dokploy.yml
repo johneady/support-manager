@@ -24,10 +24,31 @@
 # that at port 80 on the `app` service.
 
 x-app-base: &app-base
-  build:
-    context: .
-    target: runtime
-  image: support-manager:dokploy
+  # Pulled, not built. Building here would compile the PHP extensions on the
+  # deploy host -- ~6 minutes of cc competing with production for RAM on a box
+  # that is already serving this app and nine others. That is an OOM waiting to
+  # happen, and BuildKit reports an OOM as the build process dying rather than
+  # as a step failing, so it reads like a broken Dockerfile instead of an
+  # exhausted host.
+  #
+  # The image is built elsewhere and pushed to GHCR:
+  #   - .github/workflows/docker.yml on every push to main, or
+  #   - ./docker/publish-image.sh from a workstation, which produces the same
+  #     `sha-<full-sha>` tag when Actions minutes are unavailable.
+  #
+  # IMAGE_TAG must name a tag one of those published. Prefer an immutable one
+  # -- `sha-<full-commit-sha>`, or a `v*` release tag -- over `latest`:
+  # `latest` moves under you, so a redeploy can quietly pull a different build
+  # than the one you deployed, and nothing records which. Set it in the Dokploy
+  # environment; it defaults to latest only so a first deploy works.
+  #
+  # The package is private by default, so Dokploy needs a GHCR registry
+  # credential (a PAT with read:packages) to pull it. Without one the deploy
+  # fails on `docker pull` with "denied", before any container starts.
+  image: ghcr.io/${GHCR_REPOSITORY:?set GHCR_REPOSITORY in Dokploy (owner/repo, lowercase)}:${IMAGE_TAG:-latest}
+  # Always re-pull on deploy: with a moving tag, Docker would otherwise keep
+  # using the copy already on disk and "redeploy" would change nothing.
+  pull_policy: always
   restart: unless-stopped
   environment: &app-env
     APP_NAME: ${APP_NAME:-Support Manager}
