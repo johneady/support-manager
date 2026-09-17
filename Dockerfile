@@ -3,21 +3,55 @@
 # ---------------------------------------------------------------------------
 # Support Manager container image.
 #
-# Debian bookworm throughout, deliberately NOT Alpine: package.json pins
-# @rollup/rollup-linux-x64-gnu, @tailwindcss/oxide-linux-x64-gnu and
-# lightningcss-linux-x64-gnu as optionalDependencies. Those are glibc (gnu)
-# builds; on Alpine's musl the ABI does not match and the Vite build either
-# fails outright or silently emits nothing.
+# ALPINE (musl) throughout. Was Debian bookworm until the image size became the
+# problem. Almost all of the saving is the BASE, not anything this app ships:
+#
+#   1. php:8.5-*-bookworm keeps the C toolchain (gcc, g++, cpp, binutils,
+#      libc6-dev -- ~190MB) PERMANENTLY, in one 316MB layer, deliberately, so
+#      `docker-php-ext-install` and `pecl install` keep working later. The
+#      Alpine images put the same toolchain in a `.build-deps` virtual package
+#      and `apk del` it in the SAME RUN, so it never reaches a stored layer.
+#
+#   2. Those 190MB CANNOT be reclaimed on Debian by removing the packages: a
+#      delete in a child layer cannot shrink a parent layer, it only writes
+#      whiteout entries, so the bytes still ship AND the delete costs ~1.3MB
+#      more. Measured. The only Debian escape is flattening onto scratch,
+#      which discards layer sharing and every piece of image metadata.
+#
+#   3. musl + busybox rather than glibc + GNU coreutils, and no perl (29MB) or
+#      python3 (14MB) in the base at all. Neither was used here.
+#
+# The old note here claimed @rollup/rollup-linux-x64-gnu, @tailwindcss/oxide
+# and lightningcss pinned glibc-only builds. That is stale twice over: rollup
+# is no longer a dependency at all (the bundler is vite-plus), and vite-plus,
+# @tailwindcss/oxide, lightningcss, oxlint, oxfmt and the yuku packages ALL
+# publish -musl builds, all already resolved in package-lock.json.
+#
+# What musl costs: a different allocator and much smaller default thread
+# stacks, which is the classic source of "fine on Debian, segfaults in
+# production" for PHP extensions -- low exposure while this stays on the
+# standard extensions below, higher the moment an exotic PECL one is added.
+# ICU also jumps (78.1 here vs bookworm's 72.1); an ICU major CAN change
+# collation ordering, so re-check if user-facing lists are ever sorted through
+# Collator.
 # ---------------------------------------------------------------------------
 
 # --- Stage 1: PHP dependencies ---------------------------------------------
-FROM php:8.5-cli-bookworm AS vendor
+# php:8.5-cli-alpine @ PHP 8.5.10
+FROM php:8.5-cli-alpine@sha256:dae77e6aa4934d22b903da93e0e506c34032f5d8f8f91693d2cbf6e2724ddf73 AS vendor
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        git unzip libzip-dev libicu-dev \
-    && docker-php-ext-install intl \
-    && docker-php-ext-install zip \
-    && rm -rf /var/lib/apt/lists/*
+# The extension set here must not drift BELOW the runtime stage's: composer
+# validates composer.lock's platform requirements against the extensions in
+# THIS image, so a thinner set means the lock is validated against something
+# production does not run.
+RUN set -eux; \
+    apk add --no-cache git unzip; \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev; \
+    docker-php-ext-install intl zip; \
+    runDeps="$(scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
+        | tr ',' '\n' | sort -u | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }')"; \
+    apk add --no-cache $runDeps; \
+    apk del --no-network .build-deps
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -39,14 +73,15 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
         --optimize-autoloader
 
 # --- Stage 2: frontend assets ----------------------------------------------
-FROM node:26-bookworm-slim AS assets
+# node:26-alpine @ Node v26.9.0
+FROM node:26-alpine@sha256:2c45bdcbf63561a54da9549612084b43ca309854a4110c87857d609ddeb61c9e AS assets
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-# npm ci honours the lock file exactly. The linux-x64-gnu optional deps resolve
-# correctly here because this base is glibc.
+# npm ci honours the lock file exactly. The -musl optional deps resolve here
+# because this base is musl; every native dep in the lock publishes one.
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --no-audit --no-fund
 
@@ -75,7 +110,8 @@ COPY --from=vendor /app/vendor/laravel/framework ./vendor/laravel/framework
 RUN npm run build
 
 # --- Stage 3: runtime -------------------------------------------------------
-FROM php:8.5-fpm-bookworm AS runtime
+# php:8.5-fpm-alpine @ PHP 8.5.10
+FROM php:8.5-fpm-alpine@sha256:630c234abe38c0e9e4726ff59d5af6fc8f573e35939b143580129f2405ea8a74 AS runtime
 
 # Extensions this application actually requires:
 #   intl      — Laravel formatting, league/commonmark
@@ -100,25 +136,46 @@ FROM php:8.5-fpm-bookworm AS runtime
 # ctype, dom, fileinfo, filter, hash, iconv, json, libxml, mbstring, openssl,
 # pcre, session and tokenizer are already compiled into the base image.
 #
-# The -dev packages are needed only to COMPILE the extensions above, so they
-# are purged afterwards; a bare `apt-get purge -y --auto-remove` with no
-# package list is a no-op ("0 to remove") and would leave them in the image.
+# The -dev packages are needed only to COMPILE the extensions above. They go in
+# as a `.build-deps` VIRTUAL package and come out in the SAME RUN, so the
+# toolchain is never written to a stored layer -- removing it in a later RUN
+# would not shrink anything (see point 2 in the header).
 #
-# libzip4 and libicu72 are the RUNTIME libraries the built .so files link
-# against, and they are installed explicitly: as mere dependencies of the -dev
-# packages, --auto-remove takes them out along with the headers, and the image
-# then starts with "Unable to load dynamic library 'zip' ... libzip.so.4:
-# cannot open shared object file" and no ZipArchive class.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        nginx supervisor curl \
-        libzip4 libicu72 \
-        default-mysql-client \
-    && apt-get install -y --no-install-recommends libzip-dev libicu-dev \
-    && docker-php-ext-install intl \
-    && docker-php-ext-install zip \
-    && docker-php-ext-install pdo_mysql \
-    && apt-get purge -y --auto-remove libzip-dev libicu-dev \
-    && rm -rf /var/lib/apt/lists/*
+# The scanelf pass is what keeps the image working: it asks the freshly built
+# .so files which shared libraries they link against and re-adds those as real
+# runtime deps (so:libicuuc.so.78, so:libzip.so.5 and friends) BEFORE
+# `apk del .build-deps` runs. Without it the del takes icu's and libzip's
+# runtime libraries with it and the image starts with "Unable to load dynamic
+# library 'zip'" and no ZipArchive class -- the same failure the old explicit
+# libzip4/libicu72 line existed to prevent, solved generically.
+#
+# bash is not in the Alpine base (busybox ash only) and entrypoint.sh is
+# #!/usr/bin/env bash. mariadb-client replaces Debian's default-mysql-client.
+RUN apk add --no-cache nginx supervisor curl bash mariadb-client
+
+RUN set -eux; \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev; \
+    docker-php-ext-install intl; \
+    docker-php-ext-install zip; \
+    docker-php-ext-install pdo_mysql; \
+    runDeps="$(scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
+        | tr ',' '\n' | sort -u | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }')"; \
+    apk add --no-cache $runDeps; \
+    apk del --no-network .build-deps
+
+# Alpine and Debian disagree on where supervisor keeps its config, and the
+# difference is silent until the container crash-loops:
+#   Alpine: /etc/supervisord.conf            + [include] /etc/supervisor.d/*.ini
+#   Debian: /etc/supervisor/supervisord.conf + [include] /etc/supervisor/conf.d/*.conf
+# The CMD and the supervisord.conf COPY below both speak the Debian layout, so
+# rebuild that layout here rather than rewriting them. The trailing grep is the
+# guard: if an Alpine update moves that [include] line the sed matches nothing
+# and the container would boot with NO programs while looking healthy.
+RUN set -eux; \
+    mkdir -p /etc/supervisor/conf.d; \
+    sed -e 's#^files = /etc/supervisor.d/\*\.ini#files = /etc/supervisor/conf.d/*.conf#' \
+        /etc/supervisord.conf > /etc/supervisor/supervisord.conf; \
+    grep -q '^files = /etc/supervisor/conf.d/\*\.conf$' /etc/supervisor/supervisord.conf
 
 # The CLI opcache file_cache directory, created BEFORE the ini that references
 # it is in place. PHP treats a missing or unwritable opcache.file_cache as a
@@ -131,8 +188,32 @@ RUN mkdir -p /tmp/opcache && chown www-data:www-data /tmp/opcache
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-app.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/zz-www.conf
-COPY docker/nginx/default.conf /etc/nginx/sites-available/default
+# Alpine's nginx includes /etc/nginx/http.d/*.conf and has NO sites-available /
+# sites-enabled pair. Writing to http.d/default.conf also OVERWRITES Alpine's
+# stock default server, which is what removes it -- copying to sites-available/
+# instead leaves the vhost never included and Alpine's default answering :80,
+# so the container serves 404s while supervisor reports everything RUNNING.
+COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 COPY docker/entrypoint/supervisord.conf /etc/supervisor/conf.d/app.conf
+
+# Fail the BUILD on a broken vhost or a missing extension rather than in
+# production. Every trap here is silent at build time and loud much later: a
+# missing pdo_mysql surfaces at the first query, a missing intl at the first
+# formatted date, an ini that never reached conf.d by serving every request
+# uncompiled. `nginx -t` additionally turns a future Alpine layout change into
+# a failed build instead of a 404.
+#
+# Placed AFTER the php.ini COPY above so it validates the shipped config too.
+#
+# OPcache must be spelled "Zend OPcache": it is a Zend extension, so BOTH
+# extension_loaded("opcache") and `php -m | grep -ix opcache` report it missing
+# on an image where it is loaded and enabled. Do not "tidy" that to lowercase.
+RUN nginx -t
+
+RUN set -eu; \
+    php -r 'foreach (["intl", "zip", "pdo_mysql", "Zend OPcache"] as $e) { if (! extension_loaded($e)) { fwrite(STDERR, "FATAL: php extension \"$e\" missing from image\n"); exit(1); } } \
+        if (! ini_get("opcache.enable")) { fwrite(STDERR, "FATAL: opcache present but not enabled -- check docker/php/php.ini reached conf.d\n"); exit(1); } \
+        echo "extension check passed: intl zip pdo_mysql opcache(enabled)\n";'
 
 WORKDIR /var/www/html
 
