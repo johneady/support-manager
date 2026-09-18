@@ -187,6 +187,12 @@ RUN set -eux; \
 RUN mkdir -p /tmp/opcache && chown www-data:www-data /tmp/opcache
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-app.ini
+
+# CLI-only opcache overrides, deliberately NOT in conf.d -- nothing loads this
+# directory unless PHP_INI_SCAN_DIR names it, which the entrypoint does for the
+# scheduler and queue roles only. This is what keeps opcache.file_cache_only
+# off php-fpm, where it costs ~30x on every request. See the file itself.
+COPY docker/php/cli /usr/local/etc/php/cli-conf.d
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/zz-www.conf
 # Alpine's nginx includes /etc/nginx/http.d/*.conf and has NO sites-available /
 # sites-enabled pair. Writing to http.d/default.conf also OVERWRITES Alpine's
@@ -213,7 +219,17 @@ RUN nginx -t
 RUN set -eu; \
     php -r 'foreach (["intl", "zip", "pdo_mysql", "Zend OPcache"] as $e) { if (! extension_loaded($e)) { fwrite(STDERR, "FATAL: php extension \"$e\" missing from image\n"); exit(1); } } \
         if (! ini_get("opcache.enable")) { fwrite(STDERR, "FATAL: opcache present but not enabled -- check docker/php/php.ini reached conf.d\n"); exit(1); } \
+        if (ini_get("opcache.file_cache_only")) { fwrite(STDERR, "opcache.file_cache_only is set for the DEFAULT ini -- it would reach php-fpm and cost ~30x per request; it belongs only in docker/php/cli\n"); exit(1); } \
         echo "extension check passed: intl zip pdo_mysql opcache(enabled)\n";'
+# The CLI-only overrides must load when PHP_INI_SCAN_DIR names them AND must
+# not have cost us the base ini -- a PHP_INI_SCAN_DIR without its leading colon
+# REPLACES conf.d rather than appending, silently dropping memory_limit and the
+# upload limits. Assert both halves here so that regression fails the build.
+RUN set -eux; \
+    PHP_INI_SCAN_DIR=":/usr/local/etc/php/cli-conf.d" php -r '\
+        if (! ini_get("opcache.file_cache_only")) { fwrite(STDERR, "cli-conf.d did not apply file_cache_only\n"); exit(1); } \
+        if (ini_get("memory_limit") !== "256M") { fwrite(STDERR, "base ini lost under PHP_INI_SCAN_DIR (missing leading colon?): memory_limit=" . ini_get("memory_limit") . "\n"); exit(1); } \
+        echo "cli opcache ini OK\n";'
 
 WORKDIR /var/www/html
 

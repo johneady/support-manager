@@ -14,6 +14,36 @@ ROLE="${CONTAINER_ROLE:-app}"
 
 log() { printf '[entrypoint] %s\n' "$*"; }
 
+# Turn on opcache.file_cache_only for the CLI-ONLY roles.
+#
+# The scheduler forks `schedule:run` every minute, which forks `queue:work
+# --stop-when-empty`. Each is a short-lived process that would otherwise
+# compile ~1,500 files from source; file_cache_only skips shared-memory setup
+# it will never amortise and cuts that from ~819ms to ~431ms per fork.
+#
+# It CANNOT go in docker/php/php.ini: that file lands in conf.d, which php-fpm
+# reads too, and for a long-lived FPM worker the same directive means
+# filesystem I/O for ~1,000 scripts on every single request -- measured at ~30x
+# slower on a sibling image on this host. So it lives in its own directory that
+# only this export reaches.
+#
+# The LEADING COLON is load-bearing. `PHP_INI_SCAN_DIR=/path` REPLACES the
+# default scan directory, which would drop conf.d/99-app.ini entirely and take
+# memory_limit, the upload limits and opcache.enable with it. `:/path` APPENDS
+# to the compiled-in default instead, so 99-app.ini still loads first and this
+# only overrides the one directive.
+#
+# Exported rather than set per-command so that the processes schedule:work
+# FORKS inherit it -- they are the ones actually paying the compile cost.
+enable_cli_only_opcache() {
+    if [ -d /usr/local/etc/php/cli-conf.d ]; then
+        export PHP_INI_SCAN_DIR=":/usr/local/etc/php/cli-conf.d"
+        log "CLI opcache: file_cache_only enabled for this role."
+    else
+        log "WARNING: /usr/local/etc/php/cli-conf.d missing; CLI opcache not tuned."
+    fi
+}
+
 # Re-assert the CLI opcache file_cache directory.
 #
 # The Dockerfile already creates it, so this is belt and braces for the case
@@ -188,6 +218,7 @@ case "$ROLE" in
         #
         # It also runs tickets:close-inactive and the spatie/laravel-health checks.
         log "Starting scheduler role (schedule:work; carries the queue)."
+        enable_cli_only_opcache
         exec php artisan schedule:work
         ;;
     *)
