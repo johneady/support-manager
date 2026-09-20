@@ -203,6 +203,46 @@ chown -R www-data:www-data \
     /var/www/html/storage/logs 2>/dev/null || \
     log "WARNING: could not reset cache ownership (continuing)."
 
+# The trees above are the CACHES, which are rebuilt from the image on every
+# boot and so are safe to walk recursively. storage/app is different: it is a
+# persistent volume holding ticket attachments, and nothing here was handing it
+# back at all.
+#
+# That went unnoticed until the move from Debian to Alpine changed www-data
+# from uid 33 to uid 82. The volume survived the rebuild with storage/app,
+# app/private and app/public still owned by uid 33, and php-fpm is no longer
+# that owner — so attaching a file to a ticket fails below the application,
+# where Filament reports only "There was an error while attempting to load this
+# page" and nothing reaches laravel.log.
+#
+# The mount points are fixed directly; what is INSIDE them is repaired with a
+# filter rather than another `chown -R`, because this volume grows with every
+# attachment and this code runs before supervisord starts nginx — a recursive
+# walk over it would delay readiness while the container is unreachable and
+# Traefik sees no backend. `! -user www-data` means a correctly-owned tree
+# matches nothing and costs one stat per directory, and -maxdepth 2 stops above
+# the attachments themselves, which www-data writes at runtime and which
+# already have the right owner.
+#
+# The test is `-user www-data`, never a hardcoded 82. Pinning the number would
+# just trade uid 33 for the next base-image surprise; resolving the NAME means
+# this repairs itself on any future uid change.
+for d in /var/www/html/storage/app \
+         /var/www/html/storage/app/private \
+         /var/www/html/storage/app/public; do
+    mkdir -p "$d" 2>/dev/null || true
+    chown www-data:www-data "$d" 2>/dev/null || \
+        log "WARNING: could not set ownership on $d (continuing)."
+done
+
+for root in /var/www/html/storage/app/private \
+            /var/www/html/storage/app/public; do
+    [ -d "$root" ] || continue
+    find "$root" -maxdepth 2 -mindepth 1 -type d ! -user www-data \
+        -exec chown www-data:www-data {} + 2>/dev/null || \
+        log "WARNING: could not repair ownership under $root (continuing)."
+done
+
 case "$ROLE" in
     app)
         log "Starting web role (nginx + php-fpm)."
