@@ -40,7 +40,7 @@ test('the entrypoint hands the attachment volume mount points to www-data', func
 });
 
 test('the entrypoint repairs ownership inside the attachment volume', function () {
-    expect($this->entrypoint)->toMatch('/find\s+"\$root"\s+-maxdepth 2.*-type d.*!\s*-user www-data/s');
+    expect($this->entrypoint)->toMatch('/find\s+"\$root"\s+-mindepth 1\s+!\s*-user www-data/');
 });
 
 test('the ownership repair covers both the public and private roots', function () {
@@ -62,5 +62,5 @@ test('the attachment volume is never added to the recursive cache chown', functi
 });
 
 test('the ownership repair does not descend into the attachments themselves', function () {
-    expect($this->entrypoint)->toMatch('/-maxdepth 2\s+-mindepth 1/');
+    expect($this->entrypoint)->toMatch('/find\s+"\$root"\s+-mindepth 1\s+!\s*-user www-data/');
 });

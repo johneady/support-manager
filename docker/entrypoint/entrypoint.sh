@@ -235,10 +235,24 @@ for d in /var/www/html/storage/app \
         log "WARNING: could not set ownership on $d (continuing)."
 done
 
+#
+# FILES are repaired as well as directories, and the depth limit is gone. An
+# earlier version fixed only `-type d` at -maxdepth 2, on the reasoning that a
+# writable directory is enough. It is enough to CREATE a file, which is why new
+# uploads started working — but not to overwrite or delete an existing one, so
+# replacing a file already in the catalogue still failed the same way. The
+# stranded files are uid 33 mode 644.
+#
+# Dropping the depth limit is safe because `! -user www-data` makes this a
+# stat-only walk that matches nothing in the steady state. Measured on a
+# production volume: 0.07s over 2,400 entries with every one stale, 0.05s with
+# none. Cost tracks the file COUNT, not bytes — a sibling storing 5G of
+# archives holds 29 entries and measures 0.00s. The "many seconds" warned about
+# elsewhere came from an unfiltered `chown -R`, which pays a syscall per file.
 for root in /var/www/html/storage/app/private \
             /var/www/html/storage/app/public; do
     [ -d "$root" ] || continue
-    find "$root" -maxdepth 2 -mindepth 1 -type d ! -user www-data \
+    find "$root" -mindepth 1 ! -user www-data \
         -exec chown www-data:www-data {} + 2>/dev/null || \
         log "WARNING: could not repair ownership under $root (continuing)."
 done
