@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -20,6 +21,7 @@ new class extends Component
 
     public ?string $categoryFilter = null;
 
+    #[Url(as: 'status', except: '')]
     public ?string $statusFilter = null;
 
     public ?string $priorityFilter = null;
