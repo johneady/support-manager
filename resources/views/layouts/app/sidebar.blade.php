@@ -25,15 +25,17 @@
                 >
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
-                <flux:sidebar.item
-                    icon="ticket"
-                    :href="route('tickets.index')"
-                    :current="request()->routeIs('tickets.index') || request()->routeIs('tickets.create') || request()->routeIs('tickets.show')"
-                    wire:navigate
-                    class="font-medium text-zinc-900 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                >
-                    {{ __('My Tickets') }}
-                </flux:sidebar.item>
+                @unless (auth()->user()?->isAdmin())
+                    <flux:sidebar.item
+                        icon="ticket"
+                        :href="route('tickets.index')"
+                        :current="request()->routeIs('tickets.index') || request()->routeIs('tickets.create') || request()->routeIs('tickets.show')"
+                        wire:navigate
+                        class="font-medium text-zinc-900 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    >
+                        {{ __('My Tickets') }}
+                    </flux:sidebar.item>
+                @endunless
                 @if (auth()->user()?->isAdmin())
                     <livewire:ticket-queue-badge />
                     <flux:sidebar.item
@@ -89,6 +91,15 @@
                         class="font-medium text-zinc-900 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                     >
                         {{ __('Platform Settings') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item
+                        icon="ticket"
+                        :href="route('tickets.index')"
+                        :current="request()->routeIs('tickets.index') || request()->routeIs('tickets.create') || request()->routeIs('tickets.show')"
+                        wire:navigate
+                        class="font-medium text-zinc-900 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    >
+                        {{ __('My Tickets') }}
                     </flux:sidebar.item>
                 @endif
             </flux:sidebar.group>

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -20,6 +21,7 @@ new class extends Component
 {
     use WithPagination;
 
+    #[Url(as: 'status', except: '')]
     public string $statusFilter = '';
 
     public bool $showEditModal = false;

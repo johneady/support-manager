@@ -17,7 +17,11 @@
         @if ($isAdmin)
             {{-- Admin Stats --}}
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div class="group relative overflow-hidden rounded-xl border border-blue-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/30 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-blue-900/20">
+                <a
+                    href="{{ route('tickets.all', ['status' => 'open']) }}"
+                    wire:navigate
+                    class="group relative overflow-hidden rounded-xl border border-blue-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/30 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-hidden dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-blue-900/20 dark:focus-visible:ring-offset-zinc-800"
+                >
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Open Tickets</p>
@@ -30,9 +34,13 @@
                         </div>
                     </div>
                     <p class="mt-3 text-xs text-zinc-500">All open tickets</p>
-                </div>
+                </a>
 
-                <div class="group relative overflow-hidden rounded-xl border border-red-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-red-200/30 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-red-900/20">
+                <a
+                    href="{{ route('tickets.queue') }}"
+                    wire:navigate
+                    class="group relative overflow-hidden rounded-xl border border-red-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-red-200/30 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-hidden dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-red-900/20 dark:focus-visible:ring-offset-zinc-800"
+                >
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Needs Response</p>
@@ -47,9 +55,13 @@
                         </div>
                     </div>
                     <p class="mt-3 text-xs text-zinc-500">Awaiting admin reply</p>
-                </div>
+                </a>
 
-                <div class="group relative overflow-hidden rounded-xl border border-green-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-green-200/30 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-green-900/20">
+                <a
+                    href="{{ route('tickets.all', ['status' => 'closed']) }}"
+                    wire:navigate
+                    class="group relative overflow-hidden rounded-xl border border-green-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-green-200/30 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-hidden dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-green-900/20 dark:focus-visible:ring-offset-zinc-800"
+                >
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Recently Resolved</p>
@@ -64,12 +76,16 @@
                         </div>
                     </div>
                     <p class="mt-3 text-xs text-zinc-500">Closed in last 7 days</p>
-                </div>
+                </a>
             </div>
         @else
             {{-- Non-admin Stats --}}
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div class="group relative overflow-hidden rounded-xl border border-blue-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/30 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-blue-900/20">
+                <a
+                    href="{{ route('tickets.index', ['status' => 'open']) }}"
+                    wire:navigate
+                    class="group relative overflow-hidden rounded-xl border border-blue-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/30 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-hidden dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-blue-900/20 dark:focus-visible:ring-offset-zinc-800"
+                >
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Open Tickets</p>
@@ -82,9 +98,13 @@
                         </div>
                     </div>
                     <p class="mt-3 text-xs text-zinc-500">Currently active tickets</p>
-                </div>
+                </a>
 
-                <div class="group relative overflow-hidden rounded-xl border border-pink-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-pink-200/30 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-pink-900/20">
+                <a
+                    href="{{ route('tickets.index', ['status' => 'open']) }}"
+                    wire:navigate
+                    class="group relative overflow-hidden rounded-xl border border-pink-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-pink-200/30 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-hidden dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-pink-900/20 dark:focus-visible:ring-offset-zinc-800"
+                >
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Awaiting Your Response</p>
@@ -99,9 +119,13 @@
                         </div>
                     </div>
                     <p class="mt-3 text-xs text-zinc-500">Admin has replied</p>
-                </div>
+                </a>
 
-                <div class="group relative overflow-hidden rounded-xl border border-amber-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-amber-200/30 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-amber-900/20">
+                <a
+                    href="{{ route('tickets.index', ['status' => 'closed']) }}"
+                    wire:navigate
+                    class="group relative overflow-hidden rounded-xl border border-amber-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-amber-200/30 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-hidden dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:shadow-amber-900/20 dark:focus-visible:ring-offset-zinc-800"
+                >
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Resolved</p>
@@ -114,7 +138,7 @@
                         </div>
                     </div>
                     <p class="mt-3 text-xs text-zinc-500">Completed this month</p>
-                </div>
+                </a>
             </div>
         @endif
 
@@ -136,7 +160,11 @@
                 @else
                     <div class="space-y-3">
                         @foreach ($recentTickets as $ticket)
-                            <div class="rounded-lg border border-zinc-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900">
+                            <a
+                                href="{{ route('tickets.queue', ['ticket' => $ticket->id]) }}"
+                                wire:navigate
+                                class="block rounded-lg border border-zinc-200 bg-white p-4 transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-hidden dark:border-zinc-700 dark:bg-zinc-900 dark:focus-visible:ring-offset-zinc-800"
+                            >
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="flex items-center gap-3">
                                         <div>
@@ -158,7 +186,7 @@
                                         </flux:badge>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         @endforeach
                     </div>
                 @endif

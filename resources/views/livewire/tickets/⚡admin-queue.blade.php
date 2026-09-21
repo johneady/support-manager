@@ -37,9 +37,25 @@ new class extends Component
 
     public ?string $newPriority = null;
 
-    public function mount(): void
+    public function mount(?int $ticket = null): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
+
+        if ($ticket !== null) {
+            $this->openTicketById($ticket);
+        }
+    }
+
+    /**
+     * Open the edit modal for a ticket linked to from outside the queue.
+     */
+    public function openTicketById(int $ticketId): void
+    {
+        $ticket = Ticket::find($ticketId);
+
+        if ($ticket !== null) {
+            $this->openEditModal($ticket);
+        }
     }
 
     public function updatedSearch(): void
