@@ -73,7 +73,7 @@ db_*.sql
 .docker-cache
 
 # NOTE: docker/ is intentionally NOT excluded — the Dockerfile COPYs the
-# nginx, php-fpm, supervisor and entrypoint configs out of it.
+# php, FrankenPHP (Caddyfile) and entrypoint configs out of it.
 docker-compose*.yml
 Dockerfile*
 .dockerignore

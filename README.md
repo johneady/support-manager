@@ -253,9 +253,9 @@ resources/views/
 └── tickets/               # Ticket management views
 
 docker/                    # Container configuration (see Deployment)
-├── entrypoint/            # Boot script and supervisor config
-├── nginx/                 # Webserver vhost
-└── php/                   # php.ini and php-fpm pool
+├── entrypoint/            # Boot script
+├── frankenphp/            # Caddyfile for FrankenPHP / Octane worker mode
+└── php/                   # php.ini and CLI-only opcache overrides
 ```
 
 ---
@@ -266,8 +266,9 @@ Two deployment paths are supported.
 
 ### 🐳 Docker (Dokploy)
 
-The container image runs nginx and php-fpm under supervisor, with a second
-container for the scheduler. Deploy `docker-compose.dokploy.yml` — never
+The container image serves the app with FrankenPHP running Laravel Octane's
+worker (the framework boots once per worker instead of once per request), with a
+second container for the scheduler. Deploy `docker-compose.dokploy.yml` — never
 `docker-compose.yml`, which is the local stack and embeds a throwaway database
 password and app key.
 

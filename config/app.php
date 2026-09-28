@@ -75,7 +75,7 @@ return [
     |
     | Set this only where a TLS-terminating reverse proxy really does sit in
     | front of the application, such as Traefik under Dokploy. There the
-    | connection into php-fpm is plain HTTP from another container, so without
+    | connection into the app container is plain HTTP from Traefik, so without
     | trusting X-Forwarded-* the framework treats the request as insecure:
     | URLs generate as http://, and the HSTS header in
     | App\Http\Middleware\SecurityHeaders is never sent, because it is gated

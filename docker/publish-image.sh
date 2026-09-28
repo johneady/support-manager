@@ -23,9 +23,12 @@
 # will pull and then refuse to start with an exec format error.
 #
 # Usage:
-#   ./docker/publish-image.sh              # build + push HEAD, tagged sha-<sha>
-#   ./docker/publish-image.sh --also-latest
+#   ./docker/publish-image.sh              # build + push HEAD, tagged sha-<sha> and latest
+#   ./docker/publish-image.sh --no-latest  # push only the sha tag
 #   ./docker/publish-image.sh --dry-run    # build and smoke-test, do not push
+#
+# Unlike the workflow, which only moves `latest` on main, this moves it from
+# whatever branch HEAD is on. Deploy by the sha tag regardless.
 #
 # Auth: needs a GitHub PAT with `write:packages` in GHCR_TOKEN, or an already
 # logged-in `gh` (the script falls back to `gh auth token`).
@@ -34,13 +37,14 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-ALSO_LATEST=0
+ALSO_LATEST=1
 DRY_RUN=0
 for arg in "$@"; do
   case "$arg" in
     --also-latest) ALSO_LATEST=1 ;;
+    --no-latest) ALSO_LATEST=0 ;;
     --dry-run) DRY_RUN=1 ;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,33p' "$0"; exit 0 ;;
     *) echo "error: unknown argument: $arg" >&2; exit 2 ;;
   esac
 done
@@ -159,9 +163,14 @@ if [ "$ALSO_LATEST" -eq 1 ]; then
   docker push "${IMAGE}:latest"
 fi
 
+PUBLISHED="${IMAGE}:${TAG}"
+if [ "$ALSO_LATEST" -eq 1 ]; then
+  PUBLISHED="${PUBLISHED} (also ${IMAGE}:latest)"
+fi
+
 cat <<EOF
 
-Published ${IMAGE}:${TAG}
+Published ${PUBLISHED}
 
 Deploy by setting this in the Dokploy environment, then redeploying:
 

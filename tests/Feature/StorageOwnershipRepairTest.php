@@ -43,6 +43,25 @@ test('the entrypoint repairs ownership inside the attachment volume', function (
     expect($this->entrypoint)->toMatch('/find\s+"\$root"\s+-mindepth 1\s+!\s*-user www-data/');
 });
 
+test('the web server drops to www-data before serving', function () {
+    // php-fpm used to do this in its pool config. FrankenPHP has no such
+    // setting, so the entrypoint must: without it the server runs as root and
+    // every attachment it writes is root-owned.
+    expect($this->entrypoint)->toMatch('/exec setpriv --reuid=www-data --regid=www-data --init-groups "\$@"/');
+});
+
+test('the scheduler drops to www-data before running', function () {
+    // It shares the log and attachment volumes with the web role, so a
+    // root-owned laravel.log from here would lock the web server out of it.
+    expect($this->entrypoint)->toMatch('/exec setpriv --reuid=www-data --regid=www-data --init-groups php artisan schedule:work/');
+});
+
+test('the opcache file cache is handed to www-data after the root artisan calls', function () {
+    // opcache creates its file_cache directories 0700, so the ones root just
+    // made are unusable to the www-data roles unless they are handed back.
+    expect($this->entrypoint)->toMatch('/chown -R www-data:www-data \\\\\s*\n\s*\/tmp\/opcache/');
+});
+
 test('the ownership repair covers both the public and private roots', function () {
     expect($this->entrypoint)
         ->toContain('/var/www/html/storage/app/private')

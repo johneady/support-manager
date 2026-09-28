@@ -1,0 +1,90 @@
+# FrankenPHP / Caddy config for the app role.
+#
+# FrankenPHP runs Laravel Octane's worker script DIRECTLY, not through
+# `php artisan octane:frankenphp`. That command is only a launcher: a PHP
+# process that boots the whole framework just to template a Caddyfile, spawn
+# frankenphp and relay its output -- ~40MB resident for the life of the
+# container, for nothing an immutable image needs. Measured on this image, with
+# identical throughput and latency either way: 132MiB through the launcher,
+# 92MiB direct.
+#
+# What the launcher did is written out here instead. Based on laravel/octane's
+# stub (vendor/laravel/octane/src/Commands/stubs/Caddyfile) with its
+# placeholders resolved; compare against it after an Octane upgrade. The env
+# lines are the ones StartFrankenPhpCommand passes, and live on the WORKER, not
+# in the image ENV: the framework reads $_SERVER['LARAVEL_OCTANE'], and the
+# scheduler role runs from this same image.
+#
+# Added over the stub, carried over from the old nginx vhost:
+#
+#   - an 8MB request body cap, kept in step with upload_max_filesize and
+#     post_max_size in docker/php/php.ini
+#   - long-lived immutable caching for the content-hashed Vite build
+#   - dotfiles never served (.htaccess and friends sit in public/)
+#
+# TLS is NOT handled here: Traefik terminates it and forwards plain HTTP.
+{
+	auto_https disable_redirects
+
+	admin localhost:2019
+
+	frankenphp {
+		worker {
+			file /var/www/html/public/frankenphp-worker.php
+
+			# One per core on the 2-core host this shares with seven other
+			# stacks. Each worker holds a booted application in memory, so
+			# this, not traffic, sets the container's memory floor. Requests
+			# beyond two wait for a free worker, which degrades gracefully.
+			num 2
+
+			env APP_BASE_PATH /var/www/html
+			env APP_PUBLIC_PATH /var/www/html/public
+			env LARAVEL_OCTANE 1
+
+			# Recycle each worker periodically to bound any slow leak, the
+			# role pm.max_requests had under php-fpm.
+			env MAX_REQUESTS 500
+
+			# Seconds; matches max_execution_time in docker/php/php.ini.
+			env REQUEST_MAX_EXECUTION_TIME 60
+		}
+	}
+}
+
+http://:80 {
+	log {
+		level WARN
+		format json
+	}
+
+	request_body {
+		max_size 8MB
+	}
+
+	route {
+		root * /var/www/html/public
+
+		# Covers application/json by default, which is what matters here:
+		# Livewire answers every sort, filter and pagination click with a JSON
+		# body of server-rendered markup that compresses ~20x.
+		encode zstd br gzip
+
+		@dotfiles {
+			path */.*
+			not path /.well-known/*
+		}
+		respond @dotfiles 404
+
+		# Built Vite assets are content-hashed, so they are safe to cache hard.
+		@build path /build/*
+		header @build Cache-Control "public, max-age=31536000, immutable"
+
+		php_server {
+			index frankenphp-worker.php
+			try_files {path} frankenphp-worker.php
+			# Required for the public/storage/ directory...
+			resolve_root_symlink
+		}
+	}
+}

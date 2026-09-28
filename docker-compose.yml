@@ -95,7 +95,7 @@ services:
       CONTAINER_ROLE: scheduler
       # The app role owns migrations; this role must not race it.
       RUN_MIGRATIONS: "false"
-    # The image HEALTHCHECK curls nginx, which this role does not run — without
+    # The image HEALTHCHECK curls the web server, which this role does not run — without
     # this override the container reports "unhealthy" while working perfectly.
     #
     # Test PID 1 specifically, NOT a glob over /proc/*/cmdline: the healthcheck

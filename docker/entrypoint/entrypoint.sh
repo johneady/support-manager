@@ -21,8 +21,8 @@ log() { printf '[entrypoint] %s\n' "$*"; }
 # compile ~1,500 files from source; file_cache_only skips shared-memory setup
 # it will never amortise and cuts that from ~819ms to ~431ms per fork.
 #
-# It CANNOT go in docker/php/php.ini: that file lands in conf.d, which php-fpm
-# reads too, and for a long-lived FPM worker the same directive means
+# It CANNOT go in docker/php/php.ini: that file lands in conf.d, which the
+# Octane workers read too, and for a long-lived worker the same directive means
 # filesystem I/O for ~1,000 scripts on every single request -- measured at ~30x
 # slower on a sibling image on this host. So it lives in its own directory that
 # only this export reaches.
@@ -192,12 +192,19 @@ done
 # shared cache table, so it is safe to run from every role.
 php artisan optimize
 
-# The steps above run as root, so every file they emit is root-owned. php-fpm
+# The steps above run as root, so every file they emit is root-owned. Octane
 # serves as www-data, and Blade still writes to storage/framework/views at
 # runtime for any view the cache misses — that write fails with "Permission
 # denied" on a root-owned directory. Hand the trees back before dropping into
 # the long-running process.
+#
+# /tmp/opcache is in the list for the same reason: opcache creates its
+# file_cache directories mode 0700, so the ones the root artisan calls above
+# just made would be unusable to every www-data process after them -- the
+# scheduler's forks, which depend on that cache for their ~2x faster boot, most
+# of all.
 chown -R www-data:www-data \
+    /tmp/opcache \
     /var/www/html/bootstrap/cache \
     /var/www/html/storage/framework \
     /var/www/html/storage/logs 2>/dev/null || \
@@ -215,9 +222,13 @@ chown -R www-data:www-data \
 # where Filament reports only "There was an error while attempting to load this
 # page" and nothing reaches laravel.log.
 #
+# The move to the Debian-based FrankenPHP runtime flips it back: www-data is
+# uid 33 again, so a volume written under Alpine is now uid 82 throughout. The
+# repair below handles that direction the same way, by name, not number.
+#
 # The mount points are fixed directly; what is INSIDE them is repaired with a
 # filter rather than another `chown -R`, because this volume grows with every
-# attachment and this code runs before supervisord starts nginx — a recursive
+# attachment and this code runs before the web server starts — a recursive
 # walk over it would delay readiness while the container is unreachable and
 # Traefik sees no backend. `! -user www-data` means a correctly-owned tree
 # matches nothing and costs one stat per directory, and -maxdepth 2 stops above
@@ -259,8 +270,14 @@ done
 
 case "$ROLE" in
     app)
-        log "Starting web role (nginx + php-fpm)."
-        exec "$@"
+        # Everything above ran as root. The server itself must not: an Octane
+        # worker is long-lived and writes compiled views, logs and attachments,
+        # all of which must stay owned by www-data. setpriv (util-linux) execs
+        # in place, so PHP stays PID 1 and receives Docker's SIGTERM directly.
+        # Binding :80 as www-data works because Docker opens unprivileged
+        # ports to every user inside a container (see the Dockerfile).
+        log "Starting web role (Octane on FrankenPHP)."
+        exec setpriv --reuid=www-data --regid=www-data --init-groups "$@"
         ;;
     scheduler)
         # This role carries the QUEUE as well as the timed work: routes/console.php
@@ -271,9 +288,15 @@ case "$ROLE" in
         # the site itself looks perfectly healthy.
         #
         # It also runs tickets:close-inactive and the spatie/laravel-health checks.
+        #
+        # Runs as www-data, like the web role. This container shares the log
+        # and attachment volumes with the app, so anything it created as root
+        # -- laravel.log above all, if it happened to write first -- would be
+        # unwritable by the web server until the app's next boot re-chowned it.
+        # Everything this role forks inherits the uid, queue:work included.
         log "Starting scheduler role (schedule:work; carries the queue)."
         enable_cli_only_opcache
-        exec php artisan schedule:work
+        exec setpriv --reuid=www-data --regid=www-data --init-groups php artisan schedule:work
         ;;
     *)
         log "Unknown CONTAINER_ROLE '$ROLE'; running command as given."

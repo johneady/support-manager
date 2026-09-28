@@ -37,3 +37,6 @@ db_*.sql
 # direnv shim for the local PHP toolchain.
 /.envrc
 /.docker-cache
+
+# Octane worker script; copied from laravel/octane at image build / first start.
+/public/frankenphp-worker.php
