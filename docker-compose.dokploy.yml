@@ -152,16 +152,17 @@ services:
     # A per-container limit converts "one app kills the host" into "one app
     # kills itself", which Docker then restarts via `restart: unless-stopped`.
     #
-    # SIZING: pm.max_children = 4, and measured worker RSS across these
-    # stacks is 21-59MB. 4 * 75MB of worker headroom + ~120MB for nginx,
-    # the php-fpm master and opcache = 448m. That is above the realistic
-    # worst case (352m) and far below 4 * memory_limit, which is the
-    # number this cap exists to make unreachable.
+    # SIZING: FrankenPHP runs 2 Octane workers (`num 2` in
+    # docker/frankenphp/Caddyfile), each holding a booted application. Measured
+    # under sustained load on this image: ~80-130MB for the whole container,
+    # versus ~95MB for the old nginx + php-fpm image doing the same work. 448m
+    # is headroom for normal peaks, NOT for both workers at memory_limit (256M)
+    # at once; if that ever happens this container is killed and restarted
+    # rather than taking the host down.
     #
     # This is a CEILING, not a reservation: the container still uses only what
-    # it touches (steady state here is well under 150MB). Raising max_children
-    # or memory_limit means raising this too, or php-fpm will hand out workers
-    # the cgroup cannot honour.
+    # it touches. Raising the worker count or memory_limit means raising this
+    # too.
     mem_limit: 448m
     <<: *app-base
     environment:
@@ -206,7 +207,7 @@ services:
       CONTAINER_ROLE: scheduler
       # The app role owns migrations; this role must not race it.
       RUN_MIGRATIONS: "false"
-    # The image HEALTHCHECK curls nginx, which this role does not run — without
+    # The image HEALTHCHECK curls the web server, which this role does not run — without
     # this override the container reports "unhealthy" while working perfectly.
     #
     # Test PID 1 specifically, NOT a glob over /proc/*/cmdline: the healthcheck

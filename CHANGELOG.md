@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com), and this project adheres to [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Changed
+
+- The Docker image now serves through FrankenPHP in Laravel Octane worker mode, replacing nginx, php-fpm and supervisord. The runtime stage moves from Alpine to Debian trixie, and `mariadb-client` is no longer in the image
+- Both the web server and the scheduler container now run as `www-data` instead of root, so neither can leave root-owned files on the shared log and attachment volumes
+
 ## Version - 1.1.0
 
 ### Added

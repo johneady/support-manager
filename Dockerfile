@@ -3,8 +3,11 @@
 # ---------------------------------------------------------------------------
 # Support Manager container image.
 #
-# ALPINE (musl) throughout. Was Debian bookworm until the image size became the
-# problem. Almost all of the saving is the BASE, not anything this app ships:
+# The BUILD stages are Alpine (musl). The RUNTIME stage is FrankenPHP on Debian
+# trixie -- see the note on stage 3 for why that one is glibc. The runtime was
+# Alpine php-fpm before the move to Octane; what follows is why the build
+# stages went Alpine, and why a Debian php base carries so much dead weight.
+# Almost all of the saving is the BASE, not anything this app ships:
 #
 #   1. php:8.5-*-bookworm keeps the C toolchain (gcc, g++, cpp, binutils,
 #      libc6-dev -- ~190MB) PERMANENTLY, in one 316MB layer, deliberately, so
@@ -110,8 +113,20 @@ COPY --from=vendor /app/vendor/laravel/framework ./vendor/laravel/framework
 RUN npm run build
 
 # --- Stage 3: runtime -------------------------------------------------------
-# php:8.5-fpm-alpine @ PHP 8.5.10
-FROM php:8.5-fpm-alpine@sha256:630c234abe38c0e9e4726ff59d5af6fc8f573e35939b143580129f2405ea8a74 AS runtime
+# dunglas/frankenphp:1.12.7-php8.5.11-trixie
+#
+# Served by Laravel Octane in FrankenPHP worker mode: each worker boots the
+# framework ONCE and then serves requests from memory, instead of php-fpm
+# re-bootstrapping Laravel on every hit. One binary (Caddy + embedded PHP)
+# replaces nginx, php-fpm and supervisord.
+#
+# Debian (glibc) for THIS stage, unlike the two build stages above. FrankenPHP
+# embeds a thread-safe (ZTS) PHP and runs every request on a thread, which is
+# precisely where musl's small default thread stacks and slower allocator hurt
+# -- the "segfaults in production" risk the header warns about stops being
+# theoretical. FrankenPHP's own docs recommend the glibc images. The vendor and
+# assets stages only produce files, so they stay on Alpine.
+FROM dunglas/frankenphp:1.12.7-php8.5.11-trixie@sha256:81231b570830952baa3e62db06707996a886ff0a61ca64c77d032c8a110e6bc1 AS runtime
 
 # Extensions this application actually requires:
 #   intl      — Laravel formatting, league/commonmark
@@ -124,58 +139,27 @@ FROM php:8.5-fpm-alpine@sha256:630c234abe38c0e9e4726ff59d5af6fc8f573e35939b14358
 # processing and no PDF rendering. (They appear under ext-* in composer.lock
 # only as transitive `suggest` entries.)
 #
-# opcache is NOT installed here: Zend OPcache is compiled into the php base
-# image already. Running docker-php-ext-install opcache against it configures,
-# compiles nothing, and then dies on "cp: cannot stat 'modules/*'". It only
-# needs enabling, which docker/php/php.ini does.
-#
-# Each extension is installed in its OWN invocation, with no -j parallel flag.
-# docker-php-ext-install builds in a shared /usr/src/php/ext tree, so a parallel
-# batch races on the per-extension .libs/ and modules/ directories, failing with
-# "mkdir: cannot create directory 'collator/.libs': File exists".
-# ctype, dom, fileinfo, filter, hash, iconv, json, libxml, mbstring, openssl,
-# pcre, session and tokenizer are already compiled into the base image.
-#
-# The -dev packages are needed only to COMPILE the extensions above. They go in
-# as a `.build-deps` VIRTUAL package and come out in the SAME RUN, so the
-# toolchain is never written to a stored layer -- removing it in a later RUN
-# would not shrink anything (see point 2 in the header).
-#
-# The scanelf pass is what keeps the image working: it asks the freshly built
-# .so files which shared libraries they link against and re-adds those as real
-# runtime deps (so:libicuuc.so.78, so:libzip.so.5 and friends) BEFORE
-# `apk del .build-deps` runs. Without it the del takes icu's and libzip's
-# runtime libraries with it and the image starts with "Unable to load dynamic
-# library 'zip'" and no ZipArchive class -- the same failure the old explicit
-# libzip4/libicu72 line existed to prevent, solved generically.
-#
-# bash is not in the Alpine base (busybox ash only) and entrypoint.sh is
-# #!/usr/bin/env bash. mariadb-client replaces Debian's default-mysql-client.
-RUN apk add --no-cache nginx supervisor curl bash mariadb-client
+# Zend OPcache is compiled into the base image already; it only needs enabling,
+# which docker/php/php.ini does. install-php-extensions ships with the base and
+# removes its own build dependencies in the same step, so no toolchain reaches
+# a stored layer.
+RUN install-php-extensions intl zip pdo_mysql
 
+# FrankenPHP runs as www-data: the entrypoint does its root-only setup, then drops
+# privileges before starting the server. Caddy writes its autosave config and
+# state under XDG_CONFIG_HOME / XDG_DATA_HOME (/config and /data in this base
+# image), so those go to www-data.
+#
+# Binding :80 as www-data needs no file capability: Docker (20.10+) sets
+# net.ipv4.ip_unprivileged_port_start=0 in every container network namespace.
+# `setcap` on the binary would also work but rewrites it into a new 57MB layer.
+#
+# No mariadb-client (the php-fpm image had one): nothing in the application
+# shells out to it, and on Debian it drags in perl for ~115MB. Run mariadb /
+# mariadb-dump from the database container instead.
 RUN set -eux; \
-    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev; \
-    docker-php-ext-install intl; \
-    docker-php-ext-install zip; \
-    docker-php-ext-install pdo_mysql; \
-    runDeps="$(scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
-        | tr ',' '\n' | sort -u | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }')"; \
-    apk add --no-cache $runDeps; \
-    apk del --no-network .build-deps
-
-# Alpine and Debian disagree on where supervisor keeps its config, and the
-# difference is silent until the container crash-loops:
-#   Alpine: /etc/supervisord.conf            + [include] /etc/supervisor.d/*.ini
-#   Debian: /etc/supervisor/supervisord.conf + [include] /etc/supervisor/conf.d/*.conf
-# The CMD and the supervisord.conf COPY below both speak the Debian layout, so
-# rebuild that layout here rather than rewriting them. The trailing grep is the
-# guard: if an Alpine update moves that [include] line the sed matches nothing
-# and the container would boot with NO programs while looking healthy.
-RUN set -eux; \
-    mkdir -p /etc/supervisor/conf.d; \
-    sed -e 's#^files = /etc/supervisor.d/\*\.ini#files = /etc/supervisor/conf.d/*.conf#' \
-        /etc/supervisord.conf > /etc/supervisor/supervisord.conf; \
-    grep -q '^files = /etc/supervisor/conf.d/\*\.conf$' /etc/supervisor/supervisord.conf
+    mkdir -p /config/caddy /data/caddy; \
+    chown -R www-data:www-data /config/caddy /data/caddy
 
 # The CLI opcache file_cache directory, created BEFORE the ini that references
 # it is in place. PHP treats a missing or unwritable opcache.file_cache as a
@@ -191,35 +175,30 @@ COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-app.ini
 # CLI-only opcache overrides, deliberately NOT in conf.d -- nothing loads this
 # directory unless PHP_INI_SCAN_DIR names it, which the entrypoint does for the
 # scheduler and queue roles only. This is what keeps opcache.file_cache_only
-# off php-fpm, where it costs ~30x on every request. See the file itself.
+# off the Octane workers, where it costs ~30x on every request. See the file.
 COPY docker/php/cli /usr/local/etc/php/cli-conf.d
-COPY docker/php/www.conf /usr/local/etc/php-fpm.d/zz-www.conf
-# Alpine's nginx includes /etc/nginx/http.d/*.conf and has NO sites-available /
-# sites-enabled pair. Writing to http.d/default.conf also OVERWRITES Alpine's
-# stock default server, which is what removes it -- copying to sites-available/
-# instead leaves the vhost never included and Alpine's default answering :80,
-# so the container serves 404s while supervisor reports everything RUNNING.
-COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
-COPY docker/entrypoint/supervisord.conf /etc/supervisor/conf.d/app.conf
+# Replaces the base image's own Caddyfile, which its default command reads.
+COPY docker/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
 
-# Fail the BUILD on a broken vhost or a missing extension rather than in
+# Fail the BUILD on a broken Caddyfile or a missing extension rather than in
 # production. Every trap here is silent at build time and loud much later: a
 # missing pdo_mysql surfaces at the first query, a missing intl at the first
 # formatted date, an ini that never reached conf.d by serving every request
-# uncompiled. `nginx -t` additionally turns a future Alpine layout change into
-# a failed build instead of a 404.
+# uncompiled.
 #
 # Placed AFTER the php.ini COPY above so it validates the shipped config too.
 #
 # OPcache must be spelled "Zend OPcache": it is a Zend extension, so BOTH
 # extension_loaded("opcache") and `php -m | grep -ix opcache` report it missing
 # on an image where it is loaded and enabled. Do not "tidy" that to lowercase.
-RUN nginx -t
+#
+# `adapt` parses the Caddyfile without starting anything.
+RUN frankenphp adapt --config /etc/frankenphp/Caddyfile --adapter caddyfile >/dev/null
 
 RUN set -eu; \
     php -r 'foreach (["intl", "zip", "pdo_mysql", "Zend OPcache"] as $e) { if (! extension_loaded($e)) { fwrite(STDERR, "FATAL: php extension \"$e\" missing from image\n"); exit(1); } } \
         if (! ini_get("opcache.enable")) { fwrite(STDERR, "FATAL: opcache present but not enabled -- check docker/php/php.ini reached conf.d\n"); exit(1); } \
-        if (ini_get("opcache.file_cache_only")) { fwrite(STDERR, "opcache.file_cache_only is set for the DEFAULT ini -- it would reach php-fpm and cost ~30x per request; it belongs only in docker/php/cli\n"); exit(1); } \
+        if (ini_get("opcache.file_cache_only")) { fwrite(STDERR, "opcache.file_cache_only is set for the DEFAULT ini -- it would reach the Octane workers and cost ~30x per request; it belongs only in docker/php/cli\n"); exit(1); } \
         echo "extension check passed: intl zip pdo_mysql opcache(enabled)\n";'
 # The CLI-only overrides must load when PHP_INI_SCAN_DIR names them AND must
 # not have cost us the base ini -- a PHP_INI_SCAN_DIR without its leading colon
@@ -255,6 +234,11 @@ RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
 # reach a production image; .dockerignore excludes it, this is the backstop.
 RUN rm -f database/database.sqlite
 
+# The worker script FrankenPHP keeps resident (see docker/frankenphp/Caddyfile).
+# `octane:frankenphp` would copy it in on first start, but that command is not
+# used here, so the build puts it in place from the installed Octane version.
+RUN cp vendor/laravel/octane/src/Commands/stubs/frankenphp-worker.php public/frankenphp-worker.php
+
 RUN mkdir -p \
         storage/framework/cache/data \
         storage/framework/sessions \
@@ -273,4 +257,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
     CMD curl -fsS http://127.0.0.1/up || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
-CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf", "-n"]
+
+# The entrypoint drops to www-data before exec'ing this for the app role.
+# Worker count, recycling and the Octane environment are all in the Caddyfile.
+CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]
