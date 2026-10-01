@@ -41,7 +41,7 @@
 
 # --- Stage 1: PHP dependencies ---------------------------------------------
 # php:8.5-cli-alpine @ PHP 8.5.10
-FROM php:8.5-cli-alpine@sha256:dae77e6aa4934d22b903da93e0e506c34032f5d8f8f91693d2cbf6e2724ddf73 AS vendor
+FROM php:8.5-cli-alpine@sha256:93684051146ec037620855feb77f278090bde45ddc030801cd3f2a7685bc4deb AS vendor
 
 # The extension set here must not drift BELOW the runtime stage's: composer
 # validates composer.lock's platform requirements against the extensions in
