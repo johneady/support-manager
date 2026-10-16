@@ -2,7 +2,6 @@
 
 use App\Models\Faq;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -231,6 +230,7 @@ describe('faq editing', function () {
 
     it('returns 404 for non-existent faq id', function () {
         Livewire::actingAs($this->admin)
-            ->test('admin.faq-form', ['faqId' => 99999]);
-    })->throws(ModelNotFoundException::class);
+            ->test('admin.faq-form', ['faqId' => 99999])
+            ->assertNotFound();
+    });
 });
