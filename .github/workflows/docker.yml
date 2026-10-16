@@ -81,7 +81,7 @@ jobs:
 
       - name: Derive tags
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           # Lowercased by the action: GHCR rejects an uppercase path, and
           # github.repository preserves the owner's case.
