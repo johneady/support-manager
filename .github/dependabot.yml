@@ -34,6 +34,12 @@ updates:
           - laravel-vite-plugin
           - '@tailwindcss/*'
           - tailwindcss
+      # Every @tiptap/* package pins an EXACT peer version of @tiptap/core, so
+      # bumping one on its own fails `npm ci` with ERESOLVE. They must move as
+      # a set.
+      tiptap:
+        patterns:
+          - '@tiptap/*'
       dev-tooling:
         dependency-type: development
         patterns:
