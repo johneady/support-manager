@@ -77,7 +77,7 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
 
 # --- Stage 2: frontend assets ----------------------------------------------
 # node:26-alpine @ Node v26.9.0
-FROM node:26-alpine@sha256:2c45bdcbf63561a54da9549612084b43ca309854a4110c87857d609ddeb61c9e AS assets
+FROM node:26-alpine@sha256:0b36e8c136b94cd4fcf02188228e76c31ad5872eef3fec8cbd2eee500cfd9e80 AS assets
 
 WORKDIR /app
 
