@@ -126,7 +126,7 @@ RUN npm run build
 # -- the "segfaults in production" risk the header warns about stops being
 # theoretical. FrankenPHP's own docs recommend the glibc images. The vendor and
 # assets stages only produce files, so they stay on Alpine.
-FROM dunglas/frankenphp:1.12.7-php8.5.11-trixie@sha256:81231b570830952baa3e62db06707996a886ff0a61ca64c77d032c8a110e6bc1 AS runtime
+FROM dunglas/frankenphp:1.13.0-php8.5.11-trixie@sha256:2a9c6663f73ad1e401909634206bd25e13bed5b94d86eefa3b5ec64c985b4595 AS runtime
 
 # Extensions this application actually requires:
 #   intl      — Laravel formatting, league/commonmark
