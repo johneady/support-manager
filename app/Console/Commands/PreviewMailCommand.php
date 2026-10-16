@@ -75,7 +75,7 @@ class PreviewMailCommand extends Command
 
         $type = $this->argument('type');
 
-        if (! $type) {
+        if (! is_string($type) || $type === '') {
             $options = array_merge(['all' => 'All emails'], $this->emailTypes);
             $type = select(
                 label: 'Which email would you like to preview?',
