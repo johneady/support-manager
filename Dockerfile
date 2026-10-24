@@ -40,8 +40,8 @@
 # ---------------------------------------------------------------------------
 
 # --- Stage 1: PHP dependencies ---------------------------------------------
-# php:8.5-cli-alpine @ PHP 8.5.10
-FROM php:8.5-cli-alpine@sha256:93684051146ec037620855feb77f278090bde45ddc030801cd3f2a7685bc4deb AS vendor
+# php:8.5-cli-alpine @ PHP 8.5.12
+FROM php:8.5-cli-alpine@sha256:d386a12bad6b5dbee1f7dbd0291a4526dbfcbe5cfc0e8833de8d8309be8f3e50 AS vendor
 
 # The extension set here must not drift BELOW the runtime stage's: composer
 # validates composer.lock's platform requirements against the extensions in
@@ -113,7 +113,7 @@ COPY --from=vendor /app/vendor/laravel/framework ./vendor/laravel/framework
 RUN npm run build
 
 # --- Stage 3: runtime -------------------------------------------------------
-# dunglas/frankenphp:1.12.7-php8.5.11-trixie
+# dunglas/frankenphp:1.13.3-php8.5.12-trixie
 #
 # Served by Laravel Octane in FrankenPHP worker mode: each worker boots the
 # framework ONCE and then serves requests from memory, instead of php-fpm
@@ -126,7 +126,7 @@ RUN npm run build
 # -- the "segfaults in production" risk the header warns about stops being
 # theoretical. FrankenPHP's own docs recommend the glibc images. The vendor and
 # assets stages only produce files, so they stay on Alpine.
-FROM dunglas/frankenphp:1.13.0-php8.5.11-trixie@sha256:2a9c6663f73ad1e401909634206bd25e13bed5b94d86eefa3b5ec64c985b4595 AS runtime
+FROM dunglas/frankenphp:1.13.3-php8.5.12-trixie@sha256:73053ec45f0ad33c8e6f71f60ec3a11133899eecc73d7aa577b6d3a1ff5649c2 AS runtime
 
 # Extensions this application actually requires:
 #   intl      — Laravel formatting, league/commonmark
@@ -199,6 +199,8 @@ RUN set -eu; \
     php -r 'foreach (["intl", "zip", "pdo_mysql", "Zend OPcache"] as $e) { if (! extension_loaded($e)) { fwrite(STDERR, "FATAL: php extension \"$e\" missing from image\n"); exit(1); } } \
         if (! ini_get("opcache.enable")) { fwrite(STDERR, "FATAL: opcache present but not enabled -- check docker/php/php.ini reached conf.d\n"); exit(1); } \
         if (ini_get("opcache.file_cache_only")) { fwrite(STDERR, "opcache.file_cache_only is set for the DEFAULT ini -- it would reach the Octane workers and cost ~30x per request; it belongs only in docker/php/cli\n"); exit(1); } \
+        if (ini_get("session.upload_progress.enabled")) { fwrite(STDERR, "FATAL: session.upload_progress.enabled is on -- the php2shell mitigation in docker/php/php.ini did not apply\n"); exit(1); } \
+        if (version_compare(PHP_VERSION, "8.5.12", "<")) { fwrite(STDERR, "FATAL: PHP " . PHP_VERSION . " is older than 8.5.12 and vulnerable to php2shell (CVE-2026-109618/109619)\n"); exit(1); } \
         echo "extension check passed: intl zip pdo_mysql opcache(enabled)\n";'
 # The CLI-only overrides must load when PHP_INI_SCAN_DIR names them AND must
 # not have cost us the base ini -- a PHP_INI_SCAN_DIR without its leading colon
