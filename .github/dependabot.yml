@@ -73,6 +73,15 @@ updates:
       # The aliased vite key -- npm:@voidzero-dev/vite-plus-core, not upstream
       # Vite. Ignored for the same reason: it only moves with vite-plus.
       - dependency-name: vite
+      # Platform-specific optional binaries, pulled in transitively by rollup,
+      # lightningcss and esbuild. Nothing depends on them directly -- they are
+      # in the lockfile only because this machine is linux-x64, and npm picks a
+      # different one per platform. Bumping them in isolation is pure noise: the
+      # version that matters is the parent package's, which the npm group
+      # already tracks.
+      - dependency-name: '@rollup/rollup-*'
+      - dependency-name: 'lightningcss-*'
+      - dependency-name: '@esbuild/*'
 
   - package-ecosystem: github-actions
     directory: /
