@@ -1,47 +1,39 @@
 version: 2
 
+# Monthly, and ONE grouped PR per ecosystem: every PR here runs the full CI job,
+# and so does every rebase Dependabot makes when a sibling PR merges -- weekly
+# runs with several groups per ecosystem meant a steady stream of PRs plus a
+# rebase cascade after each merge. One PR per ecosystem per month has nothing to
+# cascade into.
+#
+# The cost of a single group: one package that breaks the build holds back the
+# rest. Fix it on the branch, or `@dependabot ignore` that dependency, rather
+# than splitting the group back up.
+#
+# Security updates are unaffected: they are raised as soon as an advisory is
+# published, independently of this schedule and of these groups.
 updates:
   - package-ecosystem: composer
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 10
     versioning-strategy: increase-if-necessary
     groups:
-      # Laravel's first-party packages release together and are tested
-      # together; separate PRs for each just multiply CI runs on changes that
-      # have to land as a set anyway.
-      laravel:
-        patterns:
-          - laravel/*
-          - livewire/*
-      dev-tooling:
-        dependency-type: development
+      composer:
         patterns:
           - '*'
 
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 5
     groups:
-      build-tooling:
-        patterns:
-          - vite
-          - laravel-vite-plugin
-          - '@tailwindcss/*'
-          - tailwindcss
-      # Every @tiptap/* package pins an EXACT peer version of @tiptap/core, so
-      # bumping one on its own fails `npm ci` with ERESOLVE. They must move as
-      # a set.
-      tiptap:
-        patterns:
-          - '@tiptap/*'
-      dev-tooling:
-        dependency-type: development
+      # One group for everything. That also keeps the @tiptap/* packages
+      # together, which they must be: each pins an EXACT peer version of
+      # @tiptap/core, so bumping one on its own fails `npm ci` with ERESOLVE.
+      npm:
         patterns:
           - '*'
     # playwright is held back deliberately. Its npm version must match a
@@ -55,7 +47,7 @@ updates:
     # green CI, red laptop. Bump it by hand together with the cached browser.
     #
     # Note this must be an `ignore`, not a group `exclude-patterns`: excluding it
-    # from the dev-tooling group would only stop it being BUNDLED, and Dependabot
+    # from the npm group would only stop it being BUNDLED, and Dependabot
     # would still raise a PR for it on its own.
     ignore:
       - dependency-name: playwright
@@ -81,16 +73,38 @@ updates:
       # The aliased vite key -- npm:@voidzero-dev/vite-plus-core, not upstream
       # Vite. Ignored for the same reason: it only moves with vite-plus.
       - dependency-name: vite
+      # Platform-specific optional binaries, pulled in transitively by rollup,
+      # lightningcss and esbuild. Nothing depends on them directly -- they are
+      # in the lockfile only because this machine is linux-x64, and npm picks a
+      # different one per platform. Bumping them in isolation is pure noise: the
+      # version that matters is the parent package's, which the npm group
+      # already tracks.
+      - dependency-name: '@rollup/rollup-*'
+      - dependency-name: 'lightningcss-*'
+      - dependency-name: '@esbuild/*'
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    # Ungrouped, each action (checkout, setup-php, setup-node, cache, the
+    # docker/* set...) arrived as its own PR and its own CI run.
+    groups:
+      github-actions:
+        patterns:
+          - '*'
 
-  # Pinned base images in the Dockerfile (php:8.5-*, node:22-*) go stale
+  # Pinned base images in the Dockerfile (php:8.5-*, node:26-*) go stale
   # silently otherwise -- nothing else in the repo reports a new patch release
   # of the runtime the deployed image is built on.
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: monthly
+    # The php, node and frankenphp base images otherwise each arrive as their
+    # own PR -- and these are the PRs that DO pay the image build in
+    # docker.yml, since they change the Dockerfile.
+    groups:
+      docker:
+        patterns:
+          - '*'

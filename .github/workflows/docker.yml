@@ -13,9 +13,14 @@
 name: Docker
 
 on:
+  # main is NOT here: ci.yml calls this workflow (workflow_call below) once its
+  # checks pass on the merge commit, so main only publishes a tested commit.
+  # It used to fire on the same push in parallel with ci.yml and published
+  # whether or not the tests passed. v* tags stay direct -- ci.yml does not
+  # run on them, so there is nothing to wait for.
   push:
-    branches: [main]
     tags: ['v*']
+  workflow_call:
   # Build (but never push) on PRs that touch the image, so a broken Dockerfile
   # is caught on the branch rather than at deploy time. The extension assertion
   # in the runtime stage is the point: it turns a dropped gd configure flag or
@@ -27,15 +32,19 @@ on:
   # though `COPY . .` puts it in the image -- ci.yml already tests it on every
   # PR, and rebuilding the image to re-run `artisan --version` would add ~10
   # minutes to every PR for no signal the test suite does not already give.
+  #
+  # composer.json/.lock and package.json/-lock.json are deliberately NOT here
+  # either, though they used to be. Nearly every Dependabot PR changes one, so
+  # each one -- and each rebase of one -- paid a 5-15 minute image build that
+  # the checks in ci.yml already cover: the suite runs on the new dependencies
+  # and builds the assets. A dependency that needs an extension the image lacks
+  # still fails before it can ship: the publish build on main runs the same
+  # extension assertion, and nothing reaches GHCR unless it passes.
   pull_request:
     paths:
       - Dockerfile
       - .dockerignore
       - docker/**
-      - composer.json
-      - composer.lock
-      - package.json
-      - package-lock.json
       # Changes the built assets, so it changes the image.
       - vite.config.js
       - .github/workflows/docker.yml
@@ -53,7 +62,9 @@ permissions:
 jobs:
   build:
     name: Build & push
-    runs-on: ubuntu-latest
+    # Same switch as ci.yml: the CI_RUNNER repository variable moves this onto
+    # a self-hosted runner; unset, it runs on GitHub's hosted runner.
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     # The extension compile dominates; a cold cache is ~10-15 min.
     timeout-minutes: 45
 

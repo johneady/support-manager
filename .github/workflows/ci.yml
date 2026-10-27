@@ -1,9 +1,20 @@
 name: CI
 
+# Docs and issue templates change nothing that runs, so they skip CI. Applies
+# to main too: a docs-only merge publishes no new image, which is correct --
+# the image it would build is byte-for-byte the last one.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - LICENSE
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - LICENSE
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -13,32 +24,53 @@ permissions:
   contents: read
 
 jobs:
-  static-analysis:
-    name: Pint & PHPStan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
+  # ONE job, deliberately, where this used to be five (static, sqlite,
+  # browser, and a mysql/mariadb matrix), each repeating the same setup --
+  # PHP, Composer, Node, npm ci, a Vite build -- before doing anything of its
+  # own. This repo is public, so the minutes are not billed; the point is one
+  # CI shape across these projects, with the database it tests being the one
+  # production runs.
+  #
+  # Static checks run first, so a Pint or PHPStan failure stops the run before
+  # the suites start.
+  # Each step reports on its own, so a red run still says WHICH gate failed.
+  # What this gives up is parallelism (a slower wall clock) and the isolation
+  # that kept a flaky browser test from turning the whole check red.
+  checks:
+    name: Checks
+    # The CI_RUNNER repository variable switches every job to a self-hosted
+    # runner (set it to `self-hosted`) without editing this file; unset, the
+    # job runs on GitHub's hosted runner as before. Deleting the variable is
+    # the fallback when the self-hosted machine is off.
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: intl, zip, sqlite3, pdo_sqlite
-          coverage: none
-          tools: composer:v2
+    # Production runs MariaDB (docker-compose.dokploy.yml deploys with
+    # DB_CONNECTION=mariadb), pinned to 11.8 like the other projects' Dokploy
+    # databases, so that is the one server the suite runs against. sqlite stays the LOCAL default in phpunit.xml because it is
+    # fast, but it silently tolerates what a real server rejects -- looser
+    # typing, no strict-mode errors on overlong or invalid values, transactional
+    # DDL (MariaDB commits a CREATE or DROP implicitly) -- so a green sqlite run
+    # is not evidence the deployed database agrees. The sqlite and mysql:8.4
+    # legs were dropped, so MySQL -- which README.md still lists as supported
+    # -- is no longer exercised in CI.
+    services:
+      database:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: testing
+        ports:
+          - 3306:3306
+        # healthcheck.sh ships in the MariaDB image. --innodb_initialized waits
+        # for the storage engine, not just the socket, so the first migration
+        # never races a server that is still starting.
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
-      - name: Install Composer dependencies
-        uses: ramsey/composer-install@v4
-
-      - name: Check code style
-        run: vendor/bin/pint --test --parallel
-
-      - name: Analyse types
-        run: vendor/bin/phpstan analyse --no-progress
-
-  tests:
-    name: Pest
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
@@ -50,88 +82,136 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
-          extensions: intl, zip, sqlite3, pdo_sqlite
+          # pdo_mysql is the driver for MariaDB too; sqlite stays for the
+          # browser suite, which runs on phpunit.xml's in-memory database.
+          extensions: intl, zip, sqlite3, pdo_sqlite, mysqli, pdo_mysql
           # Tia records which tests touch which files through a coverage
           # driver, and it requires PCOV specifically.
           coverage: pcov
           tools: composer:v2
 
-      # Vite+ requires a modern Node (its core tracks Vite 7, which needs
-      # 20.19+/22.12+); pinning avoids depending on the runner image's default.
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v4
+
+      # The Dockerfile's node: base and the node-version pins in this file are
+      # independent -- nothing else fails when they drift apart, which is
+      # exactly how they drifted before (CI on 22 while the Dockerfile built on
+      # 26). Assert they agree so the drift is a red build
+      # rather than a silent difference between CI and the deployed image.
+      - name: Check Node pins agree
+        run: |
+          dockerfile_node="$(grep -oP '^FROM node:\K[0-9]+' Dockerfile | sort -u)"
+          workflow_nodes="$(grep -oP "node-version: '\K[0-9]+" .github/workflows/ci.yml | sort -u)"
+
+          if [ -z "$dockerfile_node" ] || [ -z "$workflow_nodes" ]; then
+            echo "::error::Could not find a Node pin in Dockerfile and/or ci.yml."
+            exit 1
+          fi
+
+          all="$(printf '%s\n%s\n' "$dockerfile_node" "$workflow_nodes" | sort -u)"
+          if [ "$(printf '%s\n' "$all" | wc -l)" -ne 1 ]; then
+            echo "::error::Node pins disagree. Dockerfile=[$(echo $dockerfile_node)] ci.yml=[$(echo $workflow_nodes)]"
+            exit 1
+          fi
+
+          echo "Node pin consistent: $all"
+
+      - name: Check code style
+        run: vendor/bin/pint --test --parallel
+
+      - name: Analyse types
+        run: vendor/bin/phpstan analyse --no-progress
+
+      # Vite+ requires a modern Node (vite-plus declares
+      # ^20.19.0 || ^22.18.0 || >=24.11.0). Pinned to the major the Dockerfile
+      # builds the assets on, so CI builds them the way the image does rather
+      # than on whatever the runner image happens to ship.
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '26'
+          cache: npm
 
-      - name: Install Composer dependencies
-        uses: ramsey/composer-install@v4
+      - name: Install npm dependencies
+        run: npm ci
 
       - name: Set up environment
         run: |
           cp .env.example .env
           php artisan key:generate
-
-      - name: Install npm dependencies
-        run: npm ci
 
       - name: Build assets
         run: npm run build
 
       - name: Run tests
+        # phpunit.xml pins DB_CONNECTION=sqlite and DB_DATABASE=:memory: in its
+        # <php> block, but PHPUnit's <env> elements do not overwrite a variable
+        # that is already set in the process environment (only force="true"
+        # does), so setting them here wins. DB_URL is blanked for the same
+        # reason: phpunit.xml sets it empty, and a non-empty DB_URL would take
+        # precedence over the host and port below.
+        #
+        # `mariadb`, not `mysql`: docker-compose.dokploy.yml deploys with
+        # DB_CONNECTION=mariadb, so that is the driver config under test.
+        #
         # Pest's environment defaults to LOCAL and only becomes CI when --ci is
         # passed, which makes it run the full suite instead of trusting Tia's
         # cached dependency graph. `artisan test` does not forward the flag, so
         # Pest is invoked directly.
         #
-        # Browser tests are excluded here and run in their own job: they need a
-        # Playwright browser download this job has no reason to pay for, and
-        # keeping them apart stops browser flakiness from masking a real unit
-        # or feature failure.
-        run: vendor/bin/pest --ci --parallel --testsuite=Unit,Feature
-
-  browser:
-    name: Pest (browser)
-    runs-on: ubuntu-latest
-
-    # Separate from the Pest job above so the fast feedback loop stays fast:
-    # this one downloads a browser and drives a real page, which is both slower
-    # and likelier to fail for reasons unrelated to the change under test.
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: intl, zip, sqlite3, pdo_sqlite
-          coverage: none
-          tools: composer:v2
-
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-
-      - name: Install Composer dependencies
-        uses: ramsey/composer-install@v4
-
-      - name: Set up environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
-      - name: Install npm dependencies
-        run: npm ci
+        # --parallel works because Laravel's TestDatabases concern gives each
+        # worker its own database (testing_test_1, testing_test_2, ...) and
+        # migrates it, rather than the workers sharing `testing`.
+        #
+        # Capped at 4 processes deliberately: every worker holds connections to
+        # ONE service container, and the default (a process per core) is a
+        # heavier load on it than sqlite's per-worker :memory: databases, which
+        # cost the server nothing.
+        env:
+          DB_CONNECTION: mariadb
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: testing
+          DB_USERNAME: root
+          DB_PASSWORD: root
+          DB_URL: ''
+        run: vendor/bin/pest --ci --parallel --processes=4 --testsuite=Unit,Feature
 
       # The plugin drives Playwright from node_modules and refuses to run
       # against a browser build that does not match the installed version, so
-      # this must come from the same lockfile npm ci just installed.
+      # the browser must match the playwright npm package npm ci just installed.
+      # That is why the cache key is the resolved version rather than the
+      # lockfile hash: an unrelated lockfile change must not invalidate a
+      # still-correct browser, and a playwright bump must invalidate it.
+      - name: Resolve Playwright version
+        id: playwright
+        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      # Chromium is a large download that changes only when the playwright
+      # package does, so it is the single most worthwhile thing to cache in
+      # this workflow. It used to be downloaded fresh on every run.
+      - name: Cache Playwright browser
+        id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # On a cache hit the binaries are already restored and only the OS-level
+      # shared libraries are missing, so the multi-hundred-megabyte browser
+      # download is skipped and just the apt packages are installed.
       - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Build assets
-        run: npm run build
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
+      # Last, so a failure here can only ever be a browser failure: everything
+      # the server-side suites prove has already passed by the time it runs.
+      # It keeps phpunit.xml's in-memory sqlite -- it exercises the rendered
+      # UI, not driver-specific SQL, which the step above already covers.
       - name: Run browser tests
         run: vendor/bin/pest --ci --testsuite=Browser
 
@@ -145,97 +225,24 @@ jobs:
           path: tests/Browser/Screenshots
           if-no-files-found: ignore
 
-  database:
-    name: Pest (${{ matrix.database }})
-    runs-on: ubuntu-latest
-
-    # The sqlite job above is the fast feedback loop; this one is the honest
-    # one. Production runs MySQL or MariaDB (the Dockerfile installs
-    # pdo_mysql), and sqlite silently tolerates things a real server rejects:
-    # looser typing, no strict-mode errors on overlong or invalid values, and
-    # different behaviour around transactional DDL and index name limits. A
-    # green sqlite suite is not evidence the deployed database agrees.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - database: mysql
-            image: mysql:8.4
-          - database: mariadb
-            image: mariadb:11
-
-    services:
-      database:
-        image: ${{ matrix.image }}
-        env:
-          # Both images read the MYSQL_* names; MariaDB accepts them as
-          # aliases for its own MARIADB_* variables.
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: testing
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized || mysqladmin ping -h localhost -uroot -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: intl, zip, mysqli, pdo_mysql
-          coverage: pcov
-          tools: composer:v2
-
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-
-      - name: Install Composer dependencies
-        uses: ramsey/composer-install@v4
-
-      - name: Set up environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
-      - name: Install npm dependencies
-        run: npm ci
-
-      - name: Build assets
-        run: npm run build
-
-      - name: Run tests
-        # phpunit.xml pins DB_CONNECTION=sqlite and DB_DATABASE=:memory: in its
-        # <php> block, but PHPUnit's <env> elements do not overwrite a variable
-        # that is already set in the process environment (only force="true"
-        # does), so setting them here wins. DB_URL is blanked for the same
-        # reason: phpunit.xml sets it empty, and a non-empty DB_URL would take
-        # precedence over the host and port below.
-        env:
-          DB_CONNECTION: ${{ matrix.database }}
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: testing
-          DB_USERNAME: root
-          DB_PASSWORD: root
-          DB_URL: ''
-        # Browser tests are excluded: this job installs no Playwright browser,
-        # and what it exists to prove is that the schema and queries behave on
-        # a real database server -- which the Unit and Feature suites cover.
-        #
-        # --parallel works here because Laravel's TestDatabases concern gives
-        # each worker its own schema (testing_test_1, testing_test_2, ...) and
-        # migrates it, rather than the workers sharing `testing`. Capped at 4
-        # processes deliberately: every worker holds connections to ONE service
-        # container, and the default (a process per core) is a heavier load on
-        # it than the sqlite job's per-worker :memory: files, which cost the
-        # server nothing.
-        run: vendor/bin/pest --ci --parallel --processes=4 --testsuite=Unit,Feature
+  # Publishing lives here rather than on docker.yml's own push trigger so that
+  # an image only reaches GHCR once the checks above are green on the merge
+  # commit itself -- docker.yml used to fire on the same push in parallel and
+  # published regardless. That is why ci.yml still runs on push to main even
+  # though the PR already passed: main only publishes a tested commit.
+  #
+  # A called workflow runs with the CALLER's github context (event_name push,
+  # ref refs/heads/main, sha), so docker.yml's tag derivation, push condition
+  # and deploy summary behave exactly as they did on a direct push.
+  #
+  # packages: write must be granted here: a called workflow cannot raise its
+  # permissions above what the calling job allows, and the top-level default
+  # in this file is contents: read.
+  publish:
+    name: Docker
+    needs: [checks]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker.yml
