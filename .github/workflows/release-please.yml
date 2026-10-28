@@ -1,0 +1,64 @@
+# Keeps one "chore(main): release X.Y.Z" PR open on main, rebuilt from the
+# conventional commits merged since the last release. Merging that PR is the
+# release: it tags vX.Y.Z and publishes a GitHub Release with the changelog.
+#
+# Nobody edits a version number by hand. The version lives in
+# .release-please-manifest.json (and the vX.Y.Z tag), and only the release PR
+# touches it, so feature and Dependabot PRs never conflict over it. The release
+# PR also rewrites `version` in config/app.php (extra-files in
+# release-please-config.json, found by its x-release-please-version marker),
+# which is what the app reports. There is deliberately no version.txt: the
+# simple strategy updates one only if it already exists, and nothing reads it.
+#
+# Releases carry on from 1.1.0, the last one cut by hand. 1.1.0 was never
+# tagged, so the manifest starts at it and bootstrap-sha points at its commit:
+# the first release PR covers only what came after. From there, fix: bumps the
+# patch, feat: the minor, and feat!: / BREAKING CHANGE the major.
+# ci:, test:, build(deps): and chore: are left out of the changelog and never
+# cut a release on their own.
+#
+# This runs on the default GITHUB_TOKEN, which has two consequences:
+#   - "Allow GitHub Actions to create and approve pull requests" must be on
+#     (Settings > Actions > General), or opening the release PR fails with a
+#     403.
+#   - Anything GITHUB_TOKEN creates triggers no workflows. ci.yml does not run
+#     on the release PR, and the vX.Y.Z tag does not fire docker.yml's
+#     `push: tags` trigger. Merging the release PR still publishes the usual
+#     sha/latest image, because ci.yml runs on that push to main.
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+# Serialised, so two quick merges do not race to rebuild and force-push the
+# same release PR. Never cancelled: the tag and GitHub Release are one API
+# call, but relabelling the PR from "autorelease: pending" to "autorelease:
+# tagged" is a separate one after it, and a run cancelled in between leaves the
+# next run failing on a duplicate release.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    name: Release PR
+    # Same switch as ci.yml: the CI_RUNNER repository variable moves this onto
+    # a self-hosted runner; unset, it runs on GitHub's hosted runner.
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    # Only API calls, no checkout -- but self-hosted jobs queue behind the host
+    # job lock, and that wait counts toward the timeout.
+    timeout-minutes: ${{ vars.CI_RUNNER && 30 || 5 }}
+
+    permissions:
+      # Tags, releases and the release branch.
+      contents: write
+      pull-requests: write
+      # The autorelease: pending / tagged labels on the release PR.
+      issues: write
+
+    steps:
+      - uses: googleapis/release-please-action@v5
