@@ -23,11 +23,12 @@ return [
     | The current release version of the application, following Semantic
     | Versioning. This is deliberately a literal rather than an env() call:
     | the config is cached during deployment, so the value must travel with
-    | the code. Keep it in step with the latest heading in CHANGELOG.md.
+    | the code. Do not edit it by hand: the release-please PR bumps it (the
+    | marker comment below is how it finds the line).
     |
     */
 
-    'version' => '1.1.0',
+    'version' => '1.1.0', // x-release-please-version
 
     /*
     |--------------------------------------------------------------------------
