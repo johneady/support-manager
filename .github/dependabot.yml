@@ -17,7 +17,6 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    open-pull-requests-limit: 10
     versioning-strategy: increase-if-necessary
     groups:
       composer:
@@ -28,7 +27,6 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
     groups:
       # One group for everything. That also keeps the @tiptap/* packages
       # together, which they must be: each pins an EXACT peer version of
@@ -108,3 +106,35 @@ updates:
       docker:
         patterns:
           - '*'
+    ignore:
+      # Node is pinned to the 26 line, matching node-version in
+      # .github/workflows/ci.yml. Only MAJORS are ignored: node:26.x patch and
+      # security updates still arrive. Move the major by hand, together with
+      # ci.yml -- its "Check Node pins agree" step fails if the two disagree.
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
+      #
+      # PHP is held to the 8.5 line: these FROM lines and php-version in
+      # .github/workflows/ci.yml must name the same version, and a PR moving
+      # only the Dockerfile to the next PHP would ship a runtime CI never ran.
+      # Digest updates for 8.5 still arrive -- the tag has no patch level, so
+      # a new digest IS the PHP patch release. Move the minor by hand,
+      # together with ci.yml.
+      #
+      # dunglas/frankenphp -- the RUNTIME -- needs no rule, but it also gets no
+      # PHP patches: Dependabot keeps its -php8.5.12 tag suffix fixed
+      # (johneady/support-manager#48), so a PHP patch reaches production only
+      # when that tag is edited by hand. Only the vendor stage's php image
+      # moves on its own.
+      - dependency-name: php
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+      #
+      # composer (the binary stage in the Dockerfile) is held to 2.x: a new
+      # major would ride in the same group PR as the php digests, and a break
+      # there would hold those back too. Move it by hand.
+      - dependency-name: composer
+        update-types:
+          - version-update:semver-major
