@@ -9,9 +9,7 @@ This project adheres to [Semantic Versioning](https://semver.org). From 1.2.0 on
 
 ### Features
 
-* enhance dashboard links and add ticket filtering functionality ([4771b29](https://github.com/johneady/support-manager/commit/4771b29ef5b96e8ce582bbca5de21943119d5f4f))
 * enhance dashboard links and add ticket filtering functionality ([a5ea7da](https://github.com/johneady/support-manager/commit/a5ea7da53ff173ed83e66ae64bbded5f2d9182b9))
-* Introduce FrankenPHP with Octane support and update Docker configurations ([3b1b919](https://github.com/johneady/support-manager/commit/3b1b9196fa04854ef35f4862056ed276ae87f5d4))
 * Introduce FrankenPHP with Octane support and update Docker configurations ([f08d903](https://github.com/johneady/support-manager/commit/f08d9031c72ef7e5380a317bb1483b6ccd7a8384))
 * Update publish-image.sh to support --no-latest option and improve usage documentation ([5176dc4](https://github.com/johneady/support-manager/commit/5176dc41532ea532eb34acf27c9ba9cd853ac700))
 
