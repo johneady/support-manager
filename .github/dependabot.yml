@@ -92,9 +92,10 @@ updates:
         patterns:
           - '*'
 
-  # Pinned base images in the Dockerfile (php:8.5-*, node:26-*) go stale
-  # silently otherwise -- nothing else in the repo reports a new patch release
-  # of the runtime the deployed image is built on.
+  # Pinned base images in the Dockerfile (php:8.5-*, node:26-*, and the
+  # dunglas/frankenphp runtime) go stale silently otherwise -- nothing else in
+  # the repo reports a new patch release of the runtime the deployed image is
+  # built on.
   - package-ecosystem: docker
     directory: /
     schedule:
@@ -121,16 +122,23 @@ updates:
       # Digest updates for 8.5 still arrive -- the tag has no patch level, so
       # a new digest IS the PHP patch release. Move the minor by hand,
       # together with ci.yml.
-      #
-      # dunglas/frankenphp -- the RUNTIME -- needs no rule, but it also gets no
-      # PHP patches: Dependabot keeps its -php8.5.12 tag suffix fixed
-      # (johneady/support-manager#48), so a PHP patch reaches production only
-      # when that tag is edited by hand. Only the vendor stage's php image
-      # moves on its own.
       - dependency-name: php
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
+      #
+      # dunglas/frankenphp is the RUNTIME. Its tag, 1.13-php8.5-trixie, floats
+      # over frankenphp 1.13.x and PHP 8.5.x patches, so the monthly digest PR
+      # brings both -- but only while 1.13 is frankenphp's current minor.
+      # Upstream stops rebuilding 1.13 once 1.14 ships, and from then on PHP
+      # patches reach the runtime only through the 1.14 PR, so merge it rather
+      # than letting it sit. The exact tag this replaced
+      # (1.13.3-php8.5.12-trixie) froze PHP outright: Dependabot never changes
+      # a tag's -php suffix (johneady/support-manager#48). Majors are held,
+      # like node's.
+      - dependency-name: dunglas/frankenphp
+        update-types:
+          - version-update:semver-major
       #
       # composer (the binary stage in the Dockerfile) is held to 2.x: a new
       # major would ride in the same group PR as the php digests, and a break
