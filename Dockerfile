@@ -120,7 +120,10 @@ COPY --from=vendor /app/vendor/laravel/framework ./vendor/laravel/framework
 RUN npm run build
 
 # --- Stage 3: runtime -------------------------------------------------------
-# dunglas/frankenphp:1.13.3-php8.5.12-trixie
+# dunglas/frankenphp:1.13-php8.5-trixie (1.13.4 + PHP 8.5.12 when pinned),
+# pinned by digest. A floating 1.13/8.5 tag rather than an exact one, so the
+# Dependabot digest bumps bring PHP patches while 1.13 is current, and its 1.14
+# PR after that -- see .github/dependabot.yml.
 #
 # Served by Laravel Octane in FrankenPHP worker mode: each worker boots the
 # framework ONCE and then serves requests from memory, instead of php-fpm
@@ -133,7 +136,7 @@ RUN npm run build
 # -- the "segfaults in production" risk the header warns about stops being
 # theoretical. FrankenPHP's own docs recommend the glibc images. The vendor and
 # assets stages only produce files, so they stay on Alpine.
-FROM dunglas/frankenphp:1.13.3-php8.5.12-trixie@sha256:73053ec45f0ad33c8e6f71f60ec3a11133899eecc73d7aa577b6d3a1ff5649c2 AS runtime
+FROM dunglas/frankenphp:1.13-php8.5-trixie@sha256:c8abcc7925f16b1431f139d0410abe8f48db3fd862bacb646b05a4413337106a AS runtime
 
 # Extensions this application actually requires:
 #   intl      — Laravel formatting, league/commonmark
