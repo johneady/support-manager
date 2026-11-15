@@ -16,8 +16,11 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
       - LICENSE
 
+# A newer push cancels an older run on a branch or PR. On main every commit
+# gets its own group instead: each publishes its sha image, and a release
+# commit's run must finish or docker/tag-release.sh has no image to tag.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: true
 
 permissions:
