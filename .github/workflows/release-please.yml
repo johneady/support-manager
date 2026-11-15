@@ -24,7 +24,9 @@
 #   - Anything GITHUB_TOKEN creates triggers no workflows. ci.yml does not run
 #     on the release PR, and the vX.Y.Z tag does not fire docker.yml's
 #     `push: tags` trigger. Merging the release PR still publishes the usual
-#     sha/latest image, because ci.yml runs on that push to main.
+#     sha/latest image, because ci.yml runs on that push to main, and
+#     docker.yml's docker/tag-release.sh then adds the X.Y.Z and X.Y tags to
+#     that same image.
 name: Release Please
 
 on:

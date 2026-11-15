@@ -52,8 +52,10 @@ on:
   # digest bump lands, or to reproduce a deploy.
   workflow_dispatch:
 
+# Per commit on main, for the same reason as ci.yml: a release commit's
+# publish must not be cancelled by the next merge.
 concurrency:
-  group: docker-${{ github.workflow }}-${{ github.ref }}
+  group: docker-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -76,6 +78,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          # All of it on main: tag-release.sh finds the release commit in the
+          # history. Nothing else reads the history.
+          #
+          # Written as != ... && 1 || 0 on purpose. 0 is falsy in an
+          # expression, so `== main && 0 || 1` evaluates to 1 on main: a
+          # shallow clone, and the release would never be tagged.
+          fetch-depth: ${{ github.ref != 'refs/heads/main' && 1 || 0 }}
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v4
@@ -90,6 +100,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # A re-run of an older commit's workflow publishes its sha tag again,
+      # which is harmless, but must not drag `latest` or the branch tag back
+      # onto older code. Only the branch's current tip moves them.
+      - name: Check this is the branch tip
+        id: tip
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+
+          current=true
+          if [ "$GITHUB_REF_TYPE" = branch ] && [ "$GITHUB_EVENT_NAME" != pull_request ]; then
+            tip="$(git ls-remote origin "$GITHUB_REF" | cut -f1)"
+            if [ "$tip" != "$GITHUB_SHA" ]; then
+              current=false
+            fi
+          fi
+
+          latest=false
+          if [ "$current" = true ] && [ "$GITHUB_REF" = "refs/heads/$DEFAULT_BRANCH" ]; then
+            latest=true
+          fi
+
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+
       - name: Derive tags
         id: meta
         uses: docker/metadata-action@v6
@@ -100,12 +136,14 @@ jobs:
           # `latest` deliberately tracks main only. Deploy by the sha or
           # version tag, not by latest: a tag that moves under the deploy
           # target is how you end up unable to say what is running.
+          # The semver patterns only apply to a v* tag pushed by hand;
+          # releases get their version tags from tag-release.sh below.
           tags: |
-            type=ref,event=branch
+            type=ref,event=branch,enable=${{ steps.tip.outputs.current == 'true' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,format=long
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ steps.tip.outputs.latest == 'true' }}
 
       - name: Build and push
         uses: docker/build-push-action@v7
@@ -162,6 +200,18 @@ jobs:
           echo "Smoke-testing $image"
           docker run --rm --entrypoint php "$image" artisan --version
 
+      # release-please never fires the v* tag trigger above (it tags with
+      # GITHUB_TOKEN), so a release gets its version tags here, added to the
+      # sha image Build and push just published. Not on other branches: a run
+      # on the release-please branch must not publish a version before its PR
+      # is merged.
+      - name: Tag the release
+        id: release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: docker/tag-release.sh "ghcr.io/${GITHUB_REPOSITORY,,}"
+
       # Nothing here deploys. This prints the IMAGE_TAG to paste into Dokploy,
       # so the value you deploy is the immutable one rather than whatever
       # `latest` happens to point at when a container next restarts.
@@ -176,6 +226,10 @@ jobs:
         if: github.event_name != 'pull_request'
         env:
           IMAGE_TAG: sha-${{ github.sha }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_MINOR: ${{ steps.release.outputs.minor }}
+          IS_LATEST: ${{ steps.tip.outputs.latest }}
+          IS_TIP: ${{ steps.tip.outputs.current }}
         run: |
           # shellcheck disable=SC2016 # the backticks below are literal markdown
           # for the job summary, not command substitution, so these printf
@@ -184,5 +238,16 @@ jobs:
             printf '## Image published\n\n'
             printf 'Deploy by setting `IMAGE_TAG` in the Dokploy environment, then redeploy:\n\n'
             printf '```\nIMAGE_TAG=%s\n```\n\n' "$IMAGE_TAG"
-            printf 'Also tagged `latest` — published for convenience, but prefer the sha above.\n'
+            if [ -n "$RELEASE_VERSION" ]; then
+              printf 'Release %s is now tagged `%s`' "$RELEASE_VERSION" "$RELEASE_VERSION"
+              if [ -n "$RELEASE_MINOR" ]; then
+                printf ', and `%s` has moved to it' "$RELEASE_MINOR"
+              fi
+              printf '.\n\n'
+            fi
+            if [ "$IS_LATEST" = true ]; then
+              printf 'Also tagged `latest` — published for convenience, but prefer the sha above.\n'
+            elif [ "$IS_TIP" != true ]; then
+              printf 'Not tagged `latest`: a newer commit is on the branch.\n'
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

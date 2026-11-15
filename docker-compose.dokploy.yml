@@ -37,7 +37,7 @@ x-app-base: &app-base
   #     `sha-<full-sha>` tag when Actions minutes are unavailable.
   #
   # IMAGE_TAG must name a tag one of those published. Prefer an immutable one
-  # -- `sha-<full-commit-sha>`, or a `v*` release tag -- over `latest`:
+  # -- `sha-<full-commit-sha>`, or a release's `X.Y.Z` tag -- over `latest`:
   # `latest` moves under you, so a redeploy can quietly pull a different build
   # than the one you deployed, and nothing records which. Set it in the Dokploy
   # environment; it defaults to latest only so a first deploy works.
