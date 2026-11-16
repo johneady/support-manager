@@ -7,19 +7,19 @@
         "dev": "vp dev"
     },
     "dependencies": {
-        "@tailwindcss/vite": "^4.3.3",
-        "@tiptap/core": "^3.32.1",
-        "@tiptap/extension-highlight": "^3.32.1",
-        "@tiptap/extension-placeholder": "^3.32.1",
-        "@tiptap/pm": "^3.32.1",
-        "@tiptap/starter-kit": "^3.32.1",
+        "@tailwindcss/vite": "^4.3.5",
+        "@tiptap/core": "^3.33.1",
+        "@tiptap/extension-highlight": "^3.33.1",
+        "@tiptap/extension-placeholder": "^3.33.1",
+        "@tiptap/pm": "^3.33.1",
+        "@tiptap/starter-kit": "^3.33.1",
         "autoprefixer": "^10.6.2",
-        "axios": "^1.21.0",
-        "concurrently": "^10.0.6",
+        "axios": "^1.21.1",
+        "concurrently": "^10.0.7",
         "laravel-vite-plugin": "^3.2",
-        "marked": "^18.1.2",
+        "marked": "^18.2.0",
         "tailwindcss": "^4.0.7",
-        "turndown": "^7.2.4",
+        "turndown": "^7.2.5",
         "vite": "npm:@voidzero-dev/vite-plus-core@0.3.1",
         "vite-plus": "0.3.1"
     },
@@ -30,7 +30,7 @@
     },
     "devDependencies": {
         "playwright": "1.62.0",
-        "prettier": "^3.9.10",
+        "prettier": "^3.10.1",
         "prettier-plugin-blade": "^3.3.3",
         "prettier-plugin-tailwindcss": "^0.8.1"
     },
