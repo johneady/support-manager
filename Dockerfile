@@ -44,11 +44,11 @@
 # ecosystem -- which reads FROM lines only -- tracks and bumps it.
 # It used to be `COPY --from=composer:2`: a floating tag that put whichever
 # 2.x was current on build day into the image, with no PR and no diff.
-FROM composer:2.10.3@sha256:2cf275428757e5435a667bfc0d038b14520ca02be2b1b70d44a05c8c19e2de48 AS composer
+FROM composer:2.11.0@sha256:278dfc7bd35169965d03f87194816f43bf4e6b6ea61707c2114e52ad12fe24ce AS composer
 
 # --- Stage 1: PHP dependencies ---------------------------------------------
 # php:8.5-cli-alpine @ PHP 8.5.12
-FROM php:8.5-cli-alpine@sha256:e899a75c775804e5466dbd9c96b31f8b6c6ae2ddb053a8466223a0c32992ff8e AS vendor
+FROM php:8.5-cli-alpine@sha256:1ff5b45922ab30f418447c6089dbe2eba5f01e0b2742863d0327ac349305d70f AS vendor
 
 # The extension set here must not drift BELOW the runtime stage's: composer
 # validates composer.lock's platform requirements against the extensions in
@@ -84,7 +84,7 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
 
 # --- Stage 2: frontend assets ----------------------------------------------
 # node:26-alpine @ Node v26.9.0
-FROM node:26-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS assets
+FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS assets
 
 WORKDIR /app
 
@@ -136,7 +136,7 @@ RUN npm run build
 # -- the "segfaults in production" risk the header warns about stops being
 # theoretical. FrankenPHP's own docs recommend the glibc images. The vendor and
 # assets stages only produce files, so they stay on Alpine.
-FROM dunglas/frankenphp:1.13-php8.5-trixie@sha256:c8abcc7925f16b1431f139d0410abe8f48db3fd862bacb646b05a4413337106a AS runtime
+FROM dunglas/frankenphp:1.13-php8.5-trixie@sha256:667c5fffd348d9c3c260803d75956f1d9aace7e4b7331d8893de6f101d7e0e57 AS runtime
 
 # Extensions this application actually requires:
 #   intl      — Laravel formatting, league/commonmark
