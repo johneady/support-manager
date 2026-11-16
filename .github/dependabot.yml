@@ -12,9 +12,20 @@ version: 2
 #
 # Security updates are unaffected: they are raised as soon as an advisory is
 # published, independently of this schedule and of these groups.
+#
+# Commit prefixes decide what gets released, and only a release publishes an
+# image. release-please cuts a patch for fix: but nothing for chore:, build:
+# or ci:, so everything that ships in the image -- composer's runtime
+# packages, npm (the built assets come from it) and the base images -- is
+# fix(deps), and goes out with the next release PR. Composer dev packages
+# and GitHub Actions never reach the image, so they cut no release.
 updates:
   - package-ecosystem: composer
     directory: /
+    commit-message:
+      prefix: fix
+      prefix-development: chore
+      include: scope
     schedule:
       interval: monthly
     versioning-strategy: increase-if-necessary
@@ -25,6 +36,9 @@ updates:
 
   - package-ecosystem: npm
     directory: /
+    commit-message:
+      prefix: fix
+      include: scope
     schedule:
       interval: monthly
     groups:
@@ -83,6 +97,9 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    commit-message:
+      prefix: ci
+      include: scope
     schedule:
       interval: monthly
     # Ungrouped, each action (checkout, setup-php, setup-node, cache, the
@@ -98,6 +115,9 @@ updates:
   # built on.
   - package-ecosystem: docker
     directory: /
+    commit-message:
+      prefix: fix
+      include: scope
     schedule:
       interval: monthly
     # The php, node and frankenphp base images otherwise each arrive as their

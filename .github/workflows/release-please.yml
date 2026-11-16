@@ -27,6 +27,7 @@
 #     sha/latest image, because ci.yml runs on that push to main, and
 #     docker.yml's docker/tag-release.sh then adds the X.Y.Z and X.Y tags to
 #     that same image.
+#     No other push to main publishes an image.
 name: Release Please
 
 on:

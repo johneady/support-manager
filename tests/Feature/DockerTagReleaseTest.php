@@ -260,7 +260,7 @@ test('latest and the branch tag only move for the current tip of the default bra
     expect($workflow)
         ->toContain("type=ref,event=branch,enable=\${{ steps.tip.outputs.current == 'true' }}")
         ->toContain("type=raw,value=latest,enable=\${{ steps.tip.outputs.latest == 'true' }}")
-        ->toContain('tip="$(git ls-remote origin "$GITHUB_REF" | cut -f1)"')
+        ->toContain('newest="$(git ls-remote origin "$GITHUB_REF" | cut -f1)"')
         ->toContain('if [ "$current" = true ] && [ "$GITHUB_REF" = "refs/heads/$DEFAULT_BRANCH" ]; then');
 });
 
