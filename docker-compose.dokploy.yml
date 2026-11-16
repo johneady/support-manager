@@ -32,7 +32,8 @@ x-app-base: &app-base
   # exhausted host.
   #
   # The image is built elsewhere and pushed to GHCR:
-  #   - .github/workflows/docker.yml on every push to main, or
+  #   - .github/workflows/docker.yml for each release (a merged
+  #     release-please PR), or
   #   - ./docker/publish-image.sh from a workstation, which produces the same
   #     `sha-<full-sha>` tag when Actions minutes are unavailable.
   #
