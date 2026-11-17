@@ -276,3 +276,76 @@ jobs:
       contents: read
       packages: write
     uses: ./.github/workflows/docker.yml
+
+  # release-please keeps one "chore(main): release X.Y.Z" PR open on main,
+  # rebuilt from the conventional commits merged since the last release.
+  # Merging that PR is the release: it tags vX.Y.Z and publishes a GitHub
+  # Release with the changelog.
+  #
+  # Nobody edits a version number by hand. The version lives in
+  # .release-please-manifest.json (and the vX.Y.Z tag), and only the release PR
+  # touches it, so feature and Dependabot PRs never conflict over it. The release
+  # PR also rewrites `version` in config/app.php (extra-files in
+  # release-please-config.json, found by its x-release-please-version marker),
+  # which is what the app reports. There is deliberately no version.txt: the
+  # simple strategy updates one only if it already exists, and nothing reads it.
+  #
+  # Releases carry on from 1.1.0, the last one cut by hand. 1.1.0 was never
+  # tagged, so the manifest starts at it and bootstrap-sha points at its commit:
+  # the first release PR covers only what came after. From there, fix: bumps the
+  # patch, feat: the minor, and feat!: / BREAKING CHANGE the major.
+  # ci:, test:, build(deps): and chore: are left out of the changelog and never
+  # cut a release on their own.
+  #
+  # This used to run from release-please.yml on its own push trigger, in
+  # parallel with the checks, so a merge that broke main could still be tagged
+  # as a release. Here it waits for the checks, and on a release commit for the
+  # image too, so a version is never tagged without its image in GHCR.
+  #
+  # !cancelled() and the result checks are needed because publish is SKIPPED
+  # on every commit that is not a release, and a skipped need would otherwise
+  # skip this job as well -- and with it the release PR's refresh.
+  #
+  # If publish fails on a release commit, re-run that run's failed jobs BEFORE
+  # merging anything else: the next push to main would otherwise run
+  # release-please, which would tag the merged release with no image behind it.
+  #
+  # It runs on the default GITHUB_TOKEN, which has two consequences:
+  #   - "Allow GitHub Actions to create and approve pull requests" must be on
+  #     (Settings > Actions > General), or opening the release PR fails with a
+  #     403.
+  #   - Anything GITHUB_TOKEN creates triggers no workflows: this file does not
+  #     run on the release PR, and the vX.Y.Z tag does not fire docker.yml's
+  #     `push: tags` trigger. Merging the release PR runs this file on main,
+  #     where publish builds the image and docker/tag-release.sh adds the
+  #     X.Y.Z and X.Y tags to it.
+  release:
+    name: Release PR
+    needs: [checks, publish]
+    if: >-
+      !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.checks.result == 'success' &&
+      (needs.publish.result == 'success' || needs.publish.result == 'skipped')
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    # Only API calls, no checkout -- but self-hosted jobs queue behind the host
+    # job lock, and that wait counts toward the timeout.
+    timeout-minutes: ${{ vars.CI_RUNNER && 30 || 5 }}
+
+    # Serialised, so two quick merges do not race to rebuild and force-push the
+    # same release PR. Never cancelled: the tag and GitHub Release are one API
+    # call, but relabelling the PR from "autorelease: pending" to "autorelease:
+    # tagged" is a separate one after it, and a run cancelled in between leaves
+    # the next run failing on a duplicate release.
+    concurrency:
+      group: release-please
+      cancel-in-progress: false
+
+    permissions:
+      # Tags, releases and the release branch.
+      contents: write
+      pull-requests: write
+      # The autorelease: pending / tagged labels on the release PR.
+      issues: write
+
+    steps:
+      - uses: googleapis/release-please-action@v5
