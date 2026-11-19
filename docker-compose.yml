@@ -33,7 +33,8 @@ x-app-base: &app-base
     DOCKER_LOCAL_STACK: ${DOCKER_LOCAL_STACK:?pass --env-file .env.docker (see this file's header)}
 
     LOG_CHANNEL: stack
-    LOG_STACK: single
+    LOG_STACK: daily
+    LOG_DAILY_DAYS: "14"
     LOG_LEVEL: debug
 
     DB_CONNECTION: mariadb
